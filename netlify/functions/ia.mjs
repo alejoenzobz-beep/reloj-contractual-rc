@@ -1,8 +1,8 @@
 // Proxy a Gemini (Google AI Studio, plan gratuito). La clave vive en la variable de entorno GEMINI_API_KEY
 // de Netlify y nunca llega al navegador. La función arma el prompt con las mismas instrucciones del núcleo:
 // no acepta prompts libres, así no sirve como proxy abierto.
-import * as N from '../../js/nucleo.js';
-import { HERRAMIENTAS, MAX_TEXTO_HERRAMIENTA } from '../../js/herramientas.js';
+import * as N from '../../public/js/nucleo.js';
+import { HERRAMIENTAS, MAX_TEXTO_HERRAMIENTA } from '../../public/js/herramientas.js';
 
 const MODELO = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const BASE = process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com/v1beta';
