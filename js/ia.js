@@ -1,6 +1,7 @@
 // Capa de IA: el modelo solo lee y propone. Toda respuesta pasa por parsearI1 / parsearI2 (nucleo.js).
 // Modos: demostración (respuestas registradas o preparadas), servidor (Gemini vía Netlify Function) y manual.
 import * as N from './nucleo.js';
+import { HERRAMIENTAS } from './herramientas.js';
 
 export const I1 = () => N.INSTRUCCIONES.I1[N.VERSION_VIGENTE.I1].sistema;
 export const I2 = () => N.INSTRUCCIONES.I2[N.VERSION_VIGENTE.I2].sistema;
@@ -123,4 +124,13 @@ export async function vincular(doc, hechos, partidas, demo) {
   if (modo === 'manual') return { manual: true, prompt: promptI2(hechosEnvio(hechos), ps) };
   if (claveUsuario()) return llamarDirecto(I2(), N.mensajeI2(hechosEnvio(hechos), ps));
   return llamarServidor({ paso: 'I2', hechos: hechosEnvio(hechos), partidas: ps });
+}
+
+// Herramientas de redacción (resumir, traducir, revisar). Devuelve { texto, origen } o { manual: true, prompt }.
+export async function herramienta(clave, texto) {
+  const h = HERRAMIENTAS[clave];
+  if (modo === 'demo') throw new SinRespuesta('demo', 'demo');
+  if (modo === 'manual') return { manual: true, prompt: `${h.sistema}\n\n---\n\n${texto}` };
+  if (claveUsuario()) return llamarDirecto(h.sistema, texto);
+  return llamarServidor({ paso: 'H', herramienta: clave, texto });
 }

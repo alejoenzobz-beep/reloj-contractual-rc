@@ -429,6 +429,32 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
 @keyframes latido { 50% { outline-color: rgba(255,138,76,.35); } }
 @media (max-width: 900px) { .det-cuerpo > div:last-child { order: -1; } .menu-grupo { display: none; } .menu a, .lateral-pie .pie-enlace, .lateral-pie button { width: auto; padding: 0; } .lateral .logo { width: 100%; } .guia { padding: 14px; } .guia p { font-size: .86rem; margin-bottom: 8px; } .guia h3 { font-size: 1rem; } .saludo, .inicio-grid { grid-template-columns: 1fr; } .proy-sel, .resumen-dia, .accesos { grid-template-columns: 1fr; } .guia { right: 16px; bottom: 16px; } }
 
+/* ---------- Documentos de salida ---------- */
+.sal-grid { display: grid; grid-template-columns: minmax(230px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; } .sal-grid > .panel { margin: 0; }
+.sal-lista { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.sal-lista a { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; text-decoration: none; color: var(--texto); border: 1px solid transparent; }
+.sal-lista a:hover { background: var(--azul-suave); } .sal-lista a[aria-current="true"] { background: var(--azul-suave); border-color: var(--borde-luz); }
+.sal-lista b { color: var(--tinta); font-size: .9rem; } .sal-lista small { color: var(--texto-2); font-size: .78rem; } .ok-t { color: var(--verde); font-weight: 700; }
+.sal-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; } .sal-barra .segmento { margin: 0; }
+.hoja { background: #FDFDFB; color: #1B2234; border-radius: 12px; box-shadow: var(--sombra); padding: clamp(18px, 4vw, 48px); font-family: "Georgia", "Times New Roman", serif; font-size: 15px; line-height: 1.6; }
+.hoja-txt { outline: none; min-height: 300px; } .hoja-txt p { margin: 0 0 12px; } .hoja-txt:focus-visible { box-shadow: 0 0 0 3px var(--azul-2); border-radius: 6px; }
+.hoja mark.campo { background: rgba(79,123,255,.16); color: inherit; border-bottom: 2px solid #4F7BFF; padding: 0 1px; border-radius: 2px; }
+.sal-acciones { display: grid; gap: 10px; margin: 14px 0; padding: 14px; border-radius: var(--r); background: var(--vidrio); border: 1px solid var(--borde); }
+.sal-acciones .fila-btn { align-items: center; } .sal-acciones .tit2 { min-width: 100%; }
+.sal-emitir { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; padding: 16px 18px; border-radius: var(--r); background: var(--azul-suave); border: 1px solid var(--borde-luz); margin-top: 14px; }
+.sal-emitir p { margin: 0; flex: 1 1 320px; } .sal-emitir.hecho { background: var(--verde-suave); border-color: var(--verde); }
+.check .ico.info { background: var(--ambar-suave); color: var(--ambar); }
+button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); text-decoration: underline; cursor: pointer; font: inherit; }
+.her-res { margin-top: 12px; }
+@media (max-width: 900px) { .sal-grid { grid-template-columns: 1fr; } }
+@media print {
+  body { background: #fff !important; } body::before, body::after { display: none !important; }
+  body * { visibility: hidden !important; }
+  #doc-imprimir, #doc-imprimir * { visibility: visible !important; }
+  #doc-imprimir { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; background: #fff; color: #000; }
+  #doc-imprimir mark.campo { background: none; border: 0; }
+}
+
 @media (max-width: 1100px) { .pano { grid-template-columns: 1fr; } .casos3 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; } .lateral { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 14px; gap: 10px; }
@@ -453,6 +479,7 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
       <a href="#inicio"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="txt">Inicio</span></a>
       <a href="#bandeja"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span class="txt">Bandeja de cambios</span></a>
       <a href="#comparar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="txt">Comparar revisiones</span></a>
+      <a href="#salidas"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/></svg></span><span class="txt">Documentos de salida</span></a>
       <span class="menu-grupo">Control</span>
       <a href="#plazos"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span class="txt">Plazos y parámetros</span></a>
       <a href="#resultados"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="txt">Resultados</span></a>
@@ -485,6 +512,7 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
       <section class="vista" id="v-comparar" aria-label="Comparar revisiones" hidden></section>
       <section class="vista" id="v-resultados" aria-label="Resultados" hidden></section>
       <section class="vista" id="v-ajustes" aria-label="Ajustes" hidden></section>
+      <section class="vista" id="v-salidas" aria-label="Documentos de salida" hidden></section>
       <section class="vista" id="v-plazos" aria-label="Plazos y parámetros" hidden></section>
     </main>
     <footer class="pie"><span><b>Reloj Contractual</b> · Asistente de trazabilidad documental y contractual · Grupo 4 · Kevin Vega, Emmanuel Enriquez, Shirley Coronado, Aldo Tinco · Diplomado IA en Ingeniería y Construcción (AECODE)</span><span>Datos de demostración: proyecto ficticio R1 con documentos sintéticos. Ninguna salida es asesoría legal.</span></footer>

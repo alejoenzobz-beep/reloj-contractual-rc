@@ -3,6 +3,7 @@
 import * as N from './nucleo.js';
 import * as IA from './ia.js';
 import { vComparar } from './comparador.js';
+import { vSalidas } from './salidas.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -76,11 +77,11 @@ const FECHAS = docs.map(d => d.fecha_recepcion).sort();
 const PRIMERA = N.sumarDias(FECHAS[0], -1), ULTIMA = N.sumarDias(FECHAS[FECHAS.length - 1], 10);
 
 // ---------- estado (en memoria; recuerda decisiones en este navegador si se puede) ----------
-const est = { hoy: '2026-10-09', proyecto: 'R1', decisiones: {}, registro: [], filtro: 'pendientes', esp: 'todas', simPaso: 0, simDecision: null };
+const est = { hoy: '2026-10-09', proyecto: 'R1', decisiones: {}, emitidas: {}, borradores: {}, registro: [], filtro: 'pendientes', esp: 'todas', simPaso: 0, simDecision: null };
 try { const pa = localStorage.getItem('rc-proyecto-activo'); if (pa && PROY[pa]) est.proyecto = pa; } catch { }
-try { const g = JSON.parse(localStorage.getItem('rc-estado') || 'null'); if (g) Object.assign(est, { decisiones: g.decisiones || {}, registro: g.registro || [] }); } catch { }
-const guardar = () => { try { localStorage.setItem('rc-estado', JSON.stringify({ decisiones: est.decisiones, registro: est.registro })); } catch { } };
-const registrar = (quien, que) => { est.registro.unshift({ t: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }), quien, que }); guardar(); };
+try { const g = JSON.parse(localStorage.getItem('rc-estado') || 'null'); if (g) Object.assign(est, { decisiones: g.decisiones || {}, registro: g.registro || [], emitidas: g.emitidas || {}, borradores: g.borradores || {} }); } catch { }
+const guardar = () => { try { localStorage.setItem('rc-estado', JSON.stringify({ decisiones: est.decisiones, registro: est.registro, emitidas: est.emitidas, borradores: est.borradores })); } catch { } };
+const registrar = (quien, que, meta = {}) => { est.registro.unshift({ t: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }), quien, que, ...meta }); guardar(); };
 
 const estadoDe = a => {
   if (est.decisiones[a.id]) return 'decidido';
@@ -151,11 +152,12 @@ function fraseDias(a) {
 }
 
 // ---------- router ----------
-const VISTAS = ['inicio', 'simulacion', 'bandeja', 'comparar', 'plazos', 'resultados', 'ajustes'];
+const VISTAS = ['inicio', 'simulacion', 'bandeja', 'comparar', 'salidas', 'plazos', 'resultados', 'ajustes'];
 function ruta() {
   let h = location.hash.slice(1) || 'inicio';
   if (h === 'probar') h = 'comparar'; if (h === 'tablero') h = 'bandeja';
   if (h.startsWith('alerta-')) return { vista: 'alerta', id: h.slice(7).toUpperCase() };
+  if (h.startsWith('salidas-')) return { vista: 'salidas', id: h.slice(8).toUpperCase() };
   return { vista: VISTAS.includes(h) ? h : 'inicio' };
 }
 function render() {
@@ -163,9 +165,9 @@ function render() {
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'bandeja' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   $('#ruta-proy').textContent = PROY[est.proyecto].nombre;
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', bandeja: 'Bandeja de cambios', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', resultados: 'Resultados', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', resultados: 'Resultados', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, simulacion: vSim, bandeja: vBandeja, alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), resultados: vResultados, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), resultados: vResultados, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -210,11 +212,11 @@ function vInicio() {
     <div class="resumen-dia" role="group" aria-label="Resumen del proyecto">
       <a class="kpi nuevo" href="#bandeja" data-ir="nuevos"><b class="num">${nuevos}</b>cambios nuevos (últimas 48 h)</a>
       <a class="kpi urg" href="#bandeja" data-ir="urgentes"><b class="num">${urg}</b>urgentes: vencen en 3 días o menos</a>
-      <a class="kpi emitir" href="#bandeja" data-ir="decididas"><b class="num">${emitir}</b>decididos, por emitir</a></div>
+      <a class="kpi emitir" href="#salidas"><b class="num">${emitir}</b>decididos, por emitir</a></div>
     <div class="accesos">
       <a class="acceso" href="#comparar"><span class="ico">${ICO_ACC.comparar}</span><span>Comparar revisiones<small>Detecta qué cambió entre la A y la B</small></span></a>
       <a class="acceso" href="#bandeja"><span class="ico">${ICO_ACC.bandeja}</span><span>Bandeja de cambios<small>Lo que hay que atender, por plazo</small></span></a>
-      <a class="acceso" href="#bandeja" data-ir="decididas"><span class="ico">${ICO_ACC.salidas}</span><span>Documentos de salida<small>Cartas listas para revisar y emitir</small></span></a></div>
+      <a class="acceso" href="#salidas"><span class="ico">${ICO_ACC.salidas}</span><span>Documentos de salida<small>Cartas listas para revisar y emitir</small></span></a></div>
     <div class="inicio-grid">
       <div class="panel"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${abiertas.slice(0, 4).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(a.doc_id)} · ${esc(a.elemento)}</h4><p>${esc(primeraFrase(a.cambio))}</p><p>${a.partida ? `Partida ${esc(a.partida)}` : 'Sin partida en el presupuesto'} · notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>${abiertas.length > 4 ? `<p class="pista-txt" style="margin-top:10px"><a href="#bandeja">Ver los ${abiertas.length} en la bandeja</a></p>` : ''}`
         : `<p class="vacio">Sin cambios abiertos en ${esc(pr.nombre)}. Compara dos revisiones para empezar: los cambios que confirmes llegan aquí con su plazo.</p><a class="btn prim" href="#comparar">Comparar revisiones</a>`}</div>
@@ -428,7 +430,7 @@ function vAlerta(id) {
       </div>
       <div>
         <div class="panel"><h3>${dec ? 'Decisión tomada' : 'Tu decisión'}</h3>
-          ${dec ? `<div class="aviso ok">Alerta ${esc(dec.estado)}${dec.partida && dec.partida !== a.partida ? `: partida ${esc(dec.partida)} (la IA propuso ${esc(a.partida)})` : ''}.</div><div class="acciones"><button class="btn" id="d-carta">Ver borrador de carta</button><button class="btn" id="d-deshacer">Deshacer</button></div>`
+          ${dec ? `<div class="aviso ok">Alerta ${esc(dec.estado)}${dec.partida && dec.partida !== a.partida ? `: partida ${esc(dec.partida)} (la IA propuso ${esc(a.partida)})` : ''}.</div><div class="acciones">${dec.estado !== 'descartada' ? `<a class="btn prim" id="d-carta" href="#salidas-${a.id.toLowerCase()}">Redactar carta, acta o informe</a>` : ''}<button class="btn" id="d-deshacer">Deshacer</button></div>`
           : `<div class="acciones"><button class="btn prim" data-d="confirmada">Confirmar</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar</button></div>
             <div id="d-corr" hidden style="margin-top:10px"><label class="tit" for="d-sel">Partida correcta</label><select id="d-sel" style="max-width:100%">${proyecto.partidas.map(x => `<option value="${x.codigo}" ${x.codigo === a.partida ? 'selected' : ''}>${x.codigo} ${esc(x.desc)}</option>`).join('')}</select> <button class="btn peq prim" id="d-corr-ok">Guardar corrección</button></div>`}
           <div id="d-carta-box"></div>
@@ -442,14 +444,13 @@ function vAlerta(id) {
         </div>
       </div>
     </div>`;
-  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar('Oficina técnica', `${a.doc_id} · alerta ${estado}${estado === 'corregida' ? ` a ${partida}` : ''}`); vAlerta(id); };
+  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar('Oficina técnica', `${a.doc_id} · cambio ${estado}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
-  const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar('Oficina técnica', `${a.doc_id} · decisión deshecha`); vAlerta(id); };
+  const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar('Oficina técnica', `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
   const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar('Oficina técnica', `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`); vAlerta(id); pintarFecha(); };
   $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
   const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
-  const c = $('#d-carta'); if (c) c.onclick = () => { const { html, ver } = cartaDe(a); $('#d-carta-box').innerHTML = `<div class="carta" style="margin-top:12px">${html}</div><div class="check"><span class="ico ${ver.ok ? 'si' : 'no'}">${ver.ok ? '✓' : '✗'}</span><div>${ver.ok ? 'Todas las cifras y fechas vienen de los datos confirmados.' : `Cifras sin origen: ${esc(ver.fuera.join(', '))}`}</div></div>`; };
 }
 
 // ---------- RESULTADOS ----------
@@ -546,8 +547,11 @@ const GUIA = [
   { t: 'Conectar', h: 'El proyecto y su entorno de datos', p: 'Elige el proyecto y su CDE (en esta demostración, las conexiones son simuladas). Cada documento nuevo que llega al CDE arranca un plazo contractual.', ir: '#inicio', foco: '#cde' },
   { t: 'Detectar', h: 'Compara la revisión A con la B', p: 'Con la lámina de ejemplo E-301 cargada, pulsa «Detectar cambios». El comparador marca cada zona que cambió sin usar IA.', ir: '#comparar', foco: '#cmp-ir' },
   { t: 'Entender', h: 'Qué cambió, dónde y con qué prueba', p: 'La IA indica qué diferencias tienen impacto y propone la partida. Cada tarjeta trae la cita literal, verificada contra el texto de la revisión B.', ir: '#comparar', foco: '#cmp-tarjetas', antes: async () => { if (!document.querySelector('#cmp-alerta')) { $('#cmp-ir')?.click(); await esperarSel('#cmp-alerta', 15000); } } },
-  { t: 'Decidir', h: 'La persona decide', p: 'Pulsa «Crear alerta con estos cambios»: el cambio entra a la bandeja con su plazo. Luego confirma, corrige la partida o descarta. Nada se emite sin esta decisión.', ir: null, foco: '#cmp-alerta, .acciones', antes: async () => { if (location.hash.startsWith('#comparar')) { if (!document.querySelector('#cmp-alerta')) { $('#cmp-ir')?.click(); await esperarSel('#cmp-alerta', 15000); } } } },
-  { t: 'Emitir', h: 'El borrador, listo para firmar', p: 'Con la decisión tomada, el borrador de carta usa solo datos confirmados: cita, partida y fecha límite. La app avisa si alguna cifra no tiene origen.', ir: null, foco: '#d-carta, .acciones' },
+  { t: 'Decidir', h: 'La persona decide', p: 'El cambio ya está en la bandeja con su plazo. Revisa la evidencia y pulsa «Confirmar» (o corrige la partida). Nada se emite sin esta decisión: el recorrido sigue cuando la tomes.', ir: null, foco: '.acciones',
+    antes: async () => { if (location.hash.startsWith('#comparar')) { if (!document.querySelector('#cmp-alerta')) { $('#cmp-ir')?.click(); await esperarSel('#cmp-alerta', 15000); } $('#cmp-alerta')?.click(); await new Promise(r => setTimeout(r, 350)); } },
+    espera: () => { const r = ruta(); return r.vista === 'alerta' && !!est.decisiones[r.id]; } },
+  { t: 'Emitir', h: 'El borrador, listo para firmar', p: 'La carta usa solo datos confirmados: cita, partida y fecha límite, resaltados. Edítala, revisa los avisos, descárgala en DOCX, PDF o MD y registra la emisión cuando se firme.', ir: null, foco: '.sal-acciones',
+    antes: async () => { const r = ruta(); if (r.vista === 'alerta') { location.hash = `#salidas-${r.id.toLowerCase()}`; await new Promise(x => setTimeout(x, 300)); } } },
   { t: 'Auditar', h: 'Quién decidió qué y cuándo', p: 'Cada paso queda en el registro: detección, decisión y emisión. Así se puede demostrar, ante la propietaria, que se notificó a tiempo.', ir: '#bandeja', foco: '.registro' },
 ];
 let guiaPaso = -1;
@@ -566,14 +570,16 @@ async function pasoGuia() {
   const ant = $('#g-ant'); if (ant) ant.onclick = () => { guiaPaso--; pasoGuia(); };
   $('#g-sig').onclick = async () => {
     if (guiaPaso === 5) return cerrarGuia();
-    // Al pasar de «Decidir» a «Emitir», si aún estamos en el comparador, se crea la alerta del ejemplo.
-    if (guiaPaso === 3 && location.hash.startsWith('#comparar')) { $('#cmp-alerta')?.click(); await new Promise(r => setTimeout(r, 300)); }
     guiaPaso++; pasoGuia();
   };
   if (g.antes) { $('#g-sig').disabled = true; await g.antes(); $('#g-sig').disabled = false; }
+  if (g.espera && !g.espera()) {
+    const b = $('#g-sig'); b.disabled = true; b.title = 'Toma la decisión para seguir';
+    const t = setInterval(() => { if (guiaPaso < 0 || !document.body.contains(b)) return clearInterval(t); if (g.espera()) { clearInterval(t); b.disabled = false; b.title = ''; document.querySelectorAll('.foco-guia').forEach(e => e.classList.remove('foco-guia')); const f2 = document.querySelector('#d-carta'); if (f2) f2.classList.add('foco-guia'); b.focus({ preventScroll: true }); } }, 300);
+  }
   const f = document.querySelector(g.foco);
   if (f) { f.classList.add('foco-guia'); f.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: innerWidth < 700 ? 'start' : 'center' }); }
-  $('#g-sig').focus({ preventScroll: true });
+  if (!$('#g-sig').disabled) $('#g-sig').focus({ preventScroll: true });
 }
 $('#guia-abrir').onclick = () => { if (guiaPaso >= 0) cerrarGuia(); else iniciarGuia(); };
 addEventListener('keydown', e => { if (e.key === 'Escape' && guiaPaso >= 0) cerrarGuia(); });

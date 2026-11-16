@@ -2,6 +2,7 @@
 // de Netlify y nunca llega al navegador. La función arma el prompt con las mismas instrucciones del núcleo:
 // no acepta prompts libres, así no sirve como proxy abierto.
 import * as N from '../../js/nucleo.js';
+import { HERRAMIENTAS, MAX_TEXTO_HERRAMIENTA } from '../../js/herramientas.js';
 
 const MODELO = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const BASE = process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com/v1beta';
@@ -30,6 +31,11 @@ function armar(paso, e) {
     const ok = o => Object.values(o).every(v => v == null || (typeof v === 'string' && v.length <= 600) || typeof v === 'number');
     if (!hechos.every(ok) || !partidas.every(ok)) return null;
     return { sistema: N.INSTRUCCIONES.I2[N.VERSION_VIGENTE.I2].sistema, mensaje: N.mensajeI2(hechos, partidas) };
+  }
+  if (paso === 'H') {
+    const h = HERRAMIENTAS[e.herramienta];
+    if (!h || !texto(e.texto, MAX_TEXTO_HERRAMIENTA) || !e.texto.trim()) return null;
+    return { sistema: h.sistema, mensaje: e.texto };
   }
   return null;
 }
