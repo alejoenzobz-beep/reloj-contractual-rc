@@ -455,6 +455,26 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
   #doc-imprimir mark.campo { background: none; border: 0; }
 }
 
+/* ---------- Auditoría y calidad ---------- */
+.aud-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+.aud-ok { color: var(--verde); font-weight: 700; } .aud-mal { color: var(--naranja); font-weight: 700; }
+.linea-tiempo { list-style: none; margin: 18px 0 0; padding: 0 0 0 8px; position: relative; }
+.linea-tiempo::before { content: ""; position: absolute; left: 15px; top: 6px; bottom: 6px; width: 2px; background: var(--borde-luz); }
+.ev { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 16px; padding-bottom: 14px; }
+.ev-punto { width: 16px; height: 16px; border-radius: 50%; margin-top: 18px; background: var(--azul); border: 3px solid var(--fondo-1); position: relative; z-index: 1; }
+.ev-cuerpo { background: var(--vidrio); border: 1px solid var(--borde); border-radius: 16px; padding: 12px 14px; transition: border-color .4s, box-shadow .4s; min-width: 0; }
+.ev-cuerpo p { margin: 6px 0; color: var(--texto); }
+.ev-cab { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; } .ev-cab b { color: var(--tinta); } .ev-cab time { color: var(--texto-2); font-size: .84rem; }
+.hash { display: inline-block; font-size: .74rem; color: var(--texto-3); margin-right: 10px; overflow-wrap: anywhere; }
+.ev.sellado .ev-cuerpo { border-color: rgba(61,220,151,.5); animation: sellar .6s ease-out; } .ev.roto .ev-cuerpo { border-color: var(--naranja); box-shadow: 0 0 0 2px var(--naranja-suave); background: var(--naranja-suave); }
+@keyframes sellar { from { box-shadow: 0 0 0 6px rgba(61,220,151,.35); } }
+.t-azul { background: var(--azul); } .t-verde { background: var(--verde); } .t-ambar { background: var(--ambar); } .t-naranja { background: var(--naranja); } .t-gris { background: var(--texto-3); }
+.etq.t-azul, .etq.t-verde, .etq.t-ambar, .etq.t-naranja, .etq.t-gris { color: #0A1230; border-color: transparent; font-weight: 700; }
+.pruebas { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pruebas li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--borde); }
+.pruebas li .ico { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; } .pruebas .ico.si { background: var(--verde-suave); color: var(--verde); } .pruebas .ico.no { background: var(--naranja-suave); color: var(--naranja); }
+.pruebas b { display: block; color: var(--tinta); font-weight: 600; } .pruebas small { color: var(--texto-2); font-size: .8rem; }
+
 @media (max-width: 1100px) { .pano { grid-template-columns: 1fr; } .casos3 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; } .lateral { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 14px; gap: 10px; }
@@ -482,7 +502,8 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
       <a href="#salidas"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/></svg></span><span class="txt">Documentos de salida</span></a>
       <span class="menu-grupo">Control</span>
       <a href="#plazos"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span class="txt">Plazos y parámetros</span></a>
-      <a href="#resultados"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="txt">Resultados</span></a>
+      <a href="#auditoria"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="txt">Auditoría</span></a>
+      <a href="#calidad"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="txt">Calidad</span></a>
     </nav>
     <div class="lateral-pie">
       <a href="#ajustes" class="pie-enlace"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="txt">Ajustes</span></a>
@@ -510,7 +531,8 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
       <section class="vista" id="v-bandeja" aria-label="Bandeja de cambios" hidden></section>
       <section class="vista" id="v-alerta" aria-label="Detalle de alerta" hidden></section>
       <section class="vista" id="v-comparar" aria-label="Comparar revisiones" hidden></section>
-      <section class="vista" id="v-resultados" aria-label="Resultados" hidden></section>
+      <section class="vista" id="v-calidad" aria-label="Calidad" hidden></section>
+      <section class="vista" id="v-auditoria" aria-label="Auditoría" hidden></section>
       <section class="vista" id="v-ajustes" aria-label="Ajustes" hidden></section>
       <section class="vista" id="v-salidas" aria-label="Documentos de salida" hidden></section>
       <section class="vista" id="v-plazos" aria-label="Plazos y parámetros" hidden></section>

@@ -4,6 +4,8 @@ import * as N from './nucleo.js';
 import * as IA from './ia.js';
 import { vComparar } from './comparador.js';
 import { vSalidas } from './salidas.js';
+import * as AUD from './auditoria.js';
+import { casosDePrueba } from './pruebas.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -70,7 +72,7 @@ function crearAlertas(doc, hechos) {
   nuevas.push({ doc, filas });
   try { localStorage.setItem('rc-nuevas', JSON.stringify(nuevas)); } catch { }
   const res = incorporar(doc, filas);
-  registrar('Asistente', `${doc.doc_id} · ${res.length} cambio(s) detectado(s) al comparar revisiones ${doc.revision_anterior} y ${doc.revision}`);
+  registrar('Asistente', `${doc.doc_id} · ${res.length} cambio(s) detectado(s) al comparar las revisiones ${doc.revision_anterior} y ${doc.revision}, con cita verificada`, { tipo: 'detectado', alerta: res[0]?.id });
   return res;
 }
 const FECHAS = docs.map(d => d.fecha_recepcion).sort();
@@ -81,7 +83,7 @@ const est = { hoy: '2026-10-09', proyecto: 'R1', decisiones: {}, emitidas: {}, b
 try { const pa = localStorage.getItem('rc-proyecto-activo'); if (pa && PROY[pa]) est.proyecto = pa; } catch { }
 try { const g = JSON.parse(localStorage.getItem('rc-estado') || 'null'); if (g) Object.assign(est, { decisiones: g.decisiones || {}, registro: g.registro || [], emitidas: g.emitidas || {}, borradores: g.borradores || {} }); } catch { }
 const guardar = () => { try { localStorage.setItem('rc-estado', JSON.stringify({ decisiones: est.decisiones, registro: est.registro, emitidas: est.emitidas, borradores: est.borradores })); } catch { } };
-const registrar = (quien, que, meta = {}) => { est.registro.unshift({ t: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }), quien, que, ...meta }); guardar(); };
+const registrar = (quien, que, meta = {}) => { est.registro.unshift({ t: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }), quien, que, ...meta }); guardar(); AUD.anexar({ quien, que, tipo: meta.tipo, alerta: meta.alerta, fecha_sim: est.hoy }); };
 
 const estadoDe = a => {
   if (est.decisiones[a.id]) return 'decidido';
@@ -134,7 +136,7 @@ function barraPlazo(a, compacta = false) {
     <div class="pb-fila"><span class="pb-et">Para entender el cambio</span><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"><i>Sin asistente: ${REF.min}–${REF.max} días</i></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-asist"><i>Con asistente: día 0</i></span>${hoyM}</div></div>
     <div class="pb-fila"><span class="pb-et">Para sustentar</span><div class="pb-pista"><span class="pb-margen" style="left:1.5%;width:98.5%"><i>Margen con asistente: ${margenCon} día${margenCon === 1 ? '' : 's'}</i></span><span class="pb-fin"></span>${hoyM.replace(/<b>Hoy<\/b>/, '')}</div></div>
     <div class="pb-escala pb-et-pad"><span>Día 0 · recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}</span></div>
-    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = 2), ver <a href="#resultados">Resultados</a>. La revisión humana de una alerta todavía no se ha cronometrado.</p></div>`;
+    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = 2), ver <a href="#calidad">Calidad → Casos de referencia</a>. La revisión humana de una alerta todavía no se ha cronometrado.</p></div>`;
 }
 function diasBadge(a, cls = '') {
   const e = estadoDe(a);
@@ -152,10 +154,11 @@ function fraseDias(a) {
 }
 
 // ---------- router ----------
-const VISTAS = ['inicio', 'simulacion', 'bandeja', 'comparar', 'salidas', 'plazos', 'resultados', 'ajustes'];
+const VISTAS = ['inicio', 'simulacion', 'bandeja', 'comparar', 'salidas', 'auditoria', 'calidad', 'plazos', 'resultados', 'ajustes'];
 function ruta() {
   let h = location.hash.slice(1) || 'inicio';
-  if (h === 'probar') h = 'comparar'; if (h === 'tablero') h = 'bandeja';
+  if (h === 'probar') h = 'comparar'; if (h === 'tablero') h = 'bandeja'; if (h === 'resultados') h = 'calidad';
+  if (location.hash && location.hash.slice(1) !== h && VISTAS.includes(h)) history.replaceState(null, '', '#' + h);
   if (h.startsWith('alerta-')) return { vista: 'alerta', id: h.slice(7).toUpperCase() };
   if (h.startsWith('salidas-')) return { vista: 'salidas', id: h.slice(8).toUpperCase() };
   return { vista: VISTAS.includes(h) ? h : 'inicio' };
@@ -165,9 +168,9 @@ function render() {
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'bandeja' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   $('#ruta-proy').textContent = PROY[est.proyecto].nombre;
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', resultados: 'Resultados', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), resultados: vResultados, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -226,7 +229,7 @@ function vInicio() {
   document.querySelectorAll('[data-proy]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.proy; guardarActivo(); est.bproy = est.proyecto; vInicio(); pintarFecha(); });
   document.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => { est.filtro = b.dataset.ir; est.bproy = id; });
   $('#cde-cambiar').onclick = () => { $('#cde-ops').hidden = !$('#cde-ops').hidden; };
-  document.querySelectorAll('[data-cde]').forEach(b => b.onclick = () => { const t = b.dataset.cde; cdeConex[id] = t ? { tipo: t, ruta: `/${id}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } registrar('Oficina técnica', `${pr.nombre} · ${t ? `CDE conectado: ${t} (demostración)` : 'CDE desconectado'}`); vInicio(); });
+  document.querySelectorAll('[data-cde]').forEach(b => b.onclick = () => { const t = b.dataset.cde; cdeConex[id] = t ? { tipo: t, ruta: `/${id}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } registrar('Oficina técnica', `${pr.nombre} · ${t ? `CDE conectado: ${t} (demostración)` : 'CDE desconectado'}`, { tipo: 'parametro' }); vInicio(); });
   const gi = $('#guia-ini'); if (gi) gi.onclick = () => iniciarGuia();
   const gs = $('#guia-saltar'); if (gs) gs.onclick = () => { marcarGuia(); $('#invita-guia').remove(); };
 }
@@ -444,17 +447,17 @@ function vAlerta(id) {
         </div>
       </div>
     </div>`;
-  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar('Oficina técnica', `${a.doc_id} · cambio ${estado}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
+  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar('Oficina técnica', `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
   const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar('Oficina técnica', `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
-  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar('Oficina técnica', `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`); vAlerta(id); pintarFecha(); };
+  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar('Oficina técnica', `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
   $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
   const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
 }
 
 // ---------- RESULTADOS ----------
-function vResultados() {
+function vCalidad() {
   const b = cifras.corpus_base, pn = cifras.prueba_nueva, s = cifras.linea_base_sin_ia;
   const series = [
     { n: 'Con IA · corpus base (instrucción vigente)', c: 'var(--plano)', v: [b.v1_1.cobertura, b.v1_1.precision, b.v1_1.vinculacion] },
@@ -470,8 +473,8 @@ function vResultados() {
       svg += v == null ? `<text x="${x + bw / 2}" y="${y(0) - 8}" text-anchor="middle" font-size="10">—</text>` : `<rect x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" rx="3" fill="${sr.c}"/><text x="${x + bw / 2}" y="${y(v) - 6}" text-anchor="middle" font-size="11" style="fill:var(--texto)">${pct(v)}</text>`; });
     svg += `<line x1="${cx - 70}" x2="${cx + 70}" y1="${y(umbral[i])}" y2="${y(umbral[i])}" stroke="var(--nube)" stroke-width="2" stroke-dasharray="5 3"/><text x="${cx + 72}" y="${y(umbral[i]) + 4}" font-size="10" style="fill:var(--nube)">mín. ${umbral[i] * 100} %</text><text x="${cx}" y="276" text-anchor="middle" style="fill:var(--tinta);font-weight:700">${c}</text>`;
   });
-  $('#v-resultados').innerHTML = `
-    <div class="tab-cab"><div><h2>Qué tan bien funciona</h2><p style="color:var(--texto-2);max-width:48em">Medido contra respuestas correctas escritas y congeladas antes de correr la IA. Dos conjuntos: el corpus con el que se construyó el prototipo y 10 documentos nuevos que el sistema no conocía.</p></div></div>
+  $('#v-calidad').innerHTML = `
+    <div class="tab-cab"><div><h2>Calidad: qué tan bien funciona</h2><p style="color:var(--texto-2);max-width:48em">Medido contra respuestas correctas escritas y congeladas antes de correr la IA. Dos conjuntos: el corpus con el que se construyó el prototipo y 10 documentos nuevos que el sistema no conocía.</p></div></div>
     <div class="metricas">
       <div class="panel grafico"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cobertura, precisión y vinculación por conjunto">${svg}</svg>
         <div class="leyenda">${series.map(s => `<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join('')}<span><i style="background:var(--nube);height:3px"></i>Umbral mínimo</span></div></div>
@@ -486,16 +489,65 @@ function vResultados() {
       ${[['Corpus base · primera instrucción', b.v1_0], ['Corpus base · primera instrucción, repetición', b.v1_0_rep], ['Corpus base · instrucción vigente', b.v1_1], ['Corpus base · instrucción vigente, repetición', b.v1_1_rep], ['Documentos nuevos · medición 1', pn.corrida_1], ['Documentos nuevos · medición 2', pn.corrida_2]].map(([n, m]) => `<tr><td>${n}</td><td>${pct(m.cobertura)}</td><td>${pct(m.precision)}</td><td>${pct(m.vinculacion)}</td><td>${m.docs_sin_cambio_ok}</td></tr>`).join('')}
       <tr><td>Sin IA · corpus base</td><td>${pct(s.corpus_base.cobertura)}</td><td>${pct(s.corpus_base.precision)}</td><td>no vincula</td><td>—</td></tr>
       <tr><td>Sin IA · documentos nuevos</td><td>${pct(s.prueba_nueva.cobertura)}</td><td>${pct(s.prueba_nueva.precision)}</td><td>no vincula</td><td>—</td></tr></tbody></table></div>
-      <p style="color:var(--texto-2);font-size:.88rem;margin-top:8px">Además: 12 de 12 casos de prueba del plan superados y 3 de 3 accesos indebidos bloqueados por las reglas del servidor.</p></section>
-    <section class="seccion"><h3>Lo que dijeron al probarlo</h3><div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-      <div class="vidrio caso3"><span class="etq">Residente de obra · plazo de 5 días</span><p>«Me sirve que permita comparar documentos y reconocer cambios sin tener que revisar manualmente todas las páginas.»</p><p style="font-size:.86rem;color:var(--texto-2)">Pide: código, nombre de la partida y página donde se origina el cambio. La app ya muestra código y nombre; la página entra en la versión 2.</p></div>
-      <div class="vidrio caso3"><span class="etq">Oficina técnica · plazo de 7 días</span><p>«Agregaría una alerta que indique qué cambios pueden afectar costos, metrados o partidas y cuánto plazo queda para notificarlos.»</p><p style="font-size:.86rem;color:var(--texto-2)">Es la función central del asistente: cada alerta trae la partida y los días que quedan.</p></div></div>
-      <p style="font-size:.84rem;color:var(--texto-3);margin-top:8px">Consulta por WhatsApp a 2 integrantes del equipo con experiencia en obra, 16/11/2026. Ambos reportaron adicionales que se complicaron por plazo o por detectar tarde el cambio.</p></section>
+      <p style="color:var(--texto-2);font-size:.88rem;margin-top:8px">Pruebas del plan: ${esc(cifras.pruebas_cp)} superadas en la medición (se vuelven a ejecutar abajo).</p></section>
+    <section class="seccion" id="pruebas"><h3>Pruebas automatizadas</h3><p class="pista-txt" style="margin:4px 0 10px">Se ejecutan ahora, en este navegador, sobre la misma lógica que usa la app (nucleo.js). Cada una dice qué garantiza.</p>
+      <div class="panel"><div class="fila-btn" style="justify-content:space-between;align-items:center;margin-bottom:8px"><b id="pr-total"></b><button class="btn peq" id="pr-correr">Ejecutar de nuevo</button></div><ul class="pruebas" id="pr-lista"></ul></div></section>
+    <section class="seccion" id="casos-referencia"><h3>Casos de referencia</h3><p class="pista-txt" style="margin:4px 0 10px">${esc(cifras.casos_referencia.nota)} Fuente: ${esc(cifras.casos_referencia.fuente)}.</p>
+      <div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr))">${cifras.casos_referencia.casos.map(c => `<div class="vidrio caso3"><span class="etq">${esc(c.rol)} · plazo de ${c.plazo_dias} días</span><p style="font-size:1.05rem;margin:6px 0">Entender el cambio tomó <b>${c.entender_dias_min} a ${c.entender_dias_max} días</b>: quedaron ${c.plazo_dias - c.entender_dias_max} a ${c.plazo_dias - c.entender_dias_min} para preparar el sustento.</p></div>`).join('')}</div>
+      <div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px">
+      <div class="vidrio caso3"><span class="etq">Lo que dijo el residente</span><p>«Me sirve que permita comparar documentos y reconocer cambios sin tener que revisar manualmente todas las páginas.»</p><p style="font-size:.86rem;color:var(--texto-2)">Pidió: código, nombre de la partida y página donde se origina el cambio. La comparación de PDF ya indica la página.</p></div>
+      <div class="vidrio caso3"><span class="etq">Lo que dijo oficina técnica</span><p>«Agregaría una alerta que indique qué cambios pueden afectar costos, metrados o partidas y cuánto plazo queda para notificarlos.»</p><p style="font-size:.86rem;color:var(--texto-2)">Es la función central: cada cambio trae la partida y los días que quedan.</p></div></div>
+      <p class="pista-txt" style="margin-top:8px"><a href="#simulacion">Ver el caso E-204 paso a paso</a></p></section>
     <section class="seccion"><h3>Lo que todavía no medimos</h3><div class="panel lectura" style="margin-top:10px"><ul>
       <li>La línea base del proceso actual viene de 2 casos del equipo (2 a 4 días para entender el cambio, con plazos de 5 y 7): sirve para dimensionar, no es una estadística.</li>
       <li>La probaron 2 profesionales del equipo; falta un usuario externo y cronometrar la revisión de una alerta.</li>
       <li>Los documentos de prueba son sintéticos y en texto limpio: faltan planos DWG, PDF escaneados y ruido real.</li>
       <li>Las respuestas correctas se escribieron con apoyo de IA y sin un revisor humano independiente.</li></ul></div></section>`;
+}
+
+// Qué garantiza cada prueba, en una frase.
+const GARANTIZA = {
+  'CP-01': 'Un plano sin revisión anterior no se compara: se rechaza con el motivo.',
+  'CP-02': 'Un cambio evidente se acepta solo si su cita está en el documento.',
+  'CP-03': 'Un cambio escondido en una nota se detecta y su cita se verifica.',
+  'CP-04': 'Una instrucción en medio de una carta se acepta con su cita literal.',
+  'CP-05': 'Si la partida no cumple el rango, la app baja la confianza aunque la IA diga «Alta».',
+  'CP-06': 'Un cambio sin partida en el presupuesto se marca «sin partida», con confianza baja.',
+  'CP-07': 'El plazo en días calendario lo calcula la fórmula, no la IA.',
+  'CP-08': 'El plazo en días hábiles salta fines de semana y feriados.',
+  'CP-09': 'Si el contrato dice «desde el conocimiento», se cuenta desde la recepción (regla conservadora).',
+  'CP-10': 'Una cita que no está en el texto se rechaza.',
+  'CP-11': 'Al corregir una partida se conserva la propuesta original de la IA.',
+  'CP-12': 'Una carta con una cifra que no viene de los datos confirmados se marca.',
+};
+function correrPruebas() {
+  const cp = casosDePrueba(proyecto, docs), ok = cp.filter(c => c.ok).length;
+  $('#pr-total').textContent = `${ok} de ${cp.length} pruebas superadas ahora`;
+  $('#pr-lista').innerHTML = cp.map(c => `<li class="${c.ok ? 'si' : 'no'}"><span class="ico ${c.ok ? 'si' : 'no'}" aria-label="${c.ok ? 'Superada' : 'Fallida'}">${c.ok ? '✓' : '✗'}</span><div><b>${esc(GARANTIZA[c.id] || c.esc)}</b><small>${esc(c.esc)} · resultado: ${esc(c.det)}</small></div></li>`).join('');
+}
+
+// ---------- AUDITORÍA ----------
+const fHora = iso => { const d = new Date(iso); return `${d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`; };
+async function vAuditoria(estados = null) {
+  await AUD.listo();
+  const ev = [...AUD.lista()].map((e, i) => ({ ...e, i })).reverse(), alt = AUD.alterado();
+  const roto = estados && estados.some(x => x !== 'ok');
+  $('#v-auditoria').innerHTML = `
+    <div class="tab-cab"><div><h2>Auditoría</h2><p class="sub2">Quién decidió qué y cuándo. Cada evento queda sellado con el hash SHA-256 del anterior: si alguien altera uno, la cadena se rompe desde ese punto y se nota al verificar.</p></div></div>
+    <div class="aud-barra"><button class="btn prim" id="aud-verificar" ${ev.length ? '' : 'disabled'}>Verificar integridad</button>
+      ${ev.length ? (alt ? '<button class="btn" id="aud-restaurar">Restaurar el evento alterado</button>' : '<button class="btn" id="aud-alterar">Alterar un evento (demostración)</button>') : ''}
+      <span id="aud-res" aria-live="polite">${estados ? (roto ? `<span class="aud-mal">✗ Cadena rota en el evento ${estados.findIndex(x => x !== 'ok') + 1}: su contenido ya no coincide con el sello.</span>` : `<span class="aud-ok">✓ Cadena íntegra: ${ev.length} evento${ev.length === 1 ? '' : 's'} verificado${ev.length === 1 ? '' : 's'}.</span>`) : ''}</span></div>
+    <p class="pista-txt">Datos locales de este navegador. «Alterar» cambia el texto de un evento solo en memoria, para mostrar que la verificación lo detecta.</p>
+    ${ev.length ? `<ol class="linea-tiempo">${ev.map(e => { const st = estados?.[e.i], T = AUD.TIPOS[e.tipo];
+      return `<li class="ev ${st && st !== 'ok' ? 'roto' : st === 'ok' ? 'sellado' : ''}"><span class="ev-punto t-${T.c}" aria-hidden="true"></span>
+        <div class="ev-cuerpo"><div class="ev-cab"><span class="etq t-${T.c}">${T.t}</span><b>${esc(e.quien)}</b><time datetime="${e.ts}">${fHora(e.ts)}</time>${e.fecha_sim ? `<span class="pista-txt">fecha simulada ${N.fmtFecha(e.fecha_sim)}</span>` : ''}</div>
+        <p>${esc(e.que)}${e.alerta && alertaPorId[e.alerta] ? ` · <a href="#alerta-${e.alerta.toLowerCase()}">ver cambio</a>` : ''}</p>
+        <code class="hash" title="Sello: ${e.hash}">#${e.n} · sello ${e.hash.slice(0, 10)}… ← ${e.prev.slice(0, 10)}…</code>${st && st !== 'ok' ? `<span class="aud-mal">${st === 'contenido' ? '✗ Contenido alterado' : st === 'enlace' ? '✗ Enlace roto' : '✗ Arrastra la ruptura anterior'}</span>` : st === 'ok' ? '<span class="aud-ok">✓</span>' : ''}</div></li>`; }).join('')}</ol>`
+      : `<div class="vacio">Todavía no hay eventos. Haz el recorrido guiado o compara dos revisiones y decide un cambio: cada paso queda aquí.<div class="fila-btn" style="justify-content:center;margin-top:10px"><button class="btn prim" id="aud-guia">Hacer el recorrido guiado</button></div></div>`}`;
+  const v = $('#aud-verificar'); if (v) v.onclick = async () => { v.disabled = true; const r = await AUD.verificar(); await vAuditoria(r); };
+  const al = $('#aud-alterar'); if (al) al.onclick = async () => { const evs = AUD.lista(); const k = Math.max(0, evs.findIndex(e => e.tipo === 'revisado' || e.tipo === 'emitido')); AUD.alterar(k); await vAuditoria(await AUD.verificar()); };
+  const rs = $('#aud-restaurar'); if (rs) rs.onclick = async () => { AUD.restaurar(); await vAuditoria(await AUD.verificar()); };
+  const g = $('#aud-guia'); if (g) g.onclick = () => iniciarGuia();
 }
 
 // ---------- PLAZOS Y PARÁMETROS ----------
@@ -531,10 +583,10 @@ function vPlazos() {
     const n = Number($('#pz-n').value), t = document.querySelector('[name="pz-t"]:checked').value, cl = $('#pz-cl').value.trim() || pp.clausula;
     if (!Number.isInteger(n) || n < 1 || n > 120) { $('#pz-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">El plazo debe ser un número entero entre 1 y 120 días.</p>'; return; }
     guardarProy(id, { params: { ...pp, plazo: n, tipo_dias: t, clausula: cl } });
-    registrar('Administración contractual', `${pr.nombre} · plazo fijado en ${n} días ${t === 'habiles' ? 'hábiles' : 'calendario'} (cláusula ${cl})`);
+    registrar('Administración contractual', `${pr.nombre} · plazo fijado en ${n} días ${t === 'habiles' ? 'hábiles' : 'calendario'} (cláusula ${cl})`, { tipo: 'parametro' });
     vPlazos(); pintarFecha(); $('#pz-msg').innerHTML = '<p class="aviso ok" style="margin-top:8px">Parámetros guardados. Todas las fechas límite y semáforos se recalcularon.</p>';
   };
-  const rs = $('#pz-reset'); if (rs) rs.onclick = () => { delete ajustesProy[id]; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); registrar('Administración contractual', `${pr.nombre} · parámetros restablecidos a los del contrato`); vPlazos(); pintarFecha(); };
+  const rs = $('#pz-reset'); if (rs) rs.onclick = () => { delete ajustesProy[id]; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); registrar('Administración contractual', `${pr.nombre} · parámetros restablecidos a los del contrato`, { tipo: 'parametro' }); vPlazos(); pintarFecha(); };
   document.querySelectorAll('[data-quita]').forEach(b => b.onclick = () => { guardarProy(id, { feriados: fer.filter(f => f !== b.dataset.quita) }); vPlazos(); pintarFecha(); });
   $('#pz-fadd').onclick = () => { const v = $('#pz-f').value; if (!v || fer.includes(v)) return; guardarProy(id, { feriados: [...fer, v].sort() }); vPlazos(); pintarFecha(); };
 }
@@ -552,7 +604,7 @@ const GUIA = [
     espera: () => { const r = ruta(); return r.vista === 'alerta' && !!est.decisiones[r.id]; } },
   { t: 'Emitir', h: 'El borrador, listo para firmar', p: 'La carta usa solo datos confirmados: cita, partida y fecha límite, resaltados. Edítala, revisa los avisos, descárgala en DOCX, PDF o MD y registra la emisión cuando se firme.', ir: null, foco: '.sal-acciones',
     antes: async () => { const r = ruta(); if (r.vista === 'alerta') { location.hash = `#salidas-${r.id.toLowerCase()}`; await new Promise(x => setTimeout(x, 300)); } } },
-  { t: 'Auditar', h: 'Quién decidió qué y cuándo', p: 'Cada paso queda en el registro: detección, decisión y emisión. Así se puede demostrar, ante la propietaria, que se notificó a tiempo.', ir: '#bandeja', foco: '.registro' },
+  { t: 'Auditar', h: 'Quién decidió qué y cuándo', p: 'Cada paso quedó en una línea de tiempo sellada: detección, decisión y emisión, cada uno con el hash del anterior. Pulsa «Verificar integridad»: si alguien altera un evento, la cadena se rompe.', ir: '#auditoria', foco: '#aud-verificar' },
 ];
 let guiaPaso = -1;
 const esperarSel = (sel, ms = 8000) => new Promise(ok => { const t0 = Date.now(); const f = () => { if (document.querySelector(sel) || Date.now() - t0 > ms) ok(); else setTimeout(f, 150); }; f(); });
@@ -633,9 +685,10 @@ const FAQ = [
   [/resultado|funciona bien|precisi|cobertura/i, 'En el corpus base detectó 41 de 41 cambios. Con 10 documentos nuevos, 7 y 8 de 8 en dos corridas. Un comparador de texto sin IA encontró 33 de 41 con 22 falsas alarmas y no lee cartas ni RFI.'],
   [/detecta|bluebeam|procore|comparador|por qu[eé] ia/i, 'Primero un comparador sin IA marca cada zona y línea que cambió, incluido el rótulo. Luego la IA indica cuáles tienen impacto y propone la partida; la app verifica cada cita contra el texto y la confianza con 4 criterios.'],
   [/modo|gemini|clave|manual|ia en vivo/i, 'Hay tres modos de IA, en Ajustes: demostración (respuestas registradas o preparadas), Gemini en vivo (vía el servidor, sin exponer la clave) y manual (copias la instrucción, la pegas en tu asistente de IA y pegas su respuesta). En los tres, la app verifica cada cita.'],
+  [/hash|sello|borra|audit|integridad/i, 'Cada evento guarda el sello SHA-256 del anterior. Si alguien cambia o borra un evento, los sellos dejan de coincidir y «Verificar integridad» marca en rojo desde ese punto. En esta demostración el registro vive en el navegador; en producción iría en un servidor de solo anexado.'],
   [/l[ií]mit|no (hace|mide)|falta/i, 'Limitaciones: documentos sintéticos en texto, sin DWG ni PDF escaneados; la línea base viene de solo 2 casos; falta un usuario externo; no se integra con el CDE.'],
 ];
-const SUG = { inicio: ['¿Qué hace este asistente?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], bandeja: ['¿Qué hace la fecha simulada?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], resultados: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'] };
+const SUG = { inicio: ['¿Qué hace este asistente?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], bandeja: ['¿Qué hace la fecha simulada?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], calidad: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'], auditoria: ['¿Para qué sirve el hash?', '¿Qué pasa si alguien borra un evento?'] };
 const chat = [];
 function pintarChat() {
   $('#asist-msgs').innerHTML = (chat.length ? '' : '<div class="msg ia">Hola. Puedo explicarte cualquier pantalla o decisión de la app. Elige una pregunta o escribe la tuya.</div>') + chat.map(m => `<div class="msg ${m.role === 'user' ? 'yo' : 'ia'}">${esc(m.content)}</div>`).join('');
