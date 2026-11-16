@@ -354,6 +354,41 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
 .manual textarea { min-height: 120px; }
 @media (max-width: 900px) { .modos, .ajustes-grid { grid-template-columns: 1fr; } }
 
+/* ---------- Barra de plazo y parámetros ---------- */
+.pb { width: 100%; min-width: 0; }
+.pb-pista { position: relative; height: 14px; border-radius: 7px; background: var(--azul-suave); border: 1px solid var(--borde); }
+.pb-ref { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 7px 0 0 7px; background: repeating-linear-gradient(-45deg, rgba(255,138,76,.38) 0 5px, rgba(255,138,76,.12) 5px 10px); }
+.pb-ref2 { position: absolute; top: -3px; bottom: -3px; border-left: 1.5px dashed var(--naranja); border-right: 1.5px dashed var(--naranja); }
+.pb-fin { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--naranja); box-shadow: 0 0 10px var(--naranja); }
+.pb-hoy { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--tinta); transform: translateX(-1px); }
+.pb-hoy b { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: .66rem; color: var(--tinta); white-space: nowrap; }
+.pb-c .pb-hoy b { display: none; }
+.pb-escala { display: flex; justify-content: space-between; gap: 8px; font-size: .74rem; color: var(--texto-3); margin-top: 5px; }
+.pb-g { display: grid; gap: 22px; padding-top: 14px; }
+.pb-fila { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; align-items: center; }
+.pb-et { font-size: .84rem; font-weight: 600; color: var(--texto-2); } .pb-et-pad { margin-left: 182px; margin-top: -12px; }
+.pb-g .pb-pista { height: 26px; border-radius: 9px; }
+.pb-g i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: .74rem; font-weight: 700; color: var(--tinta); white-space: nowrap; }
+.pb-asist { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5%; min-width: 6px; border-radius: 9px 0 0 9px; background: var(--azul); box-shadow: 0 0 10px var(--brillo); }
+.pb-asist i { top: auto; bottom: -19px; transform: none; left: 0; color: var(--azul-2); }
+.pb-margen { position: absolute; top: 3px; bottom: 3px; border-radius: 6px; background: linear-gradient(90deg, rgba(61,220,151,.45), rgba(61,220,151,.22)); }
+.pb-nota { font-size: .82rem; color: var(--texto-2); margin: 0; }
+.pb-g .pb-pista.anima .pb-margen { animation: crecer 1.1s ease-out; transform-origin: left; } @keyframes crecer { from { transform: scaleX(0); } }
+.plazo-panel { margin-bottom: 16px; } .plazo-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; } .plazo-cab h3 { margin: 0; }
+.fecha-rec { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--borde); } .fecha-rec .tit { margin: 0; }
+.fecha-rec input, .plazos-grid input { border: 1px solid var(--borde); border-radius: 10px; padding: 7px 10px; background: var(--vidrio); color: var(--tinta); font: inherit; color-scheme: inherit; }
+.mini-plazos { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.mini-plazos a { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 70px; gap: 10px; align-items: center; text-decoration: none; color: var(--texto); font-size: .82rem; }
+.mini-plazos a:hover .mp-n { color: var(--tinta); } .mp-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-b { height: 8px; border-radius: 4px; background: var(--azul-suave); overflow: hidden; } .mp-b span { display: block; height: 100%; border-radius: 4px; }
+.mp-d { text-align: right; font-weight: 700; }
+.plazos-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; } .plazos-grid > .panel { margin: 0; } .plazos-grid > .panel:last-child { grid-column: 1 / -1; }
+.campos-plazo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; } .campos-plazo input { width: 100%; }
+.tipo-dias { border: 0; margin: 0; padding: 0; grid-column: 1 / -1; } .tipo-dias label { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.campos-plazo > div:last-child { grid-column: 1 / -1; color: var(--texto-2); font-size: .9rem; }
+.feriados { list-style: none; padding: 0; margin: 8px 0 12px; display: flex; flex-wrap: wrap; gap: 8px; } .feriados li { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--vidrio); border: 1px solid var(--borde); }
+@media (max-width: 900px) { .plazos-grid, .campos-plazo { grid-template-columns: 1fr; } .pb-fila { grid-template-columns: 1fr; gap: 20px; } .pb-et-pad { margin-left: 0; margin-top: 0; } .pb-g i { font-size: .68rem; } }
+
 @media (max-width: 1100px) { .pano { grid-template-columns: 1fr; } .casos3 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; } .lateral { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 14px; gap: 10px; }
@@ -362,6 +397,7 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
   .alerta-fila { grid-template-columns: 72px minmax(0, 1fr); } .alerta-fila .partida, .alerta-fila .pista { grid-column: 2; } .hoy { grid-template-columns: 1fr; }
   .tarj { grid-template-columns: 1fr; } .prog .barra { width: 140px; }
 }
+@media (max-width: 600px) { .ruta > span:nth-child(-n+2) { display: none; } .chip-fecha { white-space: nowrap; } .pastilla { font-size: .76rem; padding: 6px 10px; } .superior { gap: 10px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -377,6 +413,7 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
       <a href="#simulacion"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor"/></svg></span><span class="txt">Cómo funciona</span></a>
       <a href="#tablero"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span class="txt">Alertas</span></a>
       <a href="#comparar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="txt">Comparar revisiones</span></a>
+      <a href="#plazos"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span class="txt">Plazos y parámetros</span></a>
       <a href="#resultados"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="txt">Resultados</span></a>
     </nav>
     <div class="lateral-pie">
@@ -406,6 +443,7 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
       <section class="vista" id="v-comparar" aria-label="Comparar revisiones" hidden></section>
       <section class="vista" id="v-resultados" aria-label="Resultados" hidden></section>
       <section class="vista" id="v-ajustes" aria-label="Ajustes" hidden></section>
+      <section class="vista" id="v-plazos" aria-label="Plazos y parámetros" hidden></section>
     </main>
     <footer class="pie"><span><b>Reloj Contractual</b> · Asistente de trazabilidad documental y contractual · Grupo 4 · Kevin Vega, Emmanuel Enriquez, Shirley Coronado, Aldo Tinco · Diplomado IA en Ingeniería y Construcción (AECODE)</span><span>Datos de demostración: proyecto ficticio R1 con documentos sintéticos. Ninguna salida es asesoría legal.</span></footer>
   </div>

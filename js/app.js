@@ -16,15 +16,35 @@ const [docs, proyecto, reg, cifras] = await Promise.all(
   ['data/documentos.json', 'data/proyecto.json', 'data/registrado.json', 'data/cifras.json'].map(u => fetch(u).then(r => r.json())));
 const docPorId = Object.fromEntries(docs.map(d => [d.doc_id, d]));
 const partidaPorCod = Object.fromEntries(proyecto.partidas.map(p => [p.codigo, p]));
-const PARAMS = { ...proyecto.contrato.referencia_validacion }; // cláusula validada por administración contractual (PD2)
-const FERIADOS = proyecto.feriados;
 const clausula143 = reg.clausulas.find(c => c.clausula === '14.3');
+
+// ---------- proyectos y parámetros de plazo (por proyecto; editables, guardados en este navegador) ----------
+const PROYECTOS = [
+  { id: 'R1', nombre: 'Edificio multifamiliar R1', desc: proyecto.proyecto.descripcion, demo: false, fuente: `Cláusula ${clausula143.clausula} del contrato R1, validada por administración contractual`,
+    base: { ...proyecto.contrato.referencia_validacion }, feriados: [...proyecto.feriados], cde: { tipo: 'Carpeta local', ruta: '/R1/Revisiones', demo: true } },
+  { id: 'C2', nombre: 'Centro comercial C2', desc: 'Proyecto de demostración · contrato con plazo en días hábiles', demo: true, fuente: 'Parámetro de demostración',
+    base: { clausula: '12.4', gatillo: 'recepcion', plazo: 5, tipo_dias: 'habiles', consecuencia: 'Caducidad del derecho a reclamar la variación' }, feriados: [...proyecto.feriados], cde: { tipo: 'Google Drive', ruta: '/C2/Revisiones', demo: true } },
+  { id: 'H3', nombre: 'Clínica H3', desc: 'Proyecto de demostración · contrato con plazo largo en días calendario', demo: true, fuente: 'Parámetro de demostración',
+    base: { clausula: '20.1', gatillo: 'recepcion', plazo: 15, tipo_dias: 'calendario', consecuencia: 'Renuncia al reclamo correspondiente' }, feriados: [...proyecto.feriados], cde: { tipo: 'Autodesk Construction Cloud', ruta: 'H3 › Planos › Vigentes', demo: true } },
+];
+const PROY = Object.fromEntries(PROYECTOS.map(p => [p.id, p]));
+let ajustesProy = {};
+try { ajustesProy = JSON.parse(localStorage.getItem('rc-proyectos') || '{}'); } catch { }
+const paramsProy = id => ({ ...PROY[id].base, ...(ajustesProy[id]?.params || {}) });
+const feriadosProy = id => ajustesProy[id]?.feriados || PROY[id].feriados;
+const P = a => paramsProy(a?.proyecto || 'R1');
+const FER = a => feriadosProy(a?.proyecto || 'R1');
+const PARAMS_R1 = () => paramsProy('R1');
+function guardarProy(id, cambios) { ajustesProy[id] = { ...(ajustesProy[id] || {}), ...cambios }; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); }
+let recepcionCorr = {};
+try { recepcionCorr = JSON.parse(localStorage.getItem('rc-recepcion') || '{}'); } catch { }
+const REF = cifras.casos_referencia.entender_sin_asistente_dias; // 2–4 días (n = 2, casos observados)
+const LAT_MIN = cifras.corpus_base.v1_1.latencia_mediana_min;   // minutos de detección medidos
 
 const alertas = reg.hechos.map(h => {
   const v = reg.vinculos[h.id] || {};
   const d = docPorId[h.doc_id];
-  const fecha_recepcion = d.fecha_recepcion;
-  return { ...h, ...v, partida_modelo: v.partida ?? null, fecha_recepcion, limite: N.fechaLimite(fecha_recepcion, PARAMS, FERIADOS), doc: d };
+  return { ...h, ...v, partida_modelo: v.partida ?? null, proyecto: 'R1', fecha_recepcion: d.fecha_recepcion, doc: d };
 });
 const alertaPorId = Object.fromEntries(alertas.map(a => [a.id, a]));
 // Alertas creadas en «Comparar revisiones»: se guardan en este navegador.
@@ -32,10 +52,15 @@ let nuevas = [];
 try { nuevas = JSON.parse(localStorage.getItem('rc-nuevas') || '[]'); } catch { }
 function incorporar(doc, filas) {
   docPorId[doc.doc_id] = doc;
-  return filas.map(f => { const a = { ...f, partida_modelo: f.partida ?? null, fecha_recepcion: doc.fecha_recepcion, limite: N.fechaLimite(doc.fecha_recepcion, PARAMS, FERIADOS), doc, origen: 'comparador' }; alertas.push(a); alertaPorId[a.id] = a; return a; });
+  return filas.map(f => { const a = { ...f, partida_modelo: f.partida ?? null, proyecto: doc.proyecto || 'R1', fecha_recepcion: doc.fecha_recepcion, doc, origen: 'comparador' }; alertas.push(a); alertaPorId[a.id] = a; recalcular1(a); return a; });
 }
+// La fórmula del núcleo calcula cada fecha límite con los parámetros del proyecto; nunca la IA.
+function recalcular1(a) { a.fecha_recepcion = recepcionCorr[a.id] || a.doc.fecha_recepcion; a.limite = N.fechaLimite(a.fecha_recepcion, P(a), FER(a)); }
+function recalcular() { alertas.forEach(recalcular1); }
+recalcular();
 nuevas.forEach(n => incorporar(n.doc, n.filas));
 function crearAlertas(doc, hechos) {
+  doc = { ...doc, proyecto: est.proyecto };
   // Reemplaza las alertas anteriores del mismo documento comparado.
   for (let k = alertas.length - 1; k >= 0; k--) if (alertas[k].origen === 'comparador' && alertas[k].doc_id === doc.doc_id) { delete alertaPorId[alertas[k].id]; alertas.splice(k, 1); }
   nuevas = nuevas.filter(n => n.doc.doc_id !== doc.doc_id);
@@ -51,7 +76,8 @@ const FECHAS = docs.map(d => d.fecha_recepcion).sort();
 const PRIMERA = N.sumarDias(FECHAS[0], -1), ULTIMA = N.sumarDias(FECHAS[FECHAS.length - 1], 10);
 
 // ---------- estado (en memoria; recuerda decisiones en este navegador si se puede) ----------
-const est = { hoy: '2026-10-09', decisiones: {}, registro: [], filtro: 'pendientes', esp: 'todas', simPaso: 0, simDecision: null };
+const est = { hoy: '2026-10-09', proyecto: 'R1', decisiones: {}, registro: [], filtro: 'pendientes', esp: 'todas', simPaso: 0, simDecision: null };
+try { const pa = localStorage.getItem('rc-proyecto-activo'); if (pa && PROY[pa]) est.proyecto = pa; } catch { }
 try { const g = JSON.parse(localStorage.getItem('rc-estado') || 'null'); if (g) Object.assign(est, { decisiones: g.decisiones || {}, registro: g.registro || [] }); } catch { }
 const guardar = () => { try { localStorage.setItem('rc-estado', JSON.stringify({ decisiones: est.decisiones, registro: est.registro })); } catch { } };
 const registrar = (quien, que) => { est.registro.unshift({ t: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }), quien, que }); guardar(); };
@@ -92,18 +118,22 @@ function conCita(texto, cita) {
   if (!cita || k < 0) return esc(texto);
   return esc(texto.slice(0, k)) + `<mark class="cita">${esc(cita)}</mark>` + esc(texto.slice(k + cita.length));
 }
-function pista(a, ancho = 220) {
-  const ini = a.fecha_recepcion, dias = 16, x = d => 6 + (d / dias) * (ancho - 12);
-  const lim = N.difDias(a.limite, ini), hoy = N.difDias(est.hoy, ini);
-  const hx = Math.max(0, Math.min(dias, hoy));
-  return `<svg viewBox="0 0 ${ancho} 34" role="img" aria-label="Recibido el ${fCorta(ini)}, vence el ${fCorta(a.limite)}">
-    <line x1="${x(0)}" x2="${x(dias)}" y1="17" y2="17" stroke="var(--linea)" stroke-width="2"/>
-    <rect x="${x(0)}" y="11" width="${x(lim) - x(0)}" height="12" rx="3" fill="var(--plano-suave)" stroke="var(--plano)"/>
-    <line x1="${x(4)}" x2="${x(4)}" y1="6" y2="28" stroke="var(--texto-2)" stroke-dasharray="2 2"/>
-    <text x="${x(4) + 3}" y="33" font-size="8" fill="var(--texto-2)">sin sistema</text>
-    <circle cx="${x(lim)}" cy="17" r="4" fill="var(--nube)"/>
-    ${hoy >= 0 ? `<line x1="${x(hx)}" x2="${x(hx)}" y1="3" y2="31" stroke="var(--tinta)" stroke-width="2"/>` : ''}
-  </svg>`;
+// Barra de tiempo de un cambio: de la recepción (día 0) al límite contractual.
+function barraPlazo(a, compacta = false) {
+  const tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), hoy = N.difDias(est.hoy, a.fecha_recepcion);
+  const x = d => Math.max(0, Math.min(100, d / tot * 100));
+  const pp = P(a), lim = `Límite ${fCorta(a.limite)}`;
+  const margenCon = tot, margenSinMin = tot - REF.max, margenSinMax = tot - REF.min;
+  const hoyM = hoy >= 0 && hoy <= tot + 0 ? `<span class="pb-hoy" style="left:${x(hoy)}%"><b>Hoy</b></span>` : '';
+  const aria = `Recibido el ${N.fmtFecha(a.fecha_recepcion)}; vence el ${N.fmtFecha(a.limite)} (${tot} días en el calendario). Sin asistente, entender el cambio toma ${REF.min} a ${REF.max} días según los casos de referencia.`;
+  if (compacta) return `<div class="pb pb-c" role="img" aria-label="${esc(aria)}"><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-fin"></span>${hoyM}</div>
+    <div class="pb-escala"><span>Recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim}</span></div></div>`;
+  const frase = margenSinMin >= 0 ? `sin asistente quedarían entre ${margenSinMin} y ${margenSinMax} días` : margenSinMax < 0 ? 'sin asistente, el plazo vencería antes de entender el cambio' : `sin asistente quedarían entre 0 y ${margenSinMax} días (o vencería antes)`;
+  return `<div class="pb pb-g" role="img" aria-label="${esc(aria)}">
+    <div class="pb-fila"><span class="pb-et">Para entender el cambio</span><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"><i>Sin asistente: ${REF.min}–${REF.max} días</i></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-asist"><i>Con asistente: día 0</i></span>${hoyM}</div></div>
+    <div class="pb-fila"><span class="pb-et">Para sustentar</span><div class="pb-pista"><span class="pb-margen" style="left:1.5%;width:98.5%"><i>Margen con asistente: ${margenCon} día${margenCon === 1 ? '' : 's'}</i></span><span class="pb-fin"></span>${hoyM.replace(/<b>Hoy<\/b>/, '')}</div></div>
+    <div class="pb-escala pb-et-pad"><span>Día 0 · recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}</span></div>
+    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = 2), ver <a href="#resultados">Resultados</a>. La revisión humana de una alerta todavía no se ha cronometrado.</p></div>`;
 }
 function diasBadge(a, cls = '') {
   const e = estadoDe(a);
@@ -113,7 +143,7 @@ function diasBadge(a, cls = '') {
 }
 function fraseDias(a) {
   const d = N.diasRestantes(a.limite, est.hoy);
-  const base = `Cláusula ${PARAMS.clausula}: ${PARAMS.plazo} días ${PARAMS.tipo_dias} desde la recepción (${N.fmtFecha(a.fecha_recepcion)}).`;
+  const pp = P(a), base = `Cláusula ${pp.clausula}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción (${N.fmtFecha(a.fecha_recepcion)}).`;
   if (est.decisiones[a.id]) return `Ya se decidió: ${est.decisiones[a.id].estado}. ${base}`;
   if (d < 0) return `El plazo para notificar venció el ${N.fmtFecha(a.limite)}. ${base}`;
   if (d === 0) return `Hoy es el último día para notificar. ${base}`;
@@ -121,7 +151,7 @@ function fraseDias(a) {
 }
 
 // ---------- router ----------
-const VISTAS = ['inicio', 'simulacion', 'tablero', 'comparar', 'resultados', 'ajustes'];
+const VISTAS = ['inicio', 'simulacion', 'tablero', 'comparar', 'plazos', 'resultados', 'ajustes'];
 function ruta() {
   let h = location.hash.slice(1) || 'inicio';
   if (h === 'probar') h = 'comparar';
@@ -132,9 +162,9 @@ function render() {
   const r = ruta();
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'tablero' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', tablero: 'Alertas', alerta: 'Detalle de alerta', comparar: 'Comparar revisiones', resultados: 'Resultados', ajustes: 'Ajustes' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', tablero: 'Alertas', alerta: 'Detalle de alerta', comparar: 'Comparar revisiones', resultados: 'Resultados', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, simulacion: vSim, tablero: vTablero, alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), resultados: vResultados, ajustes: vAjustes })[r.vista]();
+  ({ inicio: vInicio, simulacion: vSim, tablero: vTablero, alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), resultados: vResultados, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -157,7 +187,7 @@ function vInicio() {
   const chipCls = a => ({ verde: 'verde', ambar: 'ambar', rojo: 'naranja', vencido: 'naranja' })[estadoDe(a)] || '';
   const diasTxt = a => { const d = N.diasRestantes(a.limite, est.hoy); return d < 0 ? ['' + -d, 'días vencido'] : d === 0 ? ['0', 'último día'] : ['' + d, d === 1 ? 'día queda' : 'días quedan']; };
   const tarjeta = (a, i) => {
-    const [n, t] = diasTxt(a), dest = i === 0, usado = Math.min(7, Math.max(0, N.difDias(est.hoy, a.fecha_recepcion)));
+    const [n, t] = diasTxt(a), dest = i === 0, tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), usado = Math.min(tot, Math.max(0, N.difDias(est.hoy, a.fecha_recepcion)));
     return `<a class="tarj ${dest ? 'destacada' : ''} anim" style="animation-delay:${.08 * i + .1}s" href="#alerta-${a.id.toLowerCase()}">
       <div style="display:flex;gap:16px;align-items:flex-start;min-width:0">
         ${dest ? `<span class="icono-doc">${ICO.doc}</span>` : ''}
@@ -168,7 +198,7 @@ function vInicio() {
           <div class="pie"><span class="hora">${ICO.reloj} Notificar hasta el ${fCorta(a.limite)}</span>
             ${a.partida ? `<span class="etq">${esc(a.partida)} · ${esc(a.partida_desc.length > 34 ? a.partida_desc.slice(0, 33) + '…' : a.partida_desc)}</span>` : '<span class="etq ambar">Sin partida en el presupuesto</span>'}
             <span class="etq ${a.confianza === 'Alta' ? 'verde' : a.confianza === 'Media' ? 'ambar' : 'naranja'}">Confianza ${a.confianza.toLowerCase()}</span></div>
-          ${dest ? `<div class="pie" style="margin-top:14px"><span>Plazo usado</span><span class="prog"><span class="barra"><span class="lleno ${usado >= 5 ? 'urg' : ''}" style="width:${usado / 7 * 100}%"></span></span><span class="val num">${usado}/7 días</span></span></div>` : ''}
+          ${dest ? `<div class="pie" style="margin-top:14px"><span>Plazo usado</span><span class="prog"><span class="barra"><span class="lleno ${tot - usado <= 2 ? 'urg' : ''}" style="width:${usado / tot * 100}%"></span></span><span class="val num">${usado}/${tot} días</span></span></div>` : ''}
         </div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><span class="dias-chip ${chipCls(a)}"><b class="num">${n}</b><small>${t}</small></span><span class="acc-red"><span title="Cita verificada">${ICO.cita}</span><span title="Abrir">${ICO.flecha}</span></span></div></a>`;
   };
@@ -195,10 +225,9 @@ function vInicio() {
       ${d0 ? `<div class="nota anim" style="animation-delay:.15s"><h3>Alerta del día <span class="redondo" style="width:34px;height:34px">${ICO.doc}</span></h3>
         <p class="cuerpo">Notifica antes del <b>${N.fmtFecha(d0.limite)}</b>: ${esc(primeraFrase(d0.cambio))}</p>
         <div class="acciones-n"><span>${ICO.reloj} ${esc(diasTxt(d0).join(' '))}</span><a class="btn peq prim" href="#alerta-${d0.id.toLowerCase()}">Revisar ahora</a></div></div>` : ''}
-      <div class="vidrio reloj-card anim" style="animation-delay:.25s"><h3>Caso de referencia: el plazo se consume en entender el cambio</h3>
-        <svg id="dial" viewBox="0 0 300 262" role="img" aria-label="Caso real: plazo de 5 días; entender el cambio tomó 3 a 4 días; queda 1 día para el sustento"></svg>
-        <div class="ley"><span><i style="background:var(--naranja)"></i>Plazo del contrato · 5 días</span><span><i style="background:var(--azul-2)"></i>Entender el cambio · 3–4 días</span></div>
-        <p style="font-size:.78rem;color:var(--texto-3);margin-top:8px">Fuente: consulta a residente de obra, 16/11/2026 (n = 2). En el otro caso consultado, oficina técnica: 2–3 días de un plazo de 7. Son casos observados, no la regla del contrato.</p></div>
+      <div class="vidrio reloj-card anim" style="animation-delay:.25s"><h3>Plazo restante de los cambios abiertos</h3>
+        <p class="pista-txt" style="margin:2px 0 10px">${esc(PROY.R1.nombre)} · cláusula ${esc(P().clausula)}: ${P().plazo} días ${P().tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción. <a href="#plazos">Cambiar</a></p>
+        ${miniPlazos(visibles)}</div>
       <div class="vidrio act-card anim" style="animation-delay:.35s"><div class="cab"><div><h3>Documentos que llegan</h3><small>${semana} en los últimos 7 días · cada uno arranca un plazo</small></div><a class="btn peq" href="#resultados">Resultados</a></div>
         <svg viewBox="0 0 300 130" role="img" aria-label="Documentos recibidos por día">${cuenta.map((c, k) => {
           const x = 14 + k * 28, h = c ? 14 + c * 16 : 4, y = 104 - h, hoy = k === 9;
@@ -211,32 +240,15 @@ function vInicio() {
       return `<a class="vidrio caso3" href="#alerta-${id.toLowerCase()}"><span class="q">${esc(q)}</span><div class="frag">${conCita(d.texto.split('\n').find(l => l.includes(a.cita.slice(0, 18))) || d.texto.slice(0, 160), a.cita).replace('mark class="cita"', 'mark')}</div><span class="etq">${esc(dId)} · ${a.partida ? esc(a.partida) : 'sin partida'}</span></a>`; }).join('')}</div>
   </section>`;
   document.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => { est.filtro = b.dataset.ir; });
-  dibujarDial();
 }
-let animId = 0;
-function dibujarDial() {
-  const svg = $('#dial'); if (!svg) return;
-  const cx = 150, cy = 132, R1 = 92, R2 = 70, T = 7, id = ++animId; // escala: 7 días
-  const ang = d => (-90 + d * 360 / T) * Math.PI / 180;
-  const arco = (r, d) => `M ${cx} ${cy - r} A ${r} ${r} 0 ${d > T / 2 ? 1 : 0} 1 ${cx + r * Math.cos(ang(d))} ${cy + r * Math.sin(ang(d))}`;
-  const ticks = Array.from({ length: T * 4 }, (_, k) => { const a = ang(k / 4), m = k % 4 === 0; return `<line x1="${cx + 104 * Math.cos(a)}" y1="${cy + 104 * Math.sin(a)}" x2="${cx + (m ? 114 : 108) * Math.cos(a)}" y2="${cy + (m ? 114 : 108) * Math.sin(a)}" stroke="${m ? 'var(--tinta)' : 'var(--texto-3)'}" stroke-width="${m ? 2 : 1}"/>`; }).join('');
-  const et = (d, txt, col) => { const a = ang(d), x = cx + 124 * Math.cos(a), y = cy + 124 * Math.sin(a) + 4; return `<text x="${x}" y="${y}" text-anchor="${Math.cos(a) > .2 ? 'start' : Math.cos(a) < -.2 ? 'end' : 'middle'}" font-size="10" font-weight="700" fill="${col}">${txt}</text>`; };
-  svg.innerHTML = `<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-    <circle cx="${cx}" cy="${cy}" r="${R1}" fill="none" stroke="var(--borde)" stroke-width="10"/><circle cx="${cx}" cy="${cy}" r="${R2}" fill="none" stroke="var(--borde)" stroke-width="10"/>${ticks}
-    <path id="aE" d="${arco(R2, 4)}" fill="none" stroke="var(--azul-2)" stroke-width="10" stroke-linecap="round" filter="url(#glow)"/>
-    <path id="aP" d="${arco(R1, 5)}" fill="none" stroke="var(--naranja)" stroke-width="10" stroke-linecap="round" filter="url(#glow)"/>
-    <text x="${cx}" y="${cy + 2}" text-anchor="middle" font-family="Manrope" font-weight="800" font-size="30" fill="var(--tinta)">1 día</text>
-    <text x="${cx}" y="${cy + 20}" text-anchor="middle" font-size="11" fill="var(--texto-2)">queda para el sustento</text>
-    ${et(0, 'día 0', 'var(--texto-2)')}${et(4, 'día 4', 'var(--azul-2)')}${et(5, 'día 5', 'var(--naranja)')}`;
-  const aP = $('#aP'), aE = $('#aE'), LP = aP.getTotalLength(), LE = aE.getTotalLength();
-  [[aP, LP], [aE, LE]].forEach(([p, L]) => { p.style.strokeDasharray = L; p.style.strokeDashoffset = reducido ? 0 : L; });
-  if (reducido) return;
-  const t0 = performance.now();
-  const paso = t => { if (id !== animId) return; const k = Math.max(0, Math.min(1, (t - t0) / 2400)), e = 1 - Math.pow(1 - k, 3);
-    aP.style.strokeDashoffset = LP * (1 - e); aE.style.strokeDashoffset = LE * (1 - e); if (k < 1) requestAnimationFrame(paso); };
-  requestAnimationFrame(paso);
+// Mini gráfico: un renglón por cambio abierto, ordenado por días restantes; la barra es la fracción del plazo que queda.
+function miniPlazos(lista) {
+  if (!lista.length) return '<p class="vacio">Sin cambios abiertos a esta fecha.</p>';
+  const col = { verde: 'var(--verde)', ambar: 'var(--ambar)', rojo: 'var(--naranja)', vencido: 'var(--naranja)' };
+  return `<ul class="mini-plazos">${lista.slice(0, 8).map(a => { const tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), d = N.diasRestantes(a.limite, est.hoy), e = estadoDe(a);
+    return `<li><a href="#alerta-${a.id.toLowerCase()}"><span class="mp-n">${esc(a.doc_id)} · ${esc(a.elemento)}</span><span class="mp-b"><span style="width:${Math.max(2, Math.min(100, d / tot * 100))}%;background:${col[e] || 'var(--azul-2)'}"></span></span><span class="mp-d num" style="color:${col[e]}">${d < 0 ? `vencido ${-d} d` : `${d} d`}</span></a></li>`; }).join('')}</ul>
+    ${lista.length > 8 ? `<p class="pista-txt" style="margin-top:6px">y ${lista.length - 8} más en <a href="#tablero">Alertas</a>.</p>` : ''}`;
 }
-
 // ---------- SIMULACIÓN ----------
 const SIM_ALERTA = 'ALR-0002';
 const PASOS = ['Llega el documento', 'La IA compara', 'La app verifica la cita', 'Se propone la partida', 'Se calcula el plazo', 'Tú decides', 'Carta y registro'];
@@ -332,12 +344,12 @@ function calendario(desde, limite, inicio, feriados, cuentaFeriado = false) {
 }
 let tipoSim = 'calendario';
 function simPlazo(a) {
-  const p = { ...PARAMS, tipo_dias: tipoSim }, lim = N.fechaLimite(a.fecha_recepcion, p, FERIADOS);
+  const p = { ...PARAMS_R1(), tipo_dias: tipoSim }, lim = N.fechaLimite(a.fecha_recepcion, p, FER(a));
   return `<span class="quien">Fórmula de la app</span><h2>Se calcula la fecha límite</h2>
-    <p class="explica">La IA leyó la cláusula 14.3 y administración contractual la validó una sola vez para todo el contrato. Desde entonces la fecha la calcula una fórmula, no el modelo.</p>
+    <p class="explica">La IA leyó la cláusula 14.3 y administración contractual la validó una sola vez para todo el contrato. Desde entonces la fecha la calcula una fórmula, no el modelo. El plazo se ajusta en <a href="#plazos">Plazos y parámetros</a>.</p>
     <blockquote class="aviso info" style="margin:0 0 14px">«${esc(clausula143.texto_literal)}»</blockquote>
-    <div class="fila-btn" role="group" aria-label="Tipo de días" style="margin-bottom:12px"><button class="btn peq ${tipoSim === 'calendario' ? 'prim' : ''}" data-tipo="calendario">7 días calendario (contrato R1)</button><button class="btn peq ${tipoSim === 'habiles' ? 'prim' : ''}" data-tipo="habiles">¿Y si fueran 7 días hábiles?</button></div>
-    ${calendario(a.fecha_recepcion, lim, a.fecha_recepcion, FERIADOS, tipoSim === 'calendario')}
+    <div class="fila-btn" role="group" aria-label="Tipo de días" style="margin-bottom:12px"><button class="btn peq ${tipoSim === 'calendario' ? 'prim' : ''}" data-tipo="calendario">${PARAMS_R1().plazo} días calendario</button><button class="btn peq ${tipoSim === 'habiles' ? 'prim' : ''}" data-tipo="habiles">${PARAMS_R1().plazo} días hábiles</button></div>
+    ${calendario(a.fecha_recepcion, lim, a.fecha_recepcion, FER(a), tipoSim === 'calendario')}
     <p style="margin-top:12px;font-size:1.05rem">Recibido el <b>${N.fmtFecha(a.fecha_recepcion)}</b> + ${p.plazo} días ${tipoSim === 'habiles' ? 'hábiles (sin fines de semana ni el feriado del 8 de octubre)' : 'calendario'} = vence el <b style="color:var(--nube)">${N.fmtFecha(lim)}</b>.</p>
     <details class="tec"><summary>Detalle técnico</summary><p>Funciones <code>fechaLimite</code>, <code>sumarDias</code> y <code>sumarHabiles</code> de nucleo.js. Si la cláusula dijera «desde el conocimiento», la app usa igual la fecha de recepción (regla conservadora).</p></details>`;
 }
@@ -345,7 +357,7 @@ function wirePlazo(a) { document.querySelectorAll('[data-tipo]').forEach(b => b.
 function cartaDe(a) {
   const dec = est.decisiones[a.id];
   const al = { ...a, cambio: a.cambio.split(/(?<=\.)\s/)[0], partida: dec?.partida ?? a.partida, partida_desc: dec?.partida ? partidaPorCod[dec.partida]?.desc : a.partida_desc };
-  const campos = N.camposCarta(al, PARAMS, a.doc);
+  const campos = N.camposCarta(al, P(a), a.doc);
   const texto = N.cartaPlantilla(campos);
   const ver = N.verificarCarta(texto, campos);
   let html = esc(texto);
@@ -380,12 +392,12 @@ function vTablero() {
       ${[['pendientes', 'Por decidir', visibles.length - cuenta('decidido'), 'p-gris'], ['urgentes', 'Vencen en 3 días o menos', urg, 'p-ambar'], ['vencidas', 'Vencidas sin decidir', cuenta('vencido'), 'p-vencido'], ['decididas', 'Decididas', cuenta('decidido'), 'p-decidido'], ['todas', 'Recibidas hasta hoy', visibles.length, 'p-gris']].map(([k, t, n, c]) => `<button class="chip" data-f="${k}" aria-pressed="${est.filtro === k}"><span class="punto ${c}"></span>${t} <b>${n}</b></button>`).join('')}
     </div>
     <div class="filtros"><label class="sr" for="f-esp">Especialidad</label><select id="f-esp"><option value="todas">Todas las especialidades</option>${esps.map(e => `<option ${est.esp === e ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select>
-      <span style="color:var(--texto-2);font-size:.88rem;align-self:center">${porLlegar ? `${porLlegar} cambios llegan después de esta fecha.` : ''} En cada fila: la barra azul es el plazo, el punto rojo el vencimiento, la línea punteada el día 4, cuando sin el sistema recién se entiende el cambio (casos consultados: 2 a 4 días) y la línea oscura, hoy.</span></div>
+      <span style="color:var(--texto-2);font-size:.88rem;align-self:center">${porLlegar ? `${porLlegar} cambios llegan después de esta fecha.` : ''} Cada barra va de la recepción al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, casos de referencia) y la línea marca hoy.</span></div>
     <div class="lista">${lista.length ? lista.map(a => `<a class="alerta-fila" href="#alerta-${a.id.toLowerCase()}">
         ${diasBadge(a)}
         <div><div class="doc-id">${esc(a.doc_id)} <span>· ${esc(a.doc.titulo)}</span></div><div class="resumen-cambio">${esc(a.cambio)}</div></div>
         <div class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto</b>'}<span class="conf ${a.confianza}">Confianza ${a.confianza.toLowerCase()}</span></div>
-        <div class="pista">${pista(a)}</div></a>`).join('') : `<div class="vacio">No hay alertas en este filtro para el ${N.fmtFecha(est.hoy)}. Mueve la fecha o elige «Todas».</div>`}</div>
+        <div class="pista">${barraPlazo(a, true)}</div></a>`).join('') : `<div class="vacio">No hay alertas en este filtro para el ${N.fmtFecha(est.hoy)}. Mueve la fecha o elige «Todas».</div>`}</div>
     <section class="seccion"><h3>Registro de decisiones</h3><p style="color:var(--texto-2);font-size:.9rem;margin:4px 0 10px">Cada decisión queda anotada con quién la tomó. En esta demostración el registro se guarda en este navegador.</p>
     <div class="panel"><ul class="registro">${est.registro.slice(0, 10).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || '<li><time>—</time><span>Todavía no hay decisiones. Abre una alerta y confírmala, corrígela o descártala.</span></li>'}</ul></div></section>`;
   const r = $('#hoy-r');
@@ -403,6 +415,8 @@ function vAlerta(id) {
   $('#v-alerta').innerHTML = `
     <a class="volver" href="#tablero">← Tablero de alertas</a>
     <div class="det-cab">${diasBadge(a)}<div><h2>${esc(a.doc_id)} rev. ${esc(d.revision)} · ${esc(a.elemento)}</h2><p class="frase">${esc(fraseDias(a))}</p></div></div>
+    <div class="panel plazo-panel"><div class="plazo-cab"><h3>Plazo contractual</h3><span class="pista-txt">${esc(PROY[a.proyecto].nombre)} · <a href="#plazos">parámetros</a></span></div>${barraPlazo(a)}
+      <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE</label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
     <div class="det-cuerpo">
       <div>
         <div class="panel"><h3>${d.tipo === 'Lámina' ? 'Qué cambió entre revisiones' : 'Qué dice el documento'}</h3>
@@ -432,6 +446,9 @@ function vAlerta(id) {
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
   const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar('Oficina técnica', `${a.doc_id} · decisión deshecha`); vAlerta(id); };
+  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar('Oficina técnica', `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`); vAlerta(id); pintarFecha(); };
+  $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
+  const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
   const c = $('#d-carta'); if (c) c.onclick = () => { const { html, ver } = cartaDe(a); $('#d-carta-box').innerHTML = `<div class="carta" style="margin-top:12px">${html}</div><div class="check"><span class="ico ${ver.ok ? 'si' : 'no'}">${ver.ok ? '✓' : '✗'}</span><div>${ver.ok ? 'Todas las cifras y fechas vienen de los datos confirmados.' : `Cifras sin origen: ${esc(ver.fuera.join(', '))}`}</div></div>`; };
 }
 
@@ -480,6 +497,48 @@ function vResultados() {
       <li>Las respuestas correctas se escribieron con apoyo de IA y sin un revisor humano independiente.</li></ul></div></section>`;
 }
 
+// ---------- PLAZOS Y PARÁMETROS ----------
+function vPlazos() {
+  const id = est.proyecto, pr = PROY[id], pp = paramsProy(id), fer = feriadosProy(id), mod = !!ajustesProy[id];
+  const ej = N.fechaLimite(est.hoy, pp, fer);
+  const abiertos = alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy && !est.decisiones[a.id]).length;
+  $('#v-plazos').innerHTML = `
+    <div class="tab-cab"><div><h2>Plazos y parámetros</h2><p class="sub2">Cada contrato fija su propio plazo para notificar variaciones. La fecha límite de cada cambio la calcula una fórmula con estos parámetros; la IA nunca calcula fechas.</p></div></div>
+    <div class="segmento" role="tablist" aria-label="Proyecto">${PROYECTOS.map(p => `<button role="tab" aria-selected="${p.id === id}" data-proy="${p.id}">${esc(p.nombre)}${p.demo ? ' · demostración' : ''}</button>`).join('')}</div>
+    <div class="plazos-grid">
+      <form class="panel" id="f-plazo" onsubmit="return false">
+        <h3>${esc(pr.nombre)}</h3><p class="pista-txt">${esc(pr.desc)} · Fuente del parámetro: ${esc(pr.fuente)}${mod ? ' (modificado en este navegador)' : ''}.</p>
+        <div class="campos-plazo">
+          <div><label class="tit" for="pz-cl">Cláusula</label><input id="pz-cl" value="${esc(pp.clausula)}" maxlength="12"></div>
+          <div><label class="tit" for="pz-n">Plazo para notificar (días)</label><input id="pz-n" type="number" min="1" max="120" value="${pp.plazo}"></div>
+          <fieldset class="tipo-dias"><legend class="tit">Tipo de días</legend><label><input type="radio" name="pz-t" value="calendario" ${pp.tipo_dias !== 'habiles' ? 'checked' : ''}> Calendario</label><label><input type="radio" name="pz-t" value="habiles" ${pp.tipo_dias === 'habiles' ? 'checked' : ''}> Hábiles (sin sábados, domingos ni feriados)</label></fieldset>
+          <div><span class="tit">El plazo empieza</span><p style="margin:4px 0 0">Desde la recepción del documento en el CDE. Si el contrato dice «desde el conocimiento», se usa igual la recepción (regla conservadora).</p></div>
+        </div>
+        <div class="fila-btn" style="margin-top:14px"><button class="btn prim" id="pz-ok">Guardar y recalcular</button>${mod ? '<button class="btn" id="pz-reset">Restablecer valores del contrato</button>' : ''}</div>
+        <div id="pz-msg" aria-live="polite"></div>
+      </form>
+      <div class="panel"><h3>Vista previa</h3><p>Un documento recibido hoy (${N.fmtFecha(est.hoy)}) vence el <b style="color:var(--naranja)">${N.fmtFecha(ej)}</b>.</p>
+        ${calendario(est.hoy, ej, est.hoy, fer, pp.tipo_dias !== 'habiles')}
+        <p class="pista-txt" style="margin-top:10px">${abiertos} cambio${abiertos === 1 ? '' : 's'} abierto${abiertos === 1 ? '' : 's'} de este proyecto se recalculan al guardar.</p>
+        ${id === 'R1' ? `<details class="tec"><summary>Texto de la cláusula ${esc(clausula143.clausula)}</summary><blockquote class="aviso info" style="margin:8px 0 0">«${esc(clausula143.texto_literal)}»</blockquote></details>` : ''}</div>
+      <div class="panel"><h3>Feriados</h3><p class="pista-txt">Se descuentan solo cuando el plazo es en días hábiles.</p>
+        <ul class="feriados">${fer.map(f => `<li><span class="num">${N.fmtFecha(f)}</span><button class="btn peq" data-quita="${f}" aria-label="Quitar feriado ${N.fmtFecha(f)}">Quitar</button></li>`).join('')}</ul>
+        <div class="fila-btn"><label class="sr" for="pz-f">Nuevo feriado</label><input type="date" id="pz-f"><button class="btn peq" id="pz-fadd">Agregar feriado</button></div></div>
+    </div>`;
+  document.querySelectorAll('[data-proy]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.proy; guardarActivo(); vPlazos(); });
+  $('#pz-ok').onclick = () => {
+    const n = Number($('#pz-n').value), t = document.querySelector('[name="pz-t"]:checked').value, cl = $('#pz-cl').value.trim() || pp.clausula;
+    if (!Number.isInteger(n) || n < 1 || n > 120) { $('#pz-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">El plazo debe ser un número entero entre 1 y 120 días.</p>'; return; }
+    guardarProy(id, { params: { ...pp, plazo: n, tipo_dias: t, clausula: cl } });
+    registrar('Administración contractual', `${pr.nombre} · plazo fijado en ${n} días ${t === 'habiles' ? 'hábiles' : 'calendario'} (cláusula ${cl})`);
+    vPlazos(); pintarFecha(); $('#pz-msg').innerHTML = '<p class="aviso ok" style="margin-top:8px">Parámetros guardados. Todas las fechas límite y semáforos se recalcularon.</p>';
+  };
+  const rs = $('#pz-reset'); if (rs) rs.onclick = () => { delete ajustesProy[id]; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); registrar('Administración contractual', `${pr.nombre} · parámetros restablecidos a los del contrato`); vPlazos(); pintarFecha(); };
+  document.querySelectorAll('[data-quita]').forEach(b => b.onclick = () => { guardarProy(id, { feriados: fer.filter(f => f !== b.dataset.quita) }); vPlazos(); pintarFecha(); });
+  $('#pz-fadd').onclick = () => { const v = $('#pz-f').value; if (!v || fer.includes(v)) return; guardarProy(id, { feriados: [...fer, v].sort() }); vPlazos(); pintarFecha(); };
+}
+function guardarActivo() { try { localStorage.setItem('rc-proyecto-activo', est.proyecto); } catch { } }
+
 // ---------- AJUSTES ----------
 function pintarModoIA() {
   const m = IA.modoIA(), b = $('#estado-ia');
@@ -525,7 +584,7 @@ const FAQ = [
   [/hoy|fecha|desliz|mover/i, 'El control «Hoy es» simula el paso de los días. Al moverlo verás cómo cada alerta pasa de verde a ámbar y a vencida. Así se ve por qué el plazo vence antes de entender el cambio.'],
   [/confianza|criterio|r-?v|partida/i, 'La partida la propone la IA, pero la confianza la calcula la app con 4 criterios: mismo elemento, misma especialidad, ubicación compatible y rango o unidad. 4 de 4 es Alta, 3 Media y 2 o menos Baja.'],
   [/cita|invent|alucin/i, 'Cada alerta trae un fragmento copiado literalmente del documento. La app lo busca en el texto: si no aparece, la alerta se rechaza. En el paso 3 de «Cómo funciona» puedes probarlo con una cita inventada.'],
-  [/plazo|d[ií]as|vence|cl[aá]usula/i, 'La cláusula 14.3 del proyecto da 7 días calendario desde la recepción. Administración contractual la valida una vez; luego la fecha límite sale de una fórmula, con feriados si son días hábiles. El modelo nunca calcula fechas.'],
+  [/plazo|d[ií]as|vence|cl[aá]usula/i, 'Cada proyecto tiene su plazo, en «Plazos y parámetros». En R1, la cláusula 14.3 da 7 días calendario desde la recepción. Administración contractual la valida una vez; luego la fecha límite sale de una fórmula, con feriados si son días hábiles. El modelo nunca calcula fechas.'],
   [/resultado|funciona bien|precisi|cobertura/i, 'En el corpus base detectó 41 de 41 cambios. Con 10 documentos nuevos, 7 y 8 de 8 en dos corridas. Un comparador de texto sin IA encontró 33 de 41 con 22 falsas alarmas y no lee cartas ni RFI.'],
   [/detecta|bluebeam|procore|comparador|por qu[eé] ia/i, 'Primero un comparador sin IA marca cada zona y línea que cambió, incluido el rótulo. Luego la IA indica cuáles tienen impacto y propone la partida; la app verifica cada cita contra el texto y la confianza con 4 criterios.'],
   [/modo|gemini|clave|manual|ia en vivo/i, 'Hay tres modos de IA, en Ajustes: demostración (respuestas registradas o preparadas), Gemini en vivo (vía el servidor, sin exponer la clave) y manual (copias la instrucción, la pegas en tu asistente de IA y pegas su respuesta). En los tres, la app verifica cada cita.'],
@@ -560,7 +619,7 @@ const LUNA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 function aplicarTema(t) { document.documentElement.dataset.theme = t; const osc = t === 'dark'; $('#tema-ico').innerHTML = osc ? SOL : LUNA; $('#tema').title = osc ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'; $('#tema').setAttribute('aria-label', osc ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'); try { localStorage.setItem('rc-tema', t); } catch { } }
 let temaIni = 'dark'; try { temaIni = localStorage.getItem('rc-tema') || 'dark'; } catch { }
 aplicarTema(temaIni);
-$('#tema').onclick = () => { aplicarTema(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); if (ruta().vista === 'inicio') dibujarDial(); };
+$('#tema').onclick = () => { aplicarTema(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); };
 // ---------- fecha simulada global ----------
 function pintarFecha() {
   $('#chip-fecha-t').textContent = `Hoy · ${fCorta(est.hoy)}`;

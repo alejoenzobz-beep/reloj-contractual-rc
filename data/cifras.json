@@ -153,5 +153,27 @@
    "falsas_alarmas": 8,
    "precision": 0.385
   }
+ },
+ "casos_referencia": {
+  "fuente": "Consulta por WhatsApp a 2 integrantes del equipo con experiencia en obra, 16/11/2026",
+  "nota": "Casos observados (n = 2). Sirven para dimensionar, no son una estadística ni la regla del contrato.",
+  "casos": [
+   {
+    "rol": "Residente de obra",
+    "plazo_dias": 5,
+    "entender_dias_min": 3,
+    "entender_dias_max": 4
+   },
+   {
+    "rol": "Oficina técnica",
+    "plazo_dias": 7,
+    "entender_dias_min": 2,
+    "entender_dias_max": 3
+   }
+  ],
+  "entender_sin_asistente_dias": {
+   "min": 2,
+   "max": 4
+  }
  }
 }
