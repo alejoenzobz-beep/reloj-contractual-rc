@@ -1,0 +1,1570 @@
+{
+ "generado": "2026-11-02T14:33:19.661Z",
+ "herramienta": "Claude Code CLI (claude -p) · sin herramientas · carpeta aislada",
+ "versiones": {
+  "I1": "v1.0",
+  "I2": "v1.0",
+  "I3": "v1.0"
+ },
+ "documentos_incluidos": [
+  "E-101",
+  "E-105",
+  "E-204",
+  "E-210",
+  "E-212",
+  "E-215",
+  "E-220",
+  "E-230",
+  "E-231",
+  "E-240",
+  "E-250",
+  "A-112",
+  "A-115",
+  "A-150",
+  "A-201",
+  "A-205",
+  "A-220",
+  "A-310",
+  "A-320",
+  "A-410",
+  "A-500",
+  "IS-105",
+  "IS-201",
+  "IS-210",
+  "IS-220",
+  "IS-230",
+  "IE-031",
+  "IE-040",
+  "IE-045",
+  "IE-050",
+  "IE-060",
+  "IE-070",
+  "IM-101",
+  "IM-110",
+  "IM-120",
+  "IM-130",
+  "RFI-147",
+  "RFI-152",
+  "RFI-155",
+  "RFI-160",
+  "RFI-163",
+  "RFI-170",
+  "CT-018",
+  "CT-021",
+  "CT-024",
+  "CT-027",
+  "CT-030",
+  "CT-033"
+ ],
+ "rechazados_ingesta": [
+  {
+   "doc_id": "E-108",
+   "errores": [
+    "La revisión anterior (A) no está en el corpus: no se puede comparar"
+   ]
+  },
+  {
+   "doc_id": "IS-108",
+   "errores": [
+    "La revisión anterior (A) no está en el corpus: no se puede comparar"
+   ]
+  }
+ ],
+ "llamadas": [
+  {
+   "etiqueta": "I1 lote 1",
+   "inicio": "2026-11-02T14:33:19.663Z",
+   "fin": "2026-11-02T14:33:48.121Z",
+   "segundos": 28.458,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "E-101 | 1 | Se agranda la zapata Z-3: pasa de 2,20 × 2,20 m con h = 0,60 m a 2,60 × 2,60 m con h = 0,70 m por nuevo estudio de suelos. Aumentan la excavación, el concreto, el acero, el encofrado y el solado de esas zapatas | Cimentación, ejes B-4 y C-4 | Estructuras | Zapata Z-3 | Z-3 2,60 × 2,60 m, h = 0,70 m (ejes B-4 y C-4)\nE-105 | 1 | SIN CAMBIOS | Cimentación, vigas de conexión | Estructuras | Vigas de conexión VC-1 y VC-2 | Rev. C — Actualización de rótulo y firma del especialista. Sin cambios técnicos.\nE-204 | 1 | La placa P-7 pasa de 2,80 a 3,20 m de altura aunque la revisión figura como corrección de cota. Aumentan el concreto, el acero y el encofrado. Hay que confirmar el alcance: la elevación indica niveles 3 a 6 y la nota solo nivel 4, sector B | Eje 7, niveles 3 a 6 (nota: nivel 4, sector B) | Estructuras | Placa P-7 | La altura de la placa P-7 en el eje 7, nivel 4, sector B, pasa de 2,80 a 3,20 m.\nE-210 | 1 | Se agrega acero superior en la viga V-14: 2Ø3/4\" en bastones en los apoyos de los ejes 3 y 4, además del acero corrido existente. Es mayor habilitado y colocación de acero | Nivel 5, apoyos de ejes 3 y 4 | Estructuras | Viga V-14 | acero superior 2Ø3/4\" corrido + 2Ø3/4\" bastones en apoyos de ejes 3 y 4\nE-212 | 1 | Un paño de losa aligerada de 0,20 m pasa a losa maciza de 0,20 m por el paso de ductos. Se elimina el ladrillo de techo en ese paño y aumentan el concreto y el acero | Nivel 6, paño entre ejes C–D / 3–4 | Estructuras | Losa del nivel 6 | excepto paño entre ejes C–D / 3–4, que pasa a losa maciza e = 0,20 m por paso de ductos.\nE-215 | 1 | La viga V-20 pasa de 0,60 a 0,70 m de peralte y su fondo baja de NPT +21,80 a +21,70 m, aunque la revisión figura como corrección de cotas. Aumentan el concreto, el encofrado y el acero, y puede haber interferencia con instalaciones o vanos. El corte 2-2 todavía indica 0,30 × 0,60 m: hay que aclararlo con el proyectista | Nivel 8, entre ejes B y C, corte 2-2 | Estructuras | Viga V-20 | Fondo de viga a NPT +21,70 m; la altura de la viga V-20 pasa de 0,60 a 0,70 m.\nE-220 | 1 | La escalera E-2 pasa de un tramo único a dos tramos con un descanso intermedio de 1,20 × 2,40 m. Cambian el encofrado, el concreto, el acero y el trazo de la escalera | Entre nivel 1 y nivel 2 | Estructuras | Escalera E-2 | dos tramos entre nivel 1 y nivel 2 con descanso intermedio de 1,20 × 2,40 m, garganta e = 0,15 m.\nE-230 | 1 | La sección de la columna C-5 sube de 0,40 × 0,60 m a 0,50 × 0,70 m. Aumentan el concreto y el encofrado, y puede haber interferencias con la arquitectura y los estacionamientos | Sótano 2 a nivel 1 | Estructuras | Columna C-5 | C-5 0,50 × 0,70 m, 12Ø3/4\" (sótano 2 a nivel 1).\nE-230 | 2 | El refuerzo longitudinal de la columna C-5 pasa de 10Ø3/4\" a 12Ø3/4\". Aumenta el acero | Sótano 2 a nivel 1 | Estructuras | Columna C-5 | C-5 0,50 × 0,70 m, 12Ø3/4\" (sótano 2 a nivel 1).\nE-231 | 1 | La junta sísmica entre los bloques A y B pasa de 2\" a 3\" en toda la altura. Aumenta la plancha de poliestireno y cambian el trazo de los bordes de ambos bloques y los tapajuntas | Entre bloques A y B, niveles 1 a 12 | Estructuras | Junta sísmica, detalle 4 | junta sísmica entre bloques A y B de 3\" con plancha de poliestireno, niveles 1 a 12.\nE-240 | 1 | El espesor de la placa PL-2 pasa de 0,25 a 0,30 m. Aumentan el concreto y probablemente el acero, y hay que ajustar el encofrado | Eje A, sótano 1 a nivel 3 | Estructuras | Placa PL-2 | PLACA PL-2 (eje A): e = 0,30 m, sótano 1 a nivel 3.\nE-240 | 2 | Se elimina la viga chata VCH-3 y el tabique se apoya directamente en la losa maciza. Es un deductivo de concreto, acero y encofrado de esa viga | Nivel 2, ejes 5–6 | Estructuras | Viga chata VCH-3 | VIGA CHATA VCH-3: eliminada; el tabique se apoya directamente en la losa maciza.",
+   "instruccion": "I1 v1.0",
+   "docs": [
+    "E-101",
+    "E-105",
+    "E-204",
+    "E-210",
+    "E-212",
+    "E-215",
+    "E-220",
+    "E-230",
+    "E-231",
+    "E-240"
+   ]
+  },
+  {
+   "etiqueta": "I1 lote 2",
+   "inicio": "2026-11-02T14:33:48.122Z",
+   "fin": "2026-11-02T14:34:08.268Z",
+   "segundos": 20.146,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "E-250 | 1 | Se aumenta el espesor de los muros perimetrales de la cisterna de 0,25 m a 0,30 m, con el mismo concreto f'c = 280 kg/cm². Hay mayor volumen de concreto y puede cambiar el acero y el encofrado | Cisterna, muros perimetrales | Estructuras | Muros de cisterna | MUROS DE CISTERNA: e = 0,30 m, concreto f'c = 280 kg/cm².\nA-112 | 1 | Se elimina el tabique T-3 de albañilería de 0,15 m entre ejes C–D y la sala y el estudio quedan integrados. Hay menos albañilería y tarrajeo, y cambian los acabados de piso, muros y techo en el ambiente integrado | Nivel 2, entre ejes C–D | Arquitectura | Tabique T-3 | PLANTA NIVEL 2: se elimina el tabique T-3 entre ejes C–D; sala y estudio quedan integrados.\nA-115 | 1 | Los tabiques entre departamentos cambian de drywall simple de 0,10 m a drywall acústico con lana mineral de 0,15 m. Cambian los materiales y la mano de obra, y disminuye el área útil de los departamentos | Planta típica, niveles 3 a 10, entre departamentos | Arquitectura | Tabiquería drywall entre departamentos | LEYENDA: tabiques entre departamentos de drywall acústico con lana mineral e = 0,15 m (niveles 3 a 10).\nA-150 | 1 | SIN CAMBIOS | Cuadro de acabados, áreas comunes | Arquitectura | Nombres de ambientes | Rev. B — Corrección ortográfica de nombres de ambientes.\nA-201 | 1 | El piso de los dormitorios cambia de laminado de 8 mm con zócalo de MDF a porcelanato de 60 × 60 cm con zócalo de porcelanato de 10 cm de altura. Cambian el material, la mano de obra y la preparación de la base | Dormitorios, niveles 3 a 10 | Arquitectura | Piso y zócalo de dormitorios | DORMITORIOS (niveles 3 a 10): piso de porcelanato 60 × 60 cm con zócalo de porcelanato h = 10 cm.\nA-205 | 1 | La puerta contraplacada de 0,90 m del vestíbulo previo cambia a puerta cortafuego de 90 minutos con barra antipánico en cada nivel. La puerta es de mayor especificación y puede tener un plazo de fabricación largo | Escalera de evacuación, vestíbulo previo, niveles 1 a 10 | Arquitectura | Puerta de vestíbulo previo | VESTÍBULO PREVIO: puerta cortafuego de 90 minutos con barra antipánico, una por nivel (niveles 1 a 10).\nA-220 | 1 | Se agrega cielo raso de drywall a 2,50 m de altura para ocultar las bandejas, en reemplazo del techo tarrajeado y pintado. Es una partida nueva que requiere coordinar con las instalaciones | Hall de ascensores, niveles 1 a 12 | Arquitectura | Cielo raso | HALL DE ASCENSORES (niveles 1 a 12): cielo raso de drywall a h = 2,50 m para ocultar bandejas.\nA-310 | 1 | El enchape de porcelanato de 60 × 120 cm de la fachada cambia a panel de aluminio compuesto color grafito sobre subestructura metálica. Cambian el sistema constructivo y el proveedor, y se agrega la subestructura metálica | Fachada sur, niveles 3 a 6 | Arquitectura | Revestimiento de fachada | FACHADA SUR (niveles 3 a 6): revestimiento con panel de aluminio compuesto color grafito sobre subestructura metálica.\nA-320 | 1 | El vidrio de la ventana V-4 cambia de templado de 6 mm a laminado acústico de 8 mm. Es un vidrio de mayor especificación y puede requerir cambiar la perfilería de aluminio | Fachada este, niveles 3 a 12 | Arquitectura | Ventana V-4 | VENTANA V-4 (1,50 × 1,40 m, fachada este, niveles 3 a 12): aluminio con vidrio laminado acústico de 8 mm.\nA-410 | 1 | La altura del enchape cerámico de 30 × 60 cm en los baños típicos sube de 2,10 m a 2,40 m, hasta el cielo raso. Aumentan el material y la mano de obra del enchape | Baños típicos, elevaciones | Arquitectura | Enchape cerámico de muros | NOTA 2: Altura de enchape h = 2,40 m (hasta cielo raso).",
+   "instruccion": "I1 v1.0",
+   "docs": [
+    "E-250",
+    "A-112",
+    "A-115",
+    "A-150",
+    "A-201",
+    "A-205",
+    "A-220",
+    "A-310",
+    "A-320",
+    "A-410"
+   ]
+  },
+  {
+   "etiqueta": "I1 lote 3",
+   "inicio": "2026-11-02T14:34:08.268Z",
+   "fin": "2026-11-02T14:34:38.557Z",
+   "segundos": 30.289,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "A-500 | 1 | Se cambia el parapeto de vidrio templado de 10 mm por una baranda de acero inoxidable de h = 1,10 m en los mismos 38 m lineales. Cambian la partida de suministro e instalación, el material y el proveedor. | Terraza nivel 12 | Arquitectura | Parapeto / baranda perimetral de terraza | baranda de acero inoxidable h = 1,10 m sobre murete de 0,30 m, 38 m lineales\nA-500 | 2 | Se agrega un murete de 0,30 m como base de la nueva baranda en los 38 m lineales. Es un trabajo nuevo que no estaba en la Rev. A y obliga a ejecutar el murete antes de montar la baranda. | Terraza nivel 12 | Arquitectura | Murete de apoyo de baranda | baranda de acero inoxidable h = 1,10 m sobre murete de 0,30 m, 38 m lineales\nIS-105 | 1 | Se pasa de una sola electrobomba de 5 HP a un sistema dúplex con dos electrobombas de velocidad variable de 5 HP que trabajan en alternancia. Se agrega una bomba de respaldo con su suministro, montaje e interconexión. | Cuarto de bombas · cisterna | Instalaciones sanitarias | Equipo de bombeo | sistema dúplex con dos electrobombas de velocidad variable de 5 HP funcionando en alternancia\nIS-201 | 1 | La montante MD-3 sube de PVC Ø4\" a PVC Ø6\" en los niveles 1 a 12 por el aporte de la cocina del nivel 12. Cambian la tubería, los accesorios y los pases en losas. | Montantes de desagüe · niveles 1 a 12 | Instalaciones sanitarias | Montante MD-3 | MONTANTE MD-3: PVC Ø6\", niveles 1 a 12, por aporte de la cocina del nivel 12\nIS-210 | 1 | SIN CAMBIOS | Agua fría · planta típica | Instalaciones sanitarias | Red de agua fría | Rev. B — Reemisión por coordinación con arquitectura; sin cambios en el trazado.\nIS-220 | 1 | La red de agua caliente cambia de material: de CPVC Ø1/2\" a PP-R termofusionado Ø20 mm. Cambian la tubería, los accesorios y el método de unión, que ahora requiere equipo de termofusión. | Agua caliente · departamentos típicos | Instalaciones sanitarias | Red de agua caliente | tubería PP-R termofusionada Ø20 mm desde terma a puntos de consumo\nIS-230 | 1 | Se agrega un lavatorio de loza con grifería en el cuarto de limpieza de cada nivel, del 1 al 12. Son aparatos sanitarios y grifería que no estaban en la Rev. A. | Cuarto de limpieza · planta típica · niveles 1 a 12 | Instalaciones sanitarias | Lavatorio con grifería | lavatorio de loza con grifería en cada nivel (niveles 1 a 12), punto de agua fría y sumidero\nIE-031 | 1 | Se agregan tres salidas de fuerza trifásicas de 380 V para los racks de telecomunicaciones de la sala técnica. Son salidas, canalización y cableado nuevos. | Sala técnica · sótano 1 | Instalaciones eléctricas | Salidas de fuerza trifásicas para racks | tres salidas de fuerza trifásicas 380 V para racks\nIE-040 | 1 | Los conductores de fase del alimentador TG–TD3 suben de 3-1×35 mm² a 3-1×50 mm² N2XOH en los mismos 62 m, por recálculo de caída de tensión. Puede requerir revisar si la canalización existente alcanza. | Diagrama unifilar · alimentador TG–TD3 | Instalaciones eléctricas | Conductores de fase del alimentador TG–TD3 | ALIMENTADOR TG–TD3: 3-1×50 mm² N2XOH + 1×25 mm² (T), 62 m.\nIE-040 | 2 | El conductor de tierra del alimentador TG–TD3 sube de 1×16 mm² a 1×25 mm² en los mismos 62 m. | Diagrama unifilar · alimentador TG–TD3 | Instalaciones eléctricas | Conductor de tierra del alimentador TG–TD3 | ALIMENTADOR TG–TD3: 3-1×50 mm² N2XOH + 1×25 mm² (T), 62 m.\nIE-045 | 1 | Se agrega un tablero nuevo, TD-ACI, para la bomba contra incendio, adosado al cuarto de bombas. Es un tablero adicional con su suministro, montaje y conexionado. | Tableros · sótano 2 · cuarto de bombas | Instalaciones eléctricas | Tablero TD-ACI | nuevo tablero TD-ACI adosado al cuarto de bombas\nIE-050 | 1 | SIN CAMBIOS | Leyenda y especificaciones eléctricas | Instalaciones eléctricas | Leyenda y rótulo | Rev. B — Actualización de rótulo con nuevo logotipo del proyectista. Sin cambios técnicos.",
+   "instruccion": "I1 v1.0",
+   "docs": [
+    "A-500",
+    "IS-105",
+    "IS-201",
+    "IS-210",
+    "IS-220",
+    "IS-230",
+    "IE-031",
+    "IE-040",
+    "IE-045",
+    "IE-050"
+   ]
+  },
+  {
+   "etiqueta": "I1 lote 4",
+   "inicio": "2026-11-02T14:34:38.558Z",
+   "fin": "2026-11-02T14:34:51.564Z",
+   "segundos": 13.006,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "IE-060 | 1 | Se aumenta el ancho de la bandeja portacables B-1 de 300 mm a 400 mm en los 45 m de sótano 2 | Sótano 2, canalizaciones | Instalaciones eléctricas | Bandeja portacables galvanizada B-1 | BANDEJA B-1: bandeja portacables galvanizada de 400 mm, 45 m en sótano 2.\nIE-070 | 1 | Se agregan 18 salidas de alumbrado con luminaria LED hermética en estacionamientos, que pasan de 42 a 60 | Sótano 1, estacionamientos | Instalaciones eléctricas | Salidas de alumbrado con luminaria LED hermética | ESTACIONAMIENTOS S1: 60 salidas de alumbrado con luminaria LED hermética (se agregan 18).\nIM-101 | 1 | Se agregan 24 rociadores en los depósitos D-1 a D-12, que no estaban en la revisión anterior | Sótano 2, depósitos D-1 a D-12 | Instalaciones mecánicas y ACI | Rociadores | 86 rociadores colgantes en estacionamientos y 24 rociadores adicionales en depósitos D-1 a D-12.\nIM-110 | 1 | Se aumenta la sección del ducto de extracción DE-1 de 600 × 400 mm a 800 × 400 mm por recálculo de caudal | Sótanos 1 y 2 | Instalaciones mecánicas y ACI | Ducto de extracción de monóxido DE-1 | DUCTO DE EXTRACCIÓN DE-1: plancha galvanizada 800 × 400 mm, sótanos 1 y 2.\nIM-120 | 1 | Se agrega un detector de humo por nivel en los halls, 12 detectores en total, que no estaban en la revisión anterior | Halls, niveles 1 a 12 | Instalaciones mecánicas y ACI | Detectores de humo | sirena con luz estroboscópica y un detector de humo por nivel (12 detectores).\nIM-130 | 1 | La tubería de la montante ACI Ø4\" cambia de acero cédula 10 a acero cédula 40 por presión de trabajo | Montante ACI, sótano 2 a nivel 12 | Instalaciones mecánicas y ACI | Tubería de montante ACI | MONTANTE ACI: tubería de acero cédula 40 Ø4\", sótano 2 a nivel 12.\nRFI-147 | 1 | Se agregan 2Ø5/8\" en la cara superior de la viga V-12 en el apoyo del eje 6, con 1,80 m a cada lado | Nivel 4, viga V-12, apoyo del eje 6, detalle 5 de la lámina E-209 | Estructuras | Acero de refuerzo de la viga V-12 | Agregar 2Ø5/8\" adicionales en la cara superior de la viga V-12 en el apoyo del eje 6, con longitud de 1,80 m a cada lado\nRFI-152 | 1 | SIN CAMBIOS | Azotea, parapeto, lámina A-510 | Arquitectura | Parapeto de azotea | Se confirma la altura del parapeto de 1,10 m indicada en la lámina A-510. No hay cambios.\nRFI-155 | 1 | En el cuarto de bombas se cambia el piso de porcelanato por cemento pulido con endurecedor superficial y pintura epóxica de tráfico pesado | Cuarto de bombas | Arquitectura | Acabado de piso | En el cuarto de bombas se reemplaza el porcelanato por piso de cemento pulido con endurecedor superficial y pintura epóxica de tráfico pesado.\nRFI-160 | 1 | Se agrega climatización en la sala de reuniones con 2 equipos split de 24 000 BTU y sus condensadoras en el patio de servicio. Los planos no la incluían | Nivel 1, sala de reuniones y patio de servicio | Instalaciones mecánicas y ACI | Equipos de aire acondicionado tipo split | Instalar 2 equipos de aire acondicionado tipo split de 24 000 BTU en la sala de reuniones del nivel 1, con condensadoras en el patio de servicio.",
+   "instruccion": "I1 v1.0",
+   "docs": [
+    "IE-060",
+    "IE-070",
+    "IM-101",
+    "IM-110",
+    "IM-120",
+    "IM-130",
+    "RFI-147",
+    "RFI-152",
+    "RFI-155",
+    "RFI-160"
+   ]
+  },
+  {
+   "etiqueta": "I1 lote 5",
+   "inicio": "2026-11-02T14:34:51.565Z",
+   "fin": "2026-11-02T14:35:12.187Z",
+   "segundos": 20.622,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "RFI-163 | 1 | Se define la especificación de la puerta P-1 de ingreso a departamentos, que no figuraba en el cuadro de vanos: puerta contraplacada de alma sólida con chapa de seguridad de tres golpes, de 1,00 × 2,10 m, una por departamento (64 unidades). Hay que verificar si está considerada en el presupuesto contractual | Respuesta del RFI, cuadro de vanos, puertas de ingreso a departamentos | Arquitectura | Puerta P-1 | La puerta P-1 de ingreso a departamentos será contraplacada de alma sólida con chapa de seguridad de tres golpes, 1,00 × 2,10 m\nRFI-170 | 1 | SIN CAMBIOS | Respuesta del RFI, tabique entre cocina y lavandería del departamento tipo A | Arquitectura | Tabique de drywall | El tabique es de drywall simple e = 0,10 m, tal como figura en la lámina A-115.\nCT-018 | 1 | Cambio de acabado en la fachada norte, niveles 3 a 6: se reemplaza la pintura elastomérica por enchape de porcelanato de 60 × 120 cm según la muestra aprobada. Es una variación de alcance y especificación | Fachada norte, niveles 3 a 6 | Arquitectura | Acabado de fachada | instruimos que el acabado de la fachada norte, niveles 3 a 6, cambie de pintura elastomérica a enchape de porcelanato 60 × 120 cm\nCT-021 | 1 | SIN CAMBIOS | Borde de losa del nivel 7, barandas provisionales | General | Seguridad de obra | Esta observación no modifica el alcance contractual.\nCT-024 | 1 | Cambio de material en las barandas de las escaleras de evacuación, niveles 1 a 12: se reemplaza el fierro pintado por acero inoxidable. Es una variación de especificación | Escaleras de evacuación, niveles 1 a 12 | Arquitectura | Barandas de escalera | las barandas de las escaleras de evacuación, niveles 1 a 12, se ejecuten en acero inoxidable en lugar de fierro pintado\nCT-027 | 1 | SIN CAMBIOS | Muestra de porcelanato de 60 × 60 cm, color marfil | Arquitectura | Porcelanato | Se aprueba la muestra de porcelanato 60 × 60 cm color marfil presentada el 23/10, que corresponde a la especificación contractual.\nCT-030 | 1 | Se agregan seis salidas de tomacorriente doble por departamento tipo B, niveles 3 a 10 (16 departamentos). Es un trabajo adicional al alcance contractual | Departamentos tipo B, niveles 3 a 10 | Instalaciones eléctricas | Salidas de tomacorriente doble | Se instruye adicionar seis (6) salidas de tomacorriente doble por departamento tipo B, niveles 3 a 10 (16 departamentos).\nCT-033 | 1 | Se pide adelantar en 15 días calendario la entrega del local comercial del nivel 1 respecto del hito contractual. Afecta el plazo y requiere una propuesta de acciones de aceleración | Local comercial del nivel 1 | General | Hito de entrega | solicitamos adelantar en quince (15) días calendario la entrega del local comercial del nivel 1 respecto del hito contractual.",
+   "instruccion": "I1 v1.0",
+   "docs": [
+    "RFI-163",
+    "RFI-170",
+    "CT-018",
+    "CT-021",
+    "CT-024",
+    "CT-027",
+    "CT-030",
+    "CT-033"
+   ]
+  },
+  {
+   "etiqueta": "I2 lote 1",
+   "inicio": "2026-11-02T14:35:12.187Z",
+   "fin": "2026-11-02T14:36:26.157Z",
+   "segundos": 73.97,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "ALR-0001 | 03.01.06 | Concreto f'c = 210 kg/cm² en zapatas y cimientos | Mayor volumen de concreto en zapatas Z-3 (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (zapata) y la misma especialidad, en la cimentación. La unidad m³ sirve para medir el mayor volumen al pasar de 2,20 × 2,20 × 0,60 a 2,60 × 2,60 × 0,70 m. La excavación (02.01.01) y el acero (03.03.04) también se afectan. En la lista no hay partidas de encofrado ni de solado de zapatas | —\nALR-0002 | 03.02.05 | Encofrado de placas, h > 3,00 m | Encofrado de la placa P-7, que pasa a una altura mayor de 3,00 m (reclasificación) | ✓ | ✓ | ✓ | ✓ | Alta | Con h = 3,20 m la placa queda en el rango h > 3,00 m y sale de la partida 03.02.04 (h ≤ 3,00 m). También se afectan el concreto (03.01.01) y el acero (03.03.02). Falta confirmar el alcance: la elevación indica niveles 3 a 6 y la nota solo nivel 4, sector B | —\nALR-0003 | 03.03.01 | Acero corrugado fy = 4200 kg/cm² en vigas | Mayor habilitado y colocación de acero en la viga V-14 (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (viga) y la misma especialidad. Los bastones 2Ø3/4\" en los apoyos de los ejes 3 y 4 del nivel 5 se miden en kg, igual que la partida | —\nALR-0004 | 03.01.04 | Concreto f'c = 210 kg/cm² en losas macizas | Paño de losa que pasa de aligerada a maciza (mayor concreto) | ✓ | ✓ | ✓ | ✓ | Alta | El paño queda como losa maciza de 0,20 m en el nivel 6 y se mide en m³. Hay deductivo en 03.01.05 (losa aligerada) y adicional en 03.03.03 (acero en losas). En la lista no hay partida de ladrillo de techo | —\nALR-0005 | 03.01.03 | Concreto f'c = 280 kg/cm² en vigas | Mayor concreto en la viga V-20 por el aumento de peralte (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (viga). El peralte pasa de 0,60 a 0,70 m y se mide en m³. También se afectan el encofrado (03.02.02) y el acero (03.03.01). Falta aclarar con el proyectista que el corte 2-2 todavía indica 0,30 × 0,60 m, y revisar las interferencias con instalaciones y vanos | —\nALR-0006 | 03.01.07 | Concreto f'c = 175 kg/cm² en escaleras | Cambio de la geometría de la escalera E-2 con un descanso intermedio (concreto) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (escalera) entre los niveles 1 y 2 y se mide en m³. También se afecta el encofrado (03.02.06). En la lista no hay partida específica de acero en escaleras | —\nALR-0007 | 03.01.02 | Concreto f'c = 280 kg/cm² en columnas | Mayor concreto en la columna C-5 por el aumento de sección (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (columna). La sección pasa de 0,40 × 0,60 a 0,50 × 0,70 m y se mide en m³. También se afecta el encofrado (03.02.01). Hay que revisar las interferencias con la arquitectura y los estacionamientos | —\nALR-0008 | 03.03.02 | Acero corrugado fy = 4200 kg/cm² en columnas y placas | Mayor acero longitudinal en la columna C-5 (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (columna) y la misma especialidad. El refuerzo pasa de 10Ø3/4\" a 12Ø3/4\" y se mide en kg | —\nALR-0009 | 03.04.01 | Junta sísmica con plancha de poliestireno, e = 2\" | Junta sísmica que aumenta de espesor entre los bloques A y B | ✓ | ✓ | ✓ | ✗ | Media | Coinciden el elemento, la especialidad y la ubicación, pero la partida es de e = 2\" y el cambio pide e = 3\". En la lista no hay partida de tapajuntas | 03.01.01 Concreto f'c = 280 kg/cm² en placas y muros (por el ajuste del trazo de los bordes de los bloques)\nALR-0010 | 03.01.01 | Concreto f'c = 280 kg/cm² en placas y muros | Mayor concreto en la placa PL-2 por el aumento de espesor (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (placa). El espesor pasa de 0,25 a 0,30 m y se mide en m³. Probablemente también se afectan el acero (03.03.02) y el encofrado (03.02.04 o 03.02.05, según la altura de cada nivel) | —\nALR-0011 | 03.01.03 | Concreto f'c = 280 kg/cm² en vigas | Eliminación de la viga chata VCH-3 (deductivo de concreto) | ✓ | ✓ | ✓ | ✓ | Alta | La viga chata es un tipo de viga y el concreto se mide en m³. El deductivo también alcanza al acero (03.03.01) y al encofrado (03.02.02) | —\nALR-0012 | 03.01.01 | Concreto f'c = 280 kg/cm² en placas y muros | Mayor concreto en los muros de la cisterna (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo elemento (muro de concreto). El f'c = 280 kg/cm² coincide y el volumen se mide en m³. Puede afectarse el acero (03.03.02) | —\nALR-0013 | 04.01.02 | Muro de albañilería de soga, e = 0,15 m | Eliminación del tabique T-3 (deductivo de albañilería) | ✓ | ✓ | ✓ | ✓ | Alta | Es un tabique de albañilería de e = 0,15 m y se mide en m². El deductivo también alcanza al tarrajeo (05.01.01) y a la pintura (09.01.01). Hay que revisar los acabados del ambiente integrado | —\nALR-0014 | 04.02.02 | Tabique de drywall acústico con lana mineral, e = 0,15 m | Cambio de tabique simple a tabique acústico entre departamentos | ✓ | ✓ | ✓ | ✓ | Alta | El tipo de tabique, el espesor de 0,15 m y la unidad m² coinciden con la partida. Hay deductivo en 04.02.01 | —\nALR-0015 | 06.02.01 | Piso de porcelanato 60 × 60 cm | Cambio de piso laminado a porcelanato en los dormitorios | ✓ | ✓ | ✓ | ✓ | Alta | El formato de 60 × 60 cm y la unidad m² coinciden. Hay deductivo en 06.02.02 y adicional en 06.03.01 (zócalo de h = 10 cm). En la lista no hay partida de zócalo de MDF | —\nALR-0016 | 07.01.02 | Puerta cortafuego de 90 minutos | Cambio de puerta contraplacada a puerta cortafuego en el vestíbulo previo | ✓ | ✓ | ✓ | ✓ | Alta | El elemento, la resistencia de 90 minutos y la unidad (und) coinciden. Hay deductivo en 07.01.01. Hay que verificar si la barra antipánico está incluida en la partida y revisar el plazo de fabricación | —\nALR-0017 | 05.02.01 | Cielo raso de drywall | Nuevo cielo raso de drywall en el hall de ascensores | ✓ | ✓ | ✓ | ✓ | Alta | La partida ya existe en el contrato y se mide en m². Hay que confirmar si su alcance incluye el hall. En la lista no hay partida de tarrajeo de techo; la partida de pintura 09.01.01 es para muros | —\nALR-0018 | 08.01.01 | Revestimiento de fachada con panel de aluminio compuesto | Cambio del revestimiento de la fachada sur a panel de aluminio compuesto | ✓ | ✓ | ✓ | ✓ | Alta | El sistema, la ubicación en fachada y la unidad m² coinciden. Hay deductivo en 08.01.02. Hay que verificar si la subestructura metálica está incluida en la partida | —\nALR-0019 | 07.02.01 | Ventana de aluminio con vidrio templado de 6 mm | Cambio del vidrio de la ventana V-4 | ✓ | ✓ | ✓ | ✗ | Media | Coinciden el elemento y la ubicación, pero la partida es de vidrio templado de 6 mm y el cambio pide vidrio laminado acústico de 8 mm. Puede requerir cambiar la perfilería | 07.02.02 Muro cortina\nALR-0020 | 08.02.01 | Enchape cerámico en muros de baños | Mayor altura de enchape en los baños típicos (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | El elemento, el ambiente y la unidad m² coinciden. La altura pasa de 2,10 a 2,40 m y no hay un rango en la partida que lo contradiga | —\nALR-0021 | 07.03.01 | Baranda de acero inoxidable | Cambio de parapeto de vidrio a baranda de acero inoxidable en la terraza | ✓ | ✓ | ✓ | ✓ | Alta | El elemento y la unidad (m) coinciden con los 38 m de baranda de h = 1,10 m. En la lista no hay partida de parapeto de vidrio templado para el deductivo | —\nALR-0022 | 04.01.01 | Muro de albañilería de cabeza, e = 0,25 m | Nuevo murete de apoyo de la baranda (adicional) | ✓ | ✓ | ✓ | ✗ | Media | Un murete es un tipo de muro y está en la terraza, pero los 0,30 m no coinciden con e = 0,25 m. Además, el cambio se mide en m lineales y la partida en m². Falta definir el material y si los 0,30 m son altura o espesor | 03.01.01 Concreto f'c = 280 kg/cm² en placas y muros\nALR-0023 | 10.04.01 | Sistema de bombeo de cisterna | Cambio a un sistema de bombeo dúplex con velocidad variable (adicional) | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo sistema, en el cuarto de bombas de la cisterna, y se mide en glb. El alcance aumenta con una segunda electrobomba de 5 HP más su montaje e interconexión | —\nALR-0024 | 10.02.02 | Montante de desagüe PVC | Cambio de diámetro de la montante MD-3 | ✓ | ✓ | ✓ | ✓ | Alta | El elemento, el material (PVC) y la unidad (m) coinciden. La partida no fija un diámetro que contradiga el Ø6\". Hay que revisar los accesorios y los pases en losas | —\nALR-0025 | 10.01.02 | Tubería de agua caliente | Cambio de material de la red de agua caliente | ✓ | ✓ | ✓ | ✓ | Alta | El elemento y la unidad (m) coinciden. La partida no especifica material, y Ø20 mm equivale a Ø1/2\". Cambian el método de unión y el equipo de termofusión | —",
+   "instruccion": "I2 v1.0",
+   "hechos": [
+    "ALR-0001",
+    "ALR-0002",
+    "ALR-0003",
+    "ALR-0004",
+    "ALR-0005",
+    "ALR-0006",
+    "ALR-0007",
+    "ALR-0008",
+    "ALR-0009",
+    "ALR-0010",
+    "ALR-0011",
+    "ALR-0012",
+    "ALR-0013",
+    "ALR-0014",
+    "ALR-0015",
+    "ALR-0016",
+    "ALR-0017",
+    "ALR-0018",
+    "ALR-0019",
+    "ALR-0020",
+    "ALR-0021",
+    "ALR-0022",
+    "ALR-0023",
+    "ALR-0024",
+    "ALR-0025"
+   ]
+  },
+  {
+   "etiqueta": "I2 lote 2",
+   "inicio": "2026-11-02T14:36:26.158Z",
+   "fin": "2026-11-02T14:37:21.781Z",
+   "segundos": 55.623,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "ALR-0026 | 10.03.02 | Lavatorio de loza con grifería | Adicional: suministro e instalación de lavatorio de loza con grifería en cuartos de limpieza | ✓ | ✓ | ✓ | ✓ | Alta | Mismo aparato sanitario y especialidad; la partida no restringe ambiente y la unidad und coincide con aparatos individuales | —\nALR-0027 | 11.02.03 | Salida de fuerza | Adicional: salidas de fuerza trifásicas 380 V con canalización y cableado para racks | ✓ | ✓ | ✓ | ✓ | Alta | Mismo tipo de elemento (salida de fuerza) y especialidad; unidad pto compatible; la partida no limita tensión ni ambiente, verificar que el precio unitario cubra salida trifásica | —\nALR-0028 | 11.03.02 | Alimentador con cable N2XOH | Variación: aumento de sección de conductores de fase del alimentador TG–TD3 | ✓ | ✓ | ✓ | ✓ | Alta | Es el mismo alimentador con cable N2XOH, unidad m y misma longitud; solo cambia la sección; la revisión de canalización no tiene partida propia en la lista salvo bandeja | —\nALR-0029 | 11.03.02 | Alimentador con cable N2XOH | Variación: aumento de sección del conductor de tierra del alimentador TG–TD3 | ✓ | ✓ | ✓ | ✓ | Alta | El conductor de tierra forma parte del alimentador TG–TD3; unidad m y misma longitud; verificar que el tipo de cable de tierra sea el considerado en la partida | —\nALR-0030 | 11.03.01 | Tablero de distribución | Adicional: suministro, montaje y conexionado de tablero TD-ACI | ✓ | ✓ | ✓ | ✓ | Alta | Mismo tipo de elemento (tablero) y especialidad; unidad und compatible; la partida no restringe ubicación | —\nALR-0031 | 11.04.01 | Bandeja portacables galvanizada | Variación: aumento de ancho de bandeja B-1 | ✓ | ✓ | ✓ | ✓ | Alta | Misma bandeja galvanizada y especialidad; unidad m compatible; la partida no fija ancho, el cambio afecta el precio unitario | —\nALR-0032 | 11.01.01 | Salida de alumbrado | Adicional: salidas de alumbrado con luminaria LED hermética en estacionamientos | ✓ | ✓ | ✓ | ✓ | Alta | Mismo tipo de elemento y especialidad; unidad pto compatible; verificar si la partida incluye la luminaria hermética | —\nALR-0033 | 12.01.01 | Rociador contra incendio | Adicional: suministro e instalación de rociadores en depósitos | ✓ | ✓ | ✓ | ✓ | Alta | Mismo elemento y especialidad; unidad und compatible; la partida no restringe ambiente | —\nALR-0034 | 12.02.01 | Ducto de extracción de monóxido en plancha galvanizada | Variación: aumento de sección del ducto DE-1 | ✓ | ✓ | ✓ | ✓ | Alta | Mismo ducto de extracción de monóxido en sótanos; la unidad kg absorbe el cambio de sección | —\nALR-0035 | 12.03.01 | Detector de humo | Adicional: suministro e instalación de detectores de humo en halls | ✓ | ✓ | ✓ | ✓ | Alta | Mismo elemento y especialidad; unidad und compatible; la partida no restringe ambiente | —\nALR-0036 | 12.01.02 | Tubería ACI de acero cédula 40 | Variación: cambio de cédula 10 a cédula 40 en montante ACI | ✓ | ✓ | ✓ | ✓ | Alta | La especificación nueva coincide con la partida (acero cédula 40); unidad m compatible; verificar que la partida cubra Ø4\" | —\nALR-0037 | 03.03.01 | Acero corrugado fy = 4200 kg/cm² en vigas | Adicional: refuerzo superior en apoyo de viga V-12 | ✓ | ✓ | ✓ | ✓ | Alta | Acero de refuerzo en viga, misma especialidad; unidad kg compatible con barras Ø5/8\" | —\nALR-0038 | 06.02.01 | Piso de porcelanato 60 × 60 cm | Variación: deductivo de porcelanato y nuevo acabado de cemento pulido con endurecedor y pintura epóxica | ✗ | ✓ | ✓ | ✓ | Media | Es la partida afectada por el deductivo; el nuevo acabado (cemento pulido epóxico) es otro tipo de piso y no tiene partida en la lista | 06.01.01\nALR-0039 | 12.02.02 | Equipo de aire acondicionado tipo split | Adicional: suministro e instalación de equipos split con condensadoras | ✓ | ✓ | ✓ | ✓ | Alta | Mismo tipo de equipo y especialidad; unidad und compatible; la partida no fija capacidad; la alimentación eléctrica de los equipos se evalúa aparte | —\nALR-0040 | 07.01.01 | Puerta contraplacada interior | Definición de especificación de puerta P-1 de ingreso a departamentos | ✓ | ✓ | ✗ | ✓ | Media | Mismo tipo de puerta (contraplacada) y unidad und; la partida aplica a puertas interiores y P-1 es de ingreso desde áreas comunes, con alma sólida y chapa de seguridad; verificar alcance contractual | 07.01.02\nALR-0041 | 08.01.02 | Enchape de porcelanato en fachada | Variación: reemplazo de pintura elastomérica por enchape de porcelanato 60 × 120 cm | ✓ | ✓ | ✓ | ✓ | Alta | Mismo elemento (enchape de porcelanato en fachada), especialidad y unidad m²; la partida no fija formato; implica deductivo de 09.01.02 | —\nALR-0042 | 07.03.01 | Baranda de acero inoxidable | Variación: cambio de baranda de fierro pintado por acero inoxidable en escaleras de evacuación | ✓ | ✓ | ✗ | ✓ | Media | Mismo elemento, material y unidad m; la partida no estaba prevista para las escaleras de evacuación (la baranda original era de fierro pintado) | SIN PARTIDA (no hay partida de baranda de fierro pintado en la lista)\nALR-0043 | 11.02.01 | Salida de tomacorriente doble | Adicional: salidas de tomacorriente doble en departamentos tipo B | ✓ | ✓ | ✓ | ✓ | Alta | Mismo tipo de elemento y especialidad; unidad pto compatible; la partida no restringe ambiente | —\nALR-0044 | SIN PARTIDA | SIN PARTIDA | Aceleración: adelanto de hito de entrega del local comercial del nivel 1 | ✗ | ✗ | ✗ | ✗ | Baja | Es un cambio de plazo, no de un elemento físico; ninguna partida cumple al menos dos criterios; se evalúa como propuesta de aceleración | SIN PARTIDA (gestionar como propuesta de aceleración de plazo)",
+   "instruccion": "I2 v1.0",
+   "hechos": [
+    "ALR-0026",
+    "ALR-0027",
+    "ALR-0028",
+    "ALR-0029",
+    "ALR-0030",
+    "ALR-0031",
+    "ALR-0032",
+    "ALR-0033",
+    "ALR-0034",
+    "ALR-0035",
+    "ALR-0036",
+    "ALR-0037",
+    "ALR-0038",
+    "ALR-0039",
+    "ALR-0040",
+    "ALR-0041",
+    "ALR-0042",
+    "ALR-0043",
+    "ALR-0044"
+   ]
+  },
+  {
+   "etiqueta": "I3",
+   "inicio": "2026-11-02T14:37:21.781Z",
+   "fin": "2026-11-02T14:37:30.181Z",
+   "segundos": 8.4,
+   "modelo": "claude-opus-5-5",
+   "stop_reason": "end_turn",
+   "texto": "14.3 | EL CONTRATISTA deberá notificar por escrito a LA PROPIETARIA cualquier hecho que considere que genera una variación del precio o del plazo dentro de los siete (7) días calendario siguientes a la recepción del documento que la origina. Vencido dicho plazo, se entenderá que EL CONTRATISTA renuncia al reclamo correspondiente. | recepcion | 7 | calendario | Se entiende que EL CONTRATISTA renuncia al reclamo correspondiente\n14.5 | Cuando la variación afecte la ruta crítica, EL CONTRATISTA solicitará la ampliación de plazo dentro de los quince (15) días hábiles siguientes a la fecha en que tomó conocimiento del hecho, adjuntando el análisis del cronograma vigente. | conocimiento | 15 | habiles | no explícito",
+   "instruccion": "I3 v1.0"
+  }
+ ],
+ "hechos": [
+  {
+   "doc_id": "E-101",
+   "n": 1,
+   "cambio": "Se agranda la zapata Z-3: pasa de 2,20 × 2,20 m con h = 0,60 m a 2,60 × 2,60 m con h = 0,70 m por nuevo estudio de suelos. Aumentan la excavación, el concreto, el acero, el encofrado y el solado de esas zapatas",
+   "ubicacion": "Cimentación, ejes B-4 y C-4",
+   "especialidad": "Estructuras",
+   "elemento": "Zapata Z-3",
+   "cita": "Z-3 2,60 × 2,60 m, h = 0,70 m (ejes B-4 y C-4)",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0001"
+  },
+  {
+   "doc_id": "E-204",
+   "n": 1,
+   "cambio": "La placa P-7 pasa de 2,80 a 3,20 m de altura aunque la revisión figura como corrección de cota. Aumentan el concreto, el acero y el encofrado. Hay que confirmar el alcance: la elevación indica niveles 3 a 6 y la nota solo nivel 4, sector B",
+   "ubicacion": "Eje 7, niveles 3 a 6 (nota: nivel 4, sector B)",
+   "especialidad": "Estructuras",
+   "elemento": "Placa P-7",
+   "cita": "La altura de la placa P-7 en el eje 7, nivel 4, sector B, pasa de 2,80 a 3,20 m.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0002"
+  },
+  {
+   "doc_id": "E-210",
+   "n": 1,
+   "cambio": "Se agrega acero superior en la viga V-14: 2Ø3/4\" en bastones en los apoyos de los ejes 3 y 4, además del acero corrido existente. Es mayor habilitado y colocación de acero",
+   "ubicacion": "Nivel 5, apoyos de ejes 3 y 4",
+   "especialidad": "Estructuras",
+   "elemento": "Viga V-14",
+   "cita": "acero superior 2Ø3/4\" corrido + 2Ø3/4\" bastones en apoyos de ejes 3 y 4",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0003"
+  },
+  {
+   "doc_id": "E-212",
+   "n": 1,
+   "cambio": "Un paño de losa aligerada de 0,20 m pasa a losa maciza de 0,20 m por el paso de ductos. Se elimina el ladrillo de techo en ese paño y aumentan el concreto y el acero",
+   "ubicacion": "Nivel 6, paño entre ejes C–D / 3–4",
+   "especialidad": "Estructuras",
+   "elemento": "Losa del nivel 6",
+   "cita": "excepto paño entre ejes C–D / 3–4, que pasa a losa maciza e = 0,20 m por paso de ductos.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0004"
+  },
+  {
+   "doc_id": "E-215",
+   "n": 1,
+   "cambio": "La viga V-20 pasa de 0,60 a 0,70 m de peralte y su fondo baja de NPT +21,80 a +21,70 m, aunque la revisión figura como corrección de cotas. Aumentan el concreto, el encofrado y el acero, y puede haber interferencia con instalaciones o vanos. El corte 2-2 todavía indica 0,30 × 0,60 m: hay que aclararlo con el proyectista",
+   "ubicacion": "Nivel 8, entre ejes B y C, corte 2-2",
+   "especialidad": "Estructuras",
+   "elemento": "Viga V-20",
+   "cita": "Fondo de viga a NPT +21,70 m; la altura de la viga V-20 pasa de 0,60 a 0,70 m.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0005"
+  },
+  {
+   "doc_id": "E-220",
+   "n": 1,
+   "cambio": "La escalera E-2 pasa de un tramo único a dos tramos con un descanso intermedio de 1,20 × 2,40 m. Cambian el encofrado, el concreto, el acero y el trazo de la escalera",
+   "ubicacion": "Entre nivel 1 y nivel 2",
+   "especialidad": "Estructuras",
+   "elemento": "Escalera E-2",
+   "cita": "dos tramos entre nivel 1 y nivel 2 con descanso intermedio de 1,20 × 2,40 m, garganta e = 0,15 m.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0006"
+  },
+  {
+   "doc_id": "E-230",
+   "n": 1,
+   "cambio": "La sección de la columna C-5 sube de 0,40 × 0,60 m a 0,50 × 0,70 m. Aumentan el concreto y el encofrado, y puede haber interferencias con la arquitectura y los estacionamientos",
+   "ubicacion": "Sótano 2 a nivel 1",
+   "especialidad": "Estructuras",
+   "elemento": "Columna C-5",
+   "cita": "C-5 0,50 × 0,70 m, 12Ø3/4\" (sótano 2 a nivel 1).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0007"
+  },
+  {
+   "doc_id": "E-230",
+   "n": 2,
+   "cambio": "El refuerzo longitudinal de la columna C-5 pasa de 10Ø3/4\" a 12Ø3/4\". Aumenta el acero",
+   "ubicacion": "Sótano 2 a nivel 1",
+   "especialidad": "Estructuras",
+   "elemento": "Columna C-5",
+   "cita": "C-5 0,50 × 0,70 m, 12Ø3/4\" (sótano 2 a nivel 1).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0008"
+  },
+  {
+   "doc_id": "E-231",
+   "n": 1,
+   "cambio": "La junta sísmica entre los bloques A y B pasa de 2\" a 3\" en toda la altura. Aumenta la plancha de poliestireno y cambian el trazo de los bordes de ambos bloques y los tapajuntas",
+   "ubicacion": "Entre bloques A y B, niveles 1 a 12",
+   "especialidad": "Estructuras",
+   "elemento": "Junta sísmica, detalle 4",
+   "cita": "junta sísmica entre bloques A y B de 3\" con plancha de poliestireno, niveles 1 a 12.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0009"
+  },
+  {
+   "doc_id": "E-240",
+   "n": 1,
+   "cambio": "El espesor de la placa PL-2 pasa de 0,25 a 0,30 m. Aumentan el concreto y probablemente el acero, y hay que ajustar el encofrado",
+   "ubicacion": "Eje A, sótano 1 a nivel 3",
+   "especialidad": "Estructuras",
+   "elemento": "Placa PL-2",
+   "cita": "PLACA PL-2 (eje A): e = 0,30 m, sótano 1 a nivel 3.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0010"
+  },
+  {
+   "doc_id": "E-240",
+   "n": 2,
+   "cambio": "Se elimina la viga chata VCH-3 y el tabique se apoya directamente en la losa maciza. Es un deductivo de concreto, acero y encofrado de esa viga",
+   "ubicacion": "Nivel 2, ejes 5–6",
+   "especialidad": "Estructuras",
+   "elemento": "Viga chata VCH-3",
+   "cita": "VIGA CHATA VCH-3: eliminada; el tabique se apoya directamente en la losa maciza.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:33:48.121Z",
+   "id": "ALR-0011"
+  },
+  {
+   "doc_id": "E-250",
+   "n": 1,
+   "cambio": "Se aumenta el espesor de los muros perimetrales de la cisterna de 0,25 m a 0,30 m, con el mismo concreto f'c = 280 kg/cm². Hay mayor volumen de concreto y puede cambiar el acero y el encofrado",
+   "ubicacion": "Cisterna, muros perimetrales",
+   "especialidad": "Estructuras",
+   "elemento": "Muros de cisterna",
+   "cita": "MUROS DE CISTERNA: e = 0,30 m, concreto f'c = 280 kg/cm².",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0012"
+  },
+  {
+   "doc_id": "A-112",
+   "n": 1,
+   "cambio": "Se elimina el tabique T-3 de albañilería de 0,15 m entre ejes C–D y la sala y el estudio quedan integrados. Hay menos albañilería y tarrajeo, y cambian los acabados de piso, muros y techo en el ambiente integrado",
+   "ubicacion": "Nivel 2, entre ejes C–D",
+   "especialidad": "Arquitectura",
+   "elemento": "Tabique T-3",
+   "cita": "PLANTA NIVEL 2: se elimina el tabique T-3 entre ejes C–D; sala y estudio quedan integrados.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0013"
+  },
+  {
+   "doc_id": "A-115",
+   "n": 1,
+   "cambio": "Los tabiques entre departamentos cambian de drywall simple de 0,10 m a drywall acústico con lana mineral de 0,15 m. Cambian los materiales y la mano de obra, y disminuye el área útil de los departamentos",
+   "ubicacion": "Planta típica, niveles 3 a 10, entre departamentos",
+   "especialidad": "Arquitectura",
+   "elemento": "Tabiquería drywall entre departamentos",
+   "cita": "LEYENDA: tabiques entre departamentos de drywall acústico con lana mineral e = 0,15 m (niveles 3 a 10).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0014"
+  },
+  {
+   "doc_id": "A-201",
+   "n": 1,
+   "cambio": "El piso de los dormitorios cambia de laminado de 8 mm con zócalo de MDF a porcelanato de 60 × 60 cm con zócalo de porcelanato de 10 cm de altura. Cambian el material, la mano de obra y la preparación de la base",
+   "ubicacion": "Dormitorios, niveles 3 a 10",
+   "especialidad": "Arquitectura",
+   "elemento": "Piso y zócalo de dormitorios",
+   "cita": "DORMITORIOS (niveles 3 a 10): piso de porcelanato 60 × 60 cm con zócalo de porcelanato h = 10 cm.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0015"
+  },
+  {
+   "doc_id": "A-205",
+   "n": 1,
+   "cambio": "La puerta contraplacada de 0,90 m del vestíbulo previo cambia a puerta cortafuego de 90 minutos con barra antipánico en cada nivel. La puerta es de mayor especificación y puede tener un plazo de fabricación largo",
+   "ubicacion": "Escalera de evacuación, vestíbulo previo, niveles 1 a 10",
+   "especialidad": "Arquitectura",
+   "elemento": "Puerta de vestíbulo previo",
+   "cita": "VESTÍBULO PREVIO: puerta cortafuego de 90 minutos con barra antipánico, una por nivel (niveles 1 a 10).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0016"
+  },
+  {
+   "doc_id": "A-220",
+   "n": 1,
+   "cambio": "Se agrega cielo raso de drywall a 2,50 m de altura para ocultar las bandejas, en reemplazo del techo tarrajeado y pintado. Es una partida nueva que requiere coordinar con las instalaciones",
+   "ubicacion": "Hall de ascensores, niveles 1 a 12",
+   "especialidad": "Arquitectura",
+   "elemento": "Cielo raso",
+   "cita": "HALL DE ASCENSORES (niveles 1 a 12): cielo raso de drywall a h = 2,50 m para ocultar bandejas.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0017"
+  },
+  {
+   "doc_id": "A-310",
+   "n": 1,
+   "cambio": "El enchape de porcelanato de 60 × 120 cm de la fachada cambia a panel de aluminio compuesto color grafito sobre subestructura metálica. Cambian el sistema constructivo y el proveedor, y se agrega la subestructura metálica",
+   "ubicacion": "Fachada sur, niveles 3 a 6",
+   "especialidad": "Arquitectura",
+   "elemento": "Revestimiento de fachada",
+   "cita": "FACHADA SUR (niveles 3 a 6): revestimiento con panel de aluminio compuesto color grafito sobre subestructura metálica.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0018"
+  },
+  {
+   "doc_id": "A-320",
+   "n": 1,
+   "cambio": "El vidrio de la ventana V-4 cambia de templado de 6 mm a laminado acústico de 8 mm. Es un vidrio de mayor especificación y puede requerir cambiar la perfilería de aluminio",
+   "ubicacion": "Fachada este, niveles 3 a 12",
+   "especialidad": "Arquitectura",
+   "elemento": "Ventana V-4",
+   "cita": "VENTANA V-4 (1,50 × 1,40 m, fachada este, niveles 3 a 12): aluminio con vidrio laminado acústico de 8 mm.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0019"
+  },
+  {
+   "doc_id": "A-410",
+   "n": 1,
+   "cambio": "La altura del enchape cerámico de 30 × 60 cm en los baños típicos sube de 2,10 m a 2,40 m, hasta el cielo raso. Aumentan el material y la mano de obra del enchape",
+   "ubicacion": "Baños típicos, elevaciones",
+   "especialidad": "Arquitectura",
+   "elemento": "Enchape cerámico de muros",
+   "cita": "NOTA 2: Altura de enchape h = 2,40 m (hasta cielo raso).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:08.268Z",
+   "id": "ALR-0020"
+  },
+  {
+   "doc_id": "A-500",
+   "n": 1,
+   "cambio": "Se cambia el parapeto de vidrio templado de 10 mm por una baranda de acero inoxidable de h = 1,10 m en los mismos 38 m lineales. Cambian la partida de suministro e instalación, el material y el proveedor.",
+   "ubicacion": "Terraza nivel 12",
+   "especialidad": "Arquitectura",
+   "elemento": "Parapeto / baranda perimetral de terraza",
+   "cita": "baranda de acero inoxidable h = 1,10 m sobre murete de 0,30 m, 38 m lineales",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0021"
+  },
+  {
+   "doc_id": "A-500",
+   "n": 2,
+   "cambio": "Se agrega un murete de 0,30 m como base de la nueva baranda en los 38 m lineales. Es un trabajo nuevo que no estaba en la Rev. A y obliga a ejecutar el murete antes de montar la baranda.",
+   "ubicacion": "Terraza nivel 12",
+   "especialidad": "Arquitectura",
+   "elemento": "Murete de apoyo de baranda",
+   "cita": "baranda de acero inoxidable h = 1,10 m sobre murete de 0,30 m, 38 m lineales",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0022"
+  },
+  {
+   "doc_id": "IS-105",
+   "n": 1,
+   "cambio": "Se pasa de una sola electrobomba de 5 HP a un sistema dúplex con dos electrobombas de velocidad variable de 5 HP que trabajan en alternancia. Se agrega una bomba de respaldo con su suministro, montaje e interconexión.",
+   "ubicacion": "Cuarto de bombas · cisterna",
+   "especialidad": "Instalaciones sanitarias",
+   "elemento": "Equipo de bombeo",
+   "cita": "sistema dúplex con dos electrobombas de velocidad variable de 5 HP funcionando en alternancia",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0023"
+  },
+  {
+   "doc_id": "IS-201",
+   "n": 1,
+   "cambio": "La montante MD-3 sube de PVC Ø4\" a PVC Ø6\" en los niveles 1 a 12 por el aporte de la cocina del nivel 12. Cambian la tubería, los accesorios y los pases en losas.",
+   "ubicacion": "Montantes de desagüe · niveles 1 a 12",
+   "especialidad": "Instalaciones sanitarias",
+   "elemento": "Montante MD-3",
+   "cita": "MONTANTE MD-3: PVC Ø6\", niveles 1 a 12, por aporte de la cocina del nivel 12",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0024"
+  },
+  {
+   "doc_id": "IS-220",
+   "n": 1,
+   "cambio": "La red de agua caliente cambia de material: de CPVC Ø1/2\" a PP-R termofusionado Ø20 mm. Cambian la tubería, los accesorios y el método de unión, que ahora requiere equipo de termofusión.",
+   "ubicacion": "Agua caliente · departamentos típicos",
+   "especialidad": "Instalaciones sanitarias",
+   "elemento": "Red de agua caliente",
+   "cita": "tubería PP-R termofusionada Ø20 mm desde terma a puntos de consumo",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0025"
+  },
+  {
+   "doc_id": "IS-230",
+   "n": 1,
+   "cambio": "Se agrega un lavatorio de loza con grifería en el cuarto de limpieza de cada nivel, del 1 al 12. Son aparatos sanitarios y grifería que no estaban en la Rev. A.",
+   "ubicacion": "Cuarto de limpieza · planta típica · niveles 1 a 12",
+   "especialidad": "Instalaciones sanitarias",
+   "elemento": "Lavatorio con grifería",
+   "cita": "lavatorio de loza con grifería en cada nivel (niveles 1 a 12), punto de agua fría y sumidero",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0026"
+  },
+  {
+   "doc_id": "IE-031",
+   "n": 1,
+   "cambio": "Se agregan tres salidas de fuerza trifásicas de 380 V para los racks de telecomunicaciones de la sala técnica. Son salidas, canalización y cableado nuevos.",
+   "ubicacion": "Sala técnica · sótano 1",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Salidas de fuerza trifásicas para racks",
+   "cita": "tres salidas de fuerza trifásicas 380 V para racks",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0027"
+  },
+  {
+   "doc_id": "IE-040",
+   "n": 1,
+   "cambio": "Los conductores de fase del alimentador TG–TD3 suben de 3-1×35 mm² a 3-1×50 mm² N2XOH en los mismos 62 m, por recálculo de caída de tensión. Puede requerir revisar si la canalización existente alcanza.",
+   "ubicacion": "Diagrama unifilar · alimentador TG–TD3",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Conductores de fase del alimentador TG–TD3",
+   "cita": "ALIMENTADOR TG–TD3: 3-1×50 mm² N2XOH + 1×25 mm² (T), 62 m.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0028"
+  },
+  {
+   "doc_id": "IE-040",
+   "n": 2,
+   "cambio": "El conductor de tierra del alimentador TG–TD3 sube de 1×16 mm² a 1×25 mm² en los mismos 62 m.",
+   "ubicacion": "Diagrama unifilar · alimentador TG–TD3",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Conductor de tierra del alimentador TG–TD3",
+   "cita": "ALIMENTADOR TG–TD3: 3-1×50 mm² N2XOH + 1×25 mm² (T), 62 m.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0029"
+  },
+  {
+   "doc_id": "IE-045",
+   "n": 1,
+   "cambio": "Se agrega un tablero nuevo, TD-ACI, para la bomba contra incendio, adosado al cuarto de bombas. Es un tablero adicional con su suministro, montaje y conexionado.",
+   "ubicacion": "Tableros · sótano 2 · cuarto de bombas",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Tablero TD-ACI",
+   "cita": "nuevo tablero TD-ACI adosado al cuarto de bombas",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:38.557Z",
+   "id": "ALR-0030"
+  },
+  {
+   "doc_id": "IE-060",
+   "n": 1,
+   "cambio": "Se aumenta el ancho de la bandeja portacables B-1 de 300 mm a 400 mm en los 45 m de sótano 2",
+   "ubicacion": "Sótano 2, canalizaciones",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Bandeja portacables galvanizada B-1",
+   "cita": "BANDEJA B-1: bandeja portacables galvanizada de 400 mm, 45 m en sótano 2.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0031"
+  },
+  {
+   "doc_id": "IE-070",
+   "n": 1,
+   "cambio": "Se agregan 18 salidas de alumbrado con luminaria LED hermética en estacionamientos, que pasan de 42 a 60",
+   "ubicacion": "Sótano 1, estacionamientos",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Salidas de alumbrado con luminaria LED hermética",
+   "cita": "ESTACIONAMIENTOS S1: 60 salidas de alumbrado con luminaria LED hermética (se agregan 18).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0032"
+  },
+  {
+   "doc_id": "IM-101",
+   "n": 1,
+   "cambio": "Se agregan 24 rociadores en los depósitos D-1 a D-12, que no estaban en la revisión anterior",
+   "ubicacion": "Sótano 2, depósitos D-1 a D-12",
+   "especialidad": "Instalaciones mecánicas y ACI",
+   "elemento": "Rociadores",
+   "cita": "86 rociadores colgantes en estacionamientos y 24 rociadores adicionales en depósitos D-1 a D-12.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0033"
+  },
+  {
+   "doc_id": "IM-110",
+   "n": 1,
+   "cambio": "Se aumenta la sección del ducto de extracción DE-1 de 600 × 400 mm a 800 × 400 mm por recálculo de caudal",
+   "ubicacion": "Sótanos 1 y 2",
+   "especialidad": "Instalaciones mecánicas y ACI",
+   "elemento": "Ducto de extracción de monóxido DE-1",
+   "cita": "DUCTO DE EXTRACCIÓN DE-1: plancha galvanizada 800 × 400 mm, sótanos 1 y 2.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0034"
+  },
+  {
+   "doc_id": "IM-120",
+   "n": 1,
+   "cambio": "Se agrega un detector de humo por nivel en los halls, 12 detectores en total, que no estaban en la revisión anterior",
+   "ubicacion": "Halls, niveles 1 a 12",
+   "especialidad": "Instalaciones mecánicas y ACI",
+   "elemento": "Detectores de humo",
+   "cita": "sirena con luz estroboscópica y un detector de humo por nivel (12 detectores).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0035"
+  },
+  {
+   "doc_id": "IM-130",
+   "n": 1,
+   "cambio": "La tubería de la montante ACI Ø4\" cambia de acero cédula 10 a acero cédula 40 por presión de trabajo",
+   "ubicacion": "Montante ACI, sótano 2 a nivel 12",
+   "especialidad": "Instalaciones mecánicas y ACI",
+   "elemento": "Tubería de montante ACI",
+   "cita": "MONTANTE ACI: tubería de acero cédula 40 Ø4\", sótano 2 a nivel 12.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0036"
+  },
+  {
+   "doc_id": "RFI-147",
+   "n": 1,
+   "cambio": "Se agregan 2Ø5/8\" en la cara superior de la viga V-12 en el apoyo del eje 6, con 1,80 m a cada lado",
+   "ubicacion": "Nivel 4, viga V-12, apoyo del eje 6, detalle 5 de la lámina E-209",
+   "especialidad": "Estructuras",
+   "elemento": "Acero de refuerzo de la viga V-12",
+   "cita": "Agregar 2Ø5/8\" adicionales en la cara superior de la viga V-12 en el apoyo del eje 6, con longitud de 1,80 m a cada lado",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0037"
+  },
+  {
+   "doc_id": "RFI-155",
+   "n": 1,
+   "cambio": "En el cuarto de bombas se cambia el piso de porcelanato por cemento pulido con endurecedor superficial y pintura epóxica de tráfico pesado",
+   "ubicacion": "Cuarto de bombas",
+   "especialidad": "Arquitectura",
+   "elemento": "Acabado de piso",
+   "cita": "En el cuarto de bombas se reemplaza el porcelanato por piso de cemento pulido con endurecedor superficial y pintura epóxica de tráfico pesado.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0038"
+  },
+  {
+   "doc_id": "RFI-160",
+   "n": 1,
+   "cambio": "Se agrega climatización en la sala de reuniones con 2 equipos split de 24 000 BTU y sus condensadoras en el patio de servicio. Los planos no la incluían",
+   "ubicacion": "Nivel 1, sala de reuniones y patio de servicio",
+   "especialidad": "Instalaciones mecánicas y ACI",
+   "elemento": "Equipos de aire acondicionado tipo split",
+   "cita": "Instalar 2 equipos de aire acondicionado tipo split de 24 000 BTU en la sala de reuniones del nivel 1, con condensadoras en el patio de servicio.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:34:51.564Z",
+   "id": "ALR-0039"
+  },
+  {
+   "doc_id": "RFI-163",
+   "n": 1,
+   "cambio": "Se define la especificación de la puerta P-1 de ingreso a departamentos, que no figuraba en el cuadro de vanos: puerta contraplacada de alma sólida con chapa de seguridad de tres golpes, de 1,00 × 2,10 m, una por departamento (64 unidades). Hay que verificar si está considerada en el presupuesto contractual",
+   "ubicacion": "Respuesta del RFI, cuadro de vanos, puertas de ingreso a departamentos",
+   "especialidad": "Arquitectura",
+   "elemento": "Puerta P-1",
+   "cita": "La puerta P-1 de ingreso a departamentos será contraplacada de alma sólida con chapa de seguridad de tres golpes, 1,00 × 2,10 m",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:35:12.187Z",
+   "id": "ALR-0040"
+  },
+  {
+   "doc_id": "CT-018",
+   "n": 1,
+   "cambio": "Cambio de acabado en la fachada norte, niveles 3 a 6: se reemplaza la pintura elastomérica por enchape de porcelanato de 60 × 120 cm según la muestra aprobada. Es una variación de alcance y especificación",
+   "ubicacion": "Fachada norte, niveles 3 a 6",
+   "especialidad": "Arquitectura",
+   "elemento": "Acabado de fachada",
+   "cita": "instruimos que el acabado de la fachada norte, niveles 3 a 6, cambie de pintura elastomérica a enchape de porcelanato 60 × 120 cm",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:35:12.187Z",
+   "id": "ALR-0041"
+  },
+  {
+   "doc_id": "CT-024",
+   "n": 1,
+   "cambio": "Cambio de material en las barandas de las escaleras de evacuación, niveles 1 a 12: se reemplaza el fierro pintado por acero inoxidable. Es una variación de especificación",
+   "ubicacion": "Escaleras de evacuación, niveles 1 a 12",
+   "especialidad": "Arquitectura",
+   "elemento": "Barandas de escalera",
+   "cita": "las barandas de las escaleras de evacuación, niveles 1 a 12, se ejecuten en acero inoxidable en lugar de fierro pintado",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:35:12.187Z",
+   "id": "ALR-0042"
+  },
+  {
+   "doc_id": "CT-030",
+   "n": 1,
+   "cambio": "Se agregan seis salidas de tomacorriente doble por departamento tipo B, niveles 3 a 10 (16 departamentos). Es un trabajo adicional al alcance contractual",
+   "ubicacion": "Departamentos tipo B, niveles 3 a 10",
+   "especialidad": "Instalaciones eléctricas",
+   "elemento": "Salidas de tomacorriente doble",
+   "cita": "Se instruye adicionar seis (6) salidas de tomacorriente doble por departamento tipo B, niveles 3 a 10 (16 departamentos).",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:35:12.187Z",
+   "id": "ALR-0043"
+  },
+  {
+   "doc_id": "CT-033",
+   "n": 1,
+   "cambio": "Se pide adelantar en 15 días calendario la entrega del local comercial del nivel 1 respecto del hito contractual. Afecta el plazo y requiere una propuesta de acciones de aceleración",
+   "ubicacion": "Local comercial del nivel 1",
+   "especialidad": "General",
+   "elemento": "Hito de entrega",
+   "cita": "solicitamos adelantar en quince (15) días calendario la entrega del local comercial del nivel 1 respecto del hito contractual.",
+   "cita_verificada": true,
+   "generado_en": "2026-11-02T14:35:12.187Z",
+   "id": "ALR-0044"
+  }
+ ],
+ "sin_cambios": [
+  "E-105",
+  "A-150",
+  "IS-210",
+  "IE-050",
+  "RFI-152",
+  "RFI-170",
+  "CT-021",
+  "CT-027"
+ ],
+ "rechazadas": [],
+ "vinculos": {
+  "ALR-0001": {
+   "partida": "03.01.06",
+   "partida_desc": "Concreto f'c = 210 kg/cm² en zapatas y cimientos",
+   "actividad": "Mayor volumen de concreto en zapatas Z-3 (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (zapata) y la misma especialidad, en la cimentación. La unidad m³ sirve para medir el mayor volumen al pasar de 2,20 × 2,20 × 0,60 a 2,60 × 2,60 × 0,70 m. La excavación (02.01.01) y el acero (03.03.04) también se afectan. En la lista no hay partidas de encofrado ni de solado de zapatas",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0002": {
+   "partida": "03.02.05",
+   "partida_desc": "Encofrado de placas, h > 3,00 m",
+   "actividad": "Encofrado de la placa P-7, que pasa a una altura mayor de 3,00 m (reclasificación)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Con h = 3,20 m la placa queda en el rango h > 3,00 m y sale de la partida 03.02.04 (h ≤ 3,00 m). También se afectan el concreto (03.01.01) y el acero (03.03.02). Falta confirmar el alcance: la elevación indica niveles 3 a 6 y la nota solo nivel 4, sector B",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0003": {
+   "partida": "03.03.01",
+   "partida_desc": "Acero corrugado fy = 4200 kg/cm² en vigas",
+   "actividad": "Mayor habilitado y colocación de acero en la viga V-14 (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (viga) y la misma especialidad. Los bastones 2Ø3/4\" en los apoyos de los ejes 3 y 4 del nivel 5 se miden en kg, igual que la partida",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0004": {
+   "partida": "03.01.04",
+   "partida_desc": "Concreto f'c = 210 kg/cm² en losas macizas",
+   "actividad": "Paño de losa que pasa de aligerada a maciza (mayor concreto)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El paño queda como losa maciza de 0,20 m en el nivel 6 y se mide en m³. Hay deductivo en 03.01.05 (losa aligerada) y adicional en 03.03.03 (acero en losas). En la lista no hay partida de ladrillo de techo",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0005": {
+   "partida": "03.01.03",
+   "partida_desc": "Concreto f'c = 280 kg/cm² en vigas",
+   "actividad": "Mayor concreto en la viga V-20 por el aumento de peralte (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (viga). El peralte pasa de 0,60 a 0,70 m y se mide en m³. También se afectan el encofrado (03.02.02) y el acero (03.03.01). Falta aclarar con el proyectista que el corte 2-2 todavía indica 0,30 × 0,60 m, y revisar las interferencias con instalaciones y vanos",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0006": {
+   "partida": "03.01.07",
+   "partida_desc": "Concreto f'c = 175 kg/cm² en escaleras",
+   "actividad": "Cambio de la geometría de la escalera E-2 con un descanso intermedio (concreto)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (escalera) entre los niveles 1 y 2 y se mide en m³. También se afecta el encofrado (03.02.06). En la lista no hay partida específica de acero en escaleras",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0007": {
+   "partida": "03.01.02",
+   "partida_desc": "Concreto f'c = 280 kg/cm² en columnas",
+   "actividad": "Mayor concreto en la columna C-5 por el aumento de sección (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (columna). La sección pasa de 0,40 × 0,60 a 0,50 × 0,70 m y se mide en m³. También se afecta el encofrado (03.02.01). Hay que revisar las interferencias con la arquitectura y los estacionamientos",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0008": {
+   "partida": "03.03.02",
+   "partida_desc": "Acero corrugado fy = 4200 kg/cm² en columnas y placas",
+   "actividad": "Mayor acero longitudinal en la columna C-5 (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (columna) y la misma especialidad. El refuerzo pasa de 10Ø3/4\" a 12Ø3/4\" y se mide en kg",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0009": {
+   "partida": "03.04.01",
+   "partida_desc": "Junta sísmica con plancha de poliestireno, e = 2\"",
+   "actividad": "Junta sísmica que aumenta de espesor entre los bloques A y B",
+   "criterios": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "confianza": "Media",
+   "confianza_modelo": "Media",
+   "confianza_ajustada": false,
+   "sustento": "Coinciden el elemento, la especialidad y la ubicación, pero la partida es de e = 2\" y el cambio pide e = 3\". En la lista no hay partida de tapajuntas",
+   "alternativa": "03.01.01",
+   "alternativa_desc": "Concreto f'c = 280 kg/cm² en placas y muros"
+  },
+  "ALR-0010": {
+   "partida": "03.01.01",
+   "partida_desc": "Concreto f'c = 280 kg/cm² en placas y muros",
+   "actividad": "Mayor concreto en la placa PL-2 por el aumento de espesor (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (placa). El espesor pasa de 0,25 a 0,30 m y se mide en m³. Probablemente también se afectan el acero (03.03.02) y el encofrado (03.02.04 o 03.02.05, según la altura de cada nivel)",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0011": {
+   "partida": "03.01.03",
+   "partida_desc": "Concreto f'c = 280 kg/cm² en vigas",
+   "actividad": "Eliminación de la viga chata VCH-3 (deductivo de concreto)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "La viga chata es un tipo de viga y el concreto se mide en m³. El deductivo también alcanza al acero (03.03.01) y al encofrado (03.02.02)",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0012": {
+   "partida": "03.01.01",
+   "partida_desc": "Concreto f'c = 280 kg/cm² en placas y muros",
+   "actividad": "Mayor concreto en los muros de la cisterna (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo elemento (muro de concreto). El f'c = 280 kg/cm² coincide y el volumen se mide en m³. Puede afectarse el acero (03.03.02)",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0013": {
+   "partida": "04.01.02",
+   "partida_desc": "Muro de albañilería de soga, e = 0,15 m",
+   "actividad": "Eliminación del tabique T-3 (deductivo de albañilería)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es un tabique de albañilería de e = 0,15 m y se mide en m². El deductivo también alcanza al tarrajeo (05.01.01) y a la pintura (09.01.01). Hay que revisar los acabados del ambiente integrado",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0014": {
+   "partida": "04.02.02",
+   "partida_desc": "Tabique de drywall acústico con lana mineral, e = 0,15 m",
+   "actividad": "Cambio de tabique simple a tabique acústico entre departamentos",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El tipo de tabique, el espesor de 0,15 m y la unidad m² coinciden con la partida. Hay deductivo en 04.02.01",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0015": {
+   "partida": "06.02.01",
+   "partida_desc": "Piso de porcelanato 60 × 60 cm",
+   "actividad": "Cambio de piso laminado a porcelanato en los dormitorios",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El formato de 60 × 60 cm y la unidad m² coinciden. Hay deductivo en 06.02.02 y adicional en 06.03.01 (zócalo de h = 10 cm). En la lista no hay partida de zócalo de MDF",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0016": {
+   "partida": "07.01.02",
+   "partida_desc": "Puerta cortafuego de 90 minutos",
+   "actividad": "Cambio de puerta contraplacada a puerta cortafuego en el vestíbulo previo",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El elemento, la resistencia de 90 minutos y la unidad (und) coinciden. Hay deductivo en 07.01.01. Hay que verificar si la barra antipánico está incluida en la partida y revisar el plazo de fabricación",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0017": {
+   "partida": "05.02.01",
+   "partida_desc": "Cielo raso de drywall",
+   "actividad": "Nuevo cielo raso de drywall en el hall de ascensores",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "La partida ya existe en el contrato y se mide en m². Hay que confirmar si su alcance incluye el hall. En la lista no hay partida de tarrajeo de techo; la partida de pintura 09.01.01 es para muros",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0018": {
+   "partida": "08.01.01",
+   "partida_desc": "Revestimiento de fachada con panel de aluminio compuesto",
+   "actividad": "Cambio del revestimiento de la fachada sur a panel de aluminio compuesto",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El sistema, la ubicación en fachada y la unidad m² coinciden. Hay deductivo en 08.01.02. Hay que verificar si la subestructura metálica está incluida en la partida",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0019": {
+   "partida": "07.02.01",
+   "partida_desc": "Ventana de aluminio con vidrio templado de 6 mm",
+   "actividad": "Cambio del vidrio de la ventana V-4",
+   "criterios": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "confianza": "Media",
+   "confianza_modelo": "Media",
+   "confianza_ajustada": false,
+   "sustento": "Coinciden el elemento y la ubicación, pero la partida es de vidrio templado de 6 mm y el cambio pide vidrio laminado acústico de 8 mm. Puede requerir cambiar la perfilería",
+   "alternativa": "07.02.02",
+   "alternativa_desc": "Muro cortina"
+  },
+  "ALR-0020": {
+   "partida": "08.02.01",
+   "partida_desc": "Enchape cerámico en muros de baños",
+   "actividad": "Mayor altura de enchape en los baños típicos (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El elemento, el ambiente y la unidad m² coinciden. La altura pasa de 2,10 a 2,40 m y no hay un rango en la partida que lo contradiga",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0021": {
+   "partida": "07.03.01",
+   "partida_desc": "Baranda de acero inoxidable",
+   "actividad": "Cambio de parapeto de vidrio a baranda de acero inoxidable en la terraza",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El elemento y la unidad (m) coinciden con los 38 m de baranda de h = 1,10 m. En la lista no hay partida de parapeto de vidrio templado para el deductivo",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0022": {
+   "partida": "04.01.01",
+   "partida_desc": "Muro de albañilería de cabeza, e = 0,25 m",
+   "actividad": "Nuevo murete de apoyo de la baranda (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "confianza": "Media",
+   "confianza_modelo": "Media",
+   "confianza_ajustada": false,
+   "sustento": "Un murete es un tipo de muro y está en la terraza, pero los 0,30 m no coinciden con e = 0,25 m. Además, el cambio se mide en m lineales y la partida en m². Falta definir el material y si los 0,30 m son altura o espesor",
+   "alternativa": "03.01.01",
+   "alternativa_desc": "Concreto f'c = 280 kg/cm² en placas y muros"
+  },
+  "ALR-0023": {
+   "partida": "10.04.01",
+   "partida_desc": "Sistema de bombeo de cisterna",
+   "actividad": "Cambio a un sistema de bombeo dúplex con velocidad variable (adicional)",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo sistema, en el cuarto de bombas de la cisterna, y se mide en glb. El alcance aumenta con una segunda electrobomba de 5 HP más su montaje e interconexión",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0024": {
+   "partida": "10.02.02",
+   "partida_desc": "Montante de desagüe PVC",
+   "actividad": "Cambio de diámetro de la montante MD-3",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El elemento, el material (PVC) y la unidad (m) coinciden. La partida no fija un diámetro que contradiga el Ø6\". Hay que revisar los accesorios y los pases en losas",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0025": {
+   "partida": "10.01.02",
+   "partida_desc": "Tubería de agua caliente",
+   "actividad": "Cambio de material de la red de agua caliente",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El elemento y la unidad (m) coinciden. La partida no especifica material, y Ø20 mm equivale a Ø1/2\". Cambian el método de unión y el equipo de termofusión",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0026": {
+   "partida": "10.03.02",
+   "partida_desc": "Lavatorio de loza con grifería",
+   "actividad": "Adicional: suministro e instalación de lavatorio de loza con grifería en cuartos de limpieza",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo aparato sanitario y especialidad; la partida no restringe ambiente y la unidad und coincide con aparatos individuales",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0027": {
+   "partida": "11.02.03",
+   "partida_desc": "Salida de fuerza",
+   "actividad": "Adicional: salidas de fuerza trifásicas 380 V con canalización y cableado para racks",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo tipo de elemento (salida de fuerza) y especialidad; unidad pto compatible; la partida no limita tensión ni ambiente, verificar que el precio unitario cubra salida trifásica",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0028": {
+   "partida": "11.03.02",
+   "partida_desc": "Alimentador con cable N2XOH",
+   "actividad": "Variación: aumento de sección de conductores de fase del alimentador TG–TD3",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Es el mismo alimentador con cable N2XOH, unidad m y misma longitud; solo cambia la sección; la revisión de canalización no tiene partida propia en la lista salvo bandeja",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0029": {
+   "partida": "11.03.02",
+   "partida_desc": "Alimentador con cable N2XOH",
+   "actividad": "Variación: aumento de sección del conductor de tierra del alimentador TG–TD3",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "El conductor de tierra forma parte del alimentador TG–TD3; unidad m y misma longitud; verificar que el tipo de cable de tierra sea el considerado en la partida",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0030": {
+   "partida": "11.03.01",
+   "partida_desc": "Tablero de distribución",
+   "actividad": "Adicional: suministro, montaje y conexionado de tablero TD-ACI",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo tipo de elemento (tablero) y especialidad; unidad und compatible; la partida no restringe ubicación",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0031": {
+   "partida": "11.04.01",
+   "partida_desc": "Bandeja portacables galvanizada",
+   "actividad": "Variación: aumento de ancho de bandeja B-1",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Misma bandeja galvanizada y especialidad; unidad m compatible; la partida no fija ancho, el cambio afecta el precio unitario",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0032": {
+   "partida": "11.01.01",
+   "partida_desc": "Salida de alumbrado",
+   "actividad": "Adicional: salidas de alumbrado con luminaria LED hermética en estacionamientos",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo tipo de elemento y especialidad; unidad pto compatible; verificar si la partida incluye la luminaria hermética",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0033": {
+   "partida": "12.01.01",
+   "partida_desc": "Rociador contra incendio",
+   "actividad": "Adicional: suministro e instalación de rociadores en depósitos",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo elemento y especialidad; unidad und compatible; la partida no restringe ambiente",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0034": {
+   "partida": "12.02.01",
+   "partida_desc": "Ducto de extracción de monóxido en plancha galvanizada",
+   "actividad": "Variación: aumento de sección del ducto DE-1",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo ducto de extracción de monóxido en sótanos; la unidad kg absorbe el cambio de sección",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0035": {
+   "partida": "12.03.01",
+   "partida_desc": "Detector de humo",
+   "actividad": "Adicional: suministro e instalación de detectores de humo en halls",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo elemento y especialidad; unidad und compatible; la partida no restringe ambiente",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0036": {
+   "partida": "12.01.02",
+   "partida_desc": "Tubería ACI de acero cédula 40",
+   "actividad": "Variación: cambio de cédula 10 a cédula 40 en montante ACI",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "La especificación nueva coincide con la partida (acero cédula 40); unidad m compatible; verificar que la partida cubra Ø4\"",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0037": {
+   "partida": "03.03.01",
+   "partida_desc": "Acero corrugado fy = 4200 kg/cm² en vigas",
+   "actividad": "Adicional: refuerzo superior en apoyo de viga V-12",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Acero de refuerzo en viga, misma especialidad; unidad kg compatible con barras Ø5/8\"",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0038": {
+   "partida": "06.02.01",
+   "partida_desc": "Piso de porcelanato 60 × 60 cm",
+   "actividad": "Variación: deductivo de porcelanato y nuevo acabado de cemento pulido con endurecedor y pintura epóxica",
+   "criterios": [
+    false,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Media",
+   "confianza_modelo": "Media",
+   "confianza_ajustada": false,
+   "sustento": "Es la partida afectada por el deductivo; el nuevo acabado (cemento pulido epóxico) es otro tipo de piso y no tiene partida en la lista",
+   "alternativa": "06.01.01",
+   "alternativa_desc": "Contrapiso, e = 5 cm"
+  },
+  "ALR-0039": {
+   "partida": "12.02.02",
+   "partida_desc": "Equipo de aire acondicionado tipo split",
+   "actividad": "Adicional: suministro e instalación de equipos split con condensadoras",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo tipo de equipo y especialidad; unidad und compatible; la partida no fija capacidad; la alimentación eléctrica de los equipos se evalúa aparte",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0040": {
+   "partida": "07.01.01",
+   "partida_desc": "Puerta contraplacada interior",
+   "actividad": "Definición de especificación de puerta P-1 de ingreso a departamentos",
+   "criterios": [
+    true,
+    true,
+    false,
+    true
+   ],
+   "confianza": "Media",
+   "confianza_modelo": "Media",
+   "confianza_ajustada": false,
+   "sustento": "Mismo tipo de puerta (contraplacada) y unidad und; la partida aplica a puertas interiores y P-1 es de ingreso desde áreas comunes, con alma sólida y chapa de seguridad; verificar alcance contractual",
+   "alternativa": "07.01.02",
+   "alternativa_desc": "Puerta cortafuego de 90 minutos"
+  },
+  "ALR-0041": {
+   "partida": "08.01.02",
+   "partida_desc": "Enchape de porcelanato en fachada",
+   "actividad": "Variación: reemplazo de pintura elastomérica por enchape de porcelanato 60 × 120 cm",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo elemento (enchape de porcelanato en fachada), especialidad y unidad m²; la partida no fija formato; implica deductivo de 09.01.02",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0042": {
+   "partida": "07.03.01",
+   "partida_desc": "Baranda de acero inoxidable",
+   "actividad": "Variación: cambio de baranda de fierro pintado por acero inoxidable en escaleras de evacuación",
+   "criterios": [
+    true,
+    true,
+    false,
+    true
+   ],
+   "confianza": "Media",
+   "confianza_modelo": "Media",
+   "confianza_ajustada": false,
+   "sustento": "Mismo elemento, material y unidad m; la partida no estaba prevista para las escaleras de evacuación (la baranda original era de fierro pintado)",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0043": {
+   "partida": "11.02.01",
+   "partida_desc": "Salida de tomacorriente doble",
+   "actividad": "Adicional: salidas de tomacorriente doble en departamentos tipo B",
+   "criterios": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "confianza": "Alta",
+   "confianza_modelo": "Alta",
+   "confianza_ajustada": false,
+   "sustento": "Mismo tipo de elemento y especialidad; unidad pto compatible; la partida no restringe ambiente",
+   "alternativa": null,
+   "alternativa_desc": ""
+  },
+  "ALR-0044": {
+   "partida": null,
+   "partida_desc": "Sin partida aplicable",
+   "actividad": "Aceleración: adelanto de hito de entrega del local comercial del nivel 1",
+   "criterios": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "confianza": "Baja",
+   "confianza_modelo": "Baja",
+   "confianza_ajustada": false,
+   "sustento": "Es un cambio de plazo, no de un elemento físico; ninguna partida cumple al menos dos criterios; se evalúa como propuesta de aceleración",
+   "alternativa": null,
+   "alternativa_desc": ""
+  }
+ },
+ "clausulas": [
+  {
+   "clausula": "14.3",
+   "texto_literal": "EL CONTRATISTA deberá notificar por escrito a LA PROPIETARIA cualquier hecho que considere que genera una variación del precio o del plazo dentro de los siete (7) días calendario siguientes a la recepción del documento que la origina. Vencido dicho plazo, se entenderá que EL CONTRATISTA renuncia al reclamo correspondiente.",
+   "consecuencia": "Se entiende que EL CONTRATISTA renuncia al reclamo correspondiente",
+   "gatillo": "recepcion",
+   "plazo": 7,
+   "tipo_dias": "calendario"
+  },
+  {
+   "clausula": "14.5",
+   "texto_literal": "Cuando la variación afecte la ruta crítica, EL CONTRATISTA solicitará la ampliación de plazo dentro de los quince (15) días hábiles siguientes a la fecha en que tomó conocimiento del hecho, adjuntando el análisis del cronograma vigente.",
+   "consecuencia": "no explícito",
+   "gatillo": "conocimiento",
+   "plazo": 15,
+   "tipo_dias": "habiles"
+  }
+ ]
+}

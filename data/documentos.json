@@ -1,0 +1,201 @@
+[
+{"doc_id":"E-101","tipo":"Lámina","titulo":"Cimentación · zapatas ejes A–D","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-05","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nCUADRO DE ZAPATAS: Z-1 1,80 × 1,80 m, h = 0,60 m · Z-2 2,00 × 2,00 m, h = 0,60 m · Z-3 2,20 × 2,20 m, h = 0,60 m.\nNOTA 1: Concreto f'c = 210 kg/cm² en zapatas. NOTA 2: Solado e = 0,10 m.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se modifica zapata Z-3 por nuevo estudio de suelos.\nCUADRO DE ZAPATAS: Z-1 1,80 × 1,80 m, h = 0,60 m · Z-2 2,00 × 2,00 m, h = 0,60 m · Z-3 2,60 × 2,60 m, h = 0,70 m (ejes B-4 y C-4).\nNOTA 1: Concreto f'c = 210 kg/cm² en zapatas. NOTA 2: Solado e = 0,10 m."},
+
+{"doc_id":"E-105","tipo":"Lámina","titulo":"Cimentación · vigas de conexión","especialidad":"Estructuras","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-05","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nVIGAS DE CONEXIÓN: VC-1 0,30 × 0,70 m · VC-2 0,30 × 0,80 m.\nNOTA 1: Recubrimiento 7,5 cm en elementos en contacto con el terreno.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Actualización de rótulo y firma del especialista. Sin cambios técnicos.\nVIGAS DE CONEXIÓN: VC-1 0,30 × 0,70 m · VC-2 0,30 × 0,80 m.\nNOTA 1: Recubrimiento 7,5 cm en elementos en contacto con el terreno."},
+
+{"doc_id":"E-108","tipo":"Lámina","titulo":"Cimentación · cisterna y cuarto de bombas","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-06","emisor":"Proyectista de estructuras",
+"texto_anterior":"",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se ajusta losa de fondo de cisterna.\nLOSA DE FONDO: e = 0,30 m, doble malla Ø1/2\" @ 0,20 m."},
+
+{"doc_id":"E-204","tipo":"Lámina","titulo":"Placas eje 7 · niveles 3 a 6","especialidad":"Estructuras","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-06","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nELEVACIÓN EJE 7: Placa P-7, h = 2,80 m entre niveles 3 y 6, e = 0,25 m.\nNOTA 3: Ver detalle de borde en lámina E-501.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Cota del eje 7 corregida.\nELEVACIÓN EJE 7: Placa P-7, h = 3,20 m entre niveles 3 y 6, e = 0,25 m.\nNOTA 3: La altura de la placa P-7 en el eje 7, nivel 4, sector B, pasa de 2,80 a 3,20 m. Ver detalle de borde en lámina E-501."},
+
+{"doc_id":"E-210","tipo":"Lámina","titulo":"Vigas · nivel 5","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-07","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nVIGA V-14 (0,30 × 0,60 m): acero superior 2Ø3/4\" corrido, acero inferior 3Ø3/4\" corrido.\nNOTA 2: Estribos Ø3/8\": 1 @ 0,05, 10 @ 0,10, resto @ 0,25 m.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Refuerzo adicional en viga V-14.\nVIGA V-14 (0,30 × 0,60 m): acero superior 2Ø3/4\" corrido + 2Ø3/4\" bastones en apoyos de ejes 3 y 4, acero inferior 3Ø3/4\" corrido.\nNOTA 2: Estribos Ø3/8\": 1 @ 0,05, 10 @ 0,10, resto @ 0,25 m."},
+
+{"doc_id":"E-212","tipo":"Lámina","titulo":"Encofrado de losa · nivel 6","especialidad":"Estructuras","revision":"D","revision_anterior":"C","fecha_recepcion":"2026-10-07","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. C — Emisión para construcción.\nPLANTA NIVEL 6: losa aligerada h = 0,20 m en todos los paños.\nNOTA 1: Ladrillo de techo 0,30 × 0,30 × 0,15 m.",
+"texto":"CUADRO DE REVISIONES: Rev. D — Losa maciza en zona de ductos.\nPLANTA NIVEL 6: losa aligerada h = 0,20 m, excepto paño entre ejes C–D / 3–4, que pasa a losa maciza e = 0,20 m por paso de ductos.\nNOTA 1: Ladrillo de techo 0,30 × 0,30 × 0,15 m."},
+
+{"doc_id":"E-215","tipo":"Lámina","titulo":"Vigas · nivel 8","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-08","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nCORTE 2-2: viga V-20 de 0,30 × 0,60 m entre ejes B y C.\nNOTA 4: Fondo de viga a NPT +21,80 m.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Corrección de cotas.\nCORTE 2-2: viga V-20 de 0,30 × 0,60 m entre ejes B y C.\nNOTA 4: Fondo de viga a NPT +21,70 m; la altura de la viga V-20 pasa de 0,60 a 0,70 m."},
+
+{"doc_id":"E-220","tipo":"Lámina","titulo":"Escalera E-2 · sótano 1 a nivel 2","especialidad":"Estructuras","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-09","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nESCALERA E-2: tramo único entre nivel 1 y nivel 2, garganta e = 0,15 m.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Se agrega descanso intermedio.\nESCALERA E-2: dos tramos entre nivel 1 y nivel 2 con descanso intermedio de 1,20 × 2,40 m, garganta e = 0,15 m."},
+
+{"doc_id":"E-230","tipo":"Lámina","titulo":"Columnas · sótano 2 a nivel 1","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-09","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nCUADRO DE COLUMNAS: C-5 0,40 × 0,60 m, 10Ø3/4\" (sótano 2 a nivel 1).",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se incrementa sección de columna C-5.\nCUADRO DE COLUMNAS: C-5 0,50 × 0,70 m, 12Ø3/4\" (sótano 2 a nivel 1)."},
+
+{"doc_id":"E-231","tipo":"Lámina","titulo":"Junta sísmica entre bloques A y B","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-12","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nDETALLE 4: junta sísmica entre bloques A y B de 2\" con plancha de poliestireno, niveles 1 a 12.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se amplía junta sísmica.\nDETALLE 4: junta sísmica entre bloques A y B de 3\" con plancha de poliestireno, niveles 1 a 12."},
+
+{"doc_id":"E-240","tipo":"Lámina","titulo":"Placas y vigas chatas · sótano 1 a nivel 3","especialidad":"Estructuras","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-12","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nPLACA PL-2 (eje A): e = 0,25 m, sótano 1 a nivel 3.\nVIGA CHATA VCH-3 (nivel 2, ejes 5–6): 0,40 × 0,20 m.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Se modifica placa PL-2 y se elimina viga chata VCH-3.\nPLACA PL-2 (eje A): e = 0,30 m, sótano 1 a nivel 3.\nVIGA CHATA VCH-3: eliminada; el tabique se apoya directamente en la losa maciza."},
+
+{"doc_id":"E-250","tipo":"Lámina","titulo":"Cisterna · muros perimetrales","especialidad":"Estructuras","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-13","emisor":"Proyectista de estructuras",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nMUROS DE CISTERNA: e = 0,25 m, concreto f'c = 280 kg/cm².",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se incrementa espesor de muros de cisterna.\nMUROS DE CISTERNA: e = 0,30 m, concreto f'c = 280 kg/cm²."},
+
+{"doc_id":"A-112","tipo":"Lámina","titulo":"Planta de distribución · nivel 2","especialidad":"Arquitectura","revision":"D","revision_anterior":"C","fecha_recepcion":"2026-10-08","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. C — Emisión para construcción.\nPLANTA NIVEL 2: tabique T-3 de albañilería e = 0,15 m entre ejes C–D (separa sala de estudio).",
+"texto":"CUADRO DE REVISIONES: Rev. D — Se integra estudio a la sala.\nPLANTA NIVEL 2: se elimina el tabique T-3 entre ejes C–D; sala y estudio quedan integrados."},
+
+{"doc_id":"A-115","tipo":"Lámina","titulo":"Planta típica · tabiquería entre departamentos","especialidad":"Arquitectura","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-13","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nLEYENDA: tabiques entre departamentos de drywall simple e = 0,10 m (niveles 3 a 10).",
+"texto":"CUADRO DE REVISIONES: Rev. C — Mejora acústica.\nLEYENDA: tabiques entre departamentos de drywall acústico con lana mineral e = 0,15 m (niveles 3 a 10)."},
+
+{"doc_id":"A-150","tipo":"Lámina","titulo":"Cuadro de acabados · áreas comunes","especialidad":"Arquitectura","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-14","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nAMBIENTES: 101 Lobby · 102 Recepcion · 103 Sala de usos multiples. Piso de porcelanato 60 × 60 cm en todos.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Corrección ortográfica de nombres de ambientes.\nAMBIENTES: 101 Lobby · 102 Recepción · 103 Sala de usos múltiples. Piso de porcelanato 60 × 60 cm en todos."},
+
+{"doc_id":"A-201","tipo":"Lámina","titulo":"Cuadro de acabados · departamentos típicos","especialidad":"Arquitectura","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-14","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nDORMITORIOS (niveles 3 a 10): piso laminado de 8 mm con zócalo de MDF.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Cambio de acabado de piso en dormitorios.\nDORMITORIOS (niveles 3 a 10): piso de porcelanato 60 × 60 cm con zócalo de porcelanato h = 10 cm."},
+
+{"doc_id":"A-205","tipo":"Lámina","titulo":"Escalera de evacuación · planta típica","especialidad":"Arquitectura","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-15","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nVESTÍBULO PREVIO: puerta contraplacada de 0,90 m por nivel.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Observación de seguridad (evaluación de riesgos).\nVESTÍBULO PREVIO: puerta cortafuego de 90 minutos con barra antipánico, una por nivel (niveles 1 a 10)."},
+
+{"doc_id":"A-220","tipo":"Lámina","titulo":"Planta de techos · hall de ascensores","especialidad":"Arquitectura","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-15","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nHALL DE ASCENSORES (niveles 1 a 12): techo tarrajeado y pintado.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se agrega cielo raso.\nHALL DE ASCENSORES (niveles 1 a 12): cielo raso de drywall a h = 2,50 m para ocultar bandejas."},
+
+{"doc_id":"A-310","tipo":"Lámina","titulo":"Elevación de fachada sur","especialidad":"Arquitectura","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-16","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nFACHADA SUR (niveles 3 a 6): enchape de porcelanato 60 × 120 cm.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Cambio de revestimiento de fachada.\nFACHADA SUR (niveles 3 a 6): revestimiento con panel de aluminio compuesto color grafito sobre subestructura metálica."},
+
+{"doc_id":"A-320","tipo":"Lámina","titulo":"Cuadro de vanos · fachada este","especialidad":"Arquitectura","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-16","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nVENTANA V-4 (1,50 × 1,40 m, fachada este, niveles 3 a 12): aluminio con vidrio templado de 6 mm.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Mejora acústica por avenida.\nVENTANA V-4 (1,50 × 1,40 m, fachada este, niveles 3 a 12): aluminio con vidrio laminado acústico de 8 mm."},
+
+{"doc_id":"A-410","tipo":"Lámina","titulo":"Detalle de baños típicos","especialidad":"Arquitectura","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-19","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nELEVACIONES: enchape cerámico 30 × 60 cm.\nNOTA 2: Altura de enchape h = 2,10 m.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Ajuste de altura de enchape.\nELEVACIONES: enchape cerámico 30 × 60 cm.\nNOTA 2: Altura de enchape h = 2,40 m (hasta cielo raso)."},
+
+{"doc_id":"A-500","tipo":"Lámina","titulo":"Terraza · nivel 12","especialidad":"Arquitectura","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-19","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nTERRAZA NIVEL 12: parapeto de vidrio templado de 10 mm, h = 1,10 m, 38 m lineales.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Cambio de baranda.\nTERRAZA NIVEL 12: baranda de acero inoxidable h = 1,10 m sobre murete de 0,30 m, 38 m lineales."},
+
+{"doc_id":"IS-105","tipo":"Lámina","titulo":"Cuarto de bombas · cisterna","especialidad":"Instalaciones sanitarias","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-20","emisor":"Proyectista de instalaciones sanitarias",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nEQUIPAMIENTO: una electrobomba de velocidad variable de 5 HP.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se agrega bomba de respaldo.\nEQUIPAMIENTO: sistema dúplex con dos electrobombas de velocidad variable de 5 HP funcionando en alternancia."},
+
+{"doc_id":"IS-108","tipo":"Lámina","titulo":"Red de agua contra incendio · cisterna","especialidad":"Instalaciones sanitarias","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-20","emisor":"Proyectista de instalaciones sanitarias",
+"texto_anterior":"",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se modifica volumen de reserva ACI.\nVOLUMEN DE RESERVA: 48 m³."},
+
+{"doc_id":"IS-201","tipo":"Lámina","titulo":"Montantes de desagüe · niveles 1 a 12","especialidad":"Instalaciones sanitarias","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-21","emisor":"Proyectista de instalaciones sanitarias",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nMONTANTE MD-3: PVC Ø4\", niveles 1 a 12.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Se incrementa diámetro de montante.\nMONTANTE MD-3: PVC Ø6\", niveles 1 a 12, por aporte de la cocina del nivel 12."},
+
+{"doc_id":"IS-210","tipo":"Lámina","titulo":"Agua fría · planta típica","especialidad":"Instalaciones sanitarias","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-21","emisor":"Proyectista de instalaciones sanitarias",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nRED DE AGUA FRÍA: PVC Ø1/2\" a puntos de consumo.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Reemisión por coordinación con arquitectura; sin cambios en el trazado.\nRED DE AGUA FRÍA: PVC Ø1/2\" a puntos de consumo."},
+
+{"doc_id":"IS-220","tipo":"Lámina","titulo":"Agua caliente · departamentos típicos","especialidad":"Instalaciones sanitarias","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-22","emisor":"Proyectista de instalaciones sanitarias",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nAGUA CALIENTE: tubería CPVC Ø1/2\" desde terma a puntos de consumo.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Cambio de material.\nAGUA CALIENTE: tubería PP-R termofusionada Ø20 mm desde terma a puntos de consumo."},
+
+{"doc_id":"IS-230","tipo":"Lámina","titulo":"Cuarto de limpieza · planta típica","especialidad":"Instalaciones sanitarias","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-22","emisor":"Proyectista de instalaciones sanitarias",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nCUARTO DE LIMPIEZA: punto de agua fría y sumidero.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se agrega aparato sanitario.\nCUARTO DE LIMPIEZA: lavatorio de loza con grifería en cada nivel (niveles 1 a 12), punto de agua fría y sumidero."},
+
+{"doc_id":"IE-031","tipo":"Lámina","titulo":"Sala técnica · sótano 1","especialidad":"Instalaciones eléctricas","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-23","emisor":"Proyectista de instalaciones eléctricas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nSALA TÉCNICA S1: alumbrado y dos tomacorrientes dobles.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Equipos de telecomunicaciones.\nSALA TÉCNICA S1: alumbrado, dos tomacorrientes dobles y tres salidas de fuerza trifásicas 380 V para racks."},
+
+{"doc_id":"IE-040","tipo":"Lámina","titulo":"Diagrama unifilar · alimentadores","especialidad":"Instalaciones eléctricas","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-23","emisor":"Proyectista de instalaciones eléctricas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nALIMENTADOR TG–TD3: 3-1×35 mm² N2XOH + 1×16 mm² (T), 62 m.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Recálculo por caída de tensión.\nALIMENTADOR TG–TD3: 3-1×50 mm² N2XOH + 1×25 mm² (T), 62 m."},
+
+{"doc_id":"IE-045","tipo":"Lámina","titulo":"Tableros · sótano 2","especialidad":"Instalaciones eléctricas","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-26","emisor":"Proyectista de instalaciones eléctricas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nTABLEROS S2: TG, TD-S1, TD-S2.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se agrega tablero para bomba contra incendio.\nTABLEROS S2: TG, TD-S1, TD-S2 y nuevo tablero TD-ACI adosado al cuarto de bombas."},
+
+{"doc_id":"IE-050","tipo":"Lámina","titulo":"Leyenda y especificaciones eléctricas","especialidad":"Instalaciones eléctricas","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-26","emisor":"Proyectista de instalaciones eléctricas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nLEYENDA: símbolos de salidas, tableros y canalizaciones según CNE.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Actualización de rótulo con nuevo logotipo del proyectista. Sin cambios técnicos.\nLEYENDA: símbolos de salidas, tableros y canalizaciones según CNE."},
+
+{"doc_id":"IE-060","tipo":"Lámina","titulo":"Canalizaciones · sótano 2","especialidad":"Instalaciones eléctricas","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-27","emisor":"Proyectista de instalaciones eléctricas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nBANDEJA B-1: bandeja portacables galvanizada de 300 mm, 45 m en sótano 2.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Ampliación por cableado ACI.\nBANDEJA B-1: bandeja portacables galvanizada de 400 mm, 45 m en sótano 2."},
+
+{"doc_id":"IE-070","tipo":"Lámina","titulo":"Alumbrado · estacionamientos sótano 1","especialidad":"Instalaciones eléctricas","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-27","emisor":"Proyectista de instalaciones eléctricas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nESTACIONAMIENTOS S1: 42 salidas de alumbrado con luminaria LED hermética.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Nivel de iluminación según observación de supervisión.\nESTACIONAMIENTOS S1: 60 salidas de alumbrado con luminaria LED hermética (se agregan 18)."},
+
+{"doc_id":"IM-101","tipo":"Lámina","titulo":"Rociadores · sótano 2","especialidad":"Instalaciones mecánicas y ACI","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-28","emisor":"Proyectista de instalaciones mecánicas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nSÓTANO 2: 86 rociadores colgantes en estacionamientos.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se incluyen depósitos.\nSÓTANO 2: 86 rociadores colgantes en estacionamientos y 24 rociadores adicionales en depósitos D-1 a D-12."},
+
+{"doc_id":"IM-110","tipo":"Lámina","titulo":"Extracción de monóxido · sótanos","especialidad":"Instalaciones mecánicas y ACI","revision":"C","revision_anterior":"B","fecha_recepcion":"2026-10-28","emisor":"Proyectista de instalaciones mecánicas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nDUCTO DE EXTRACCIÓN DE-1: plancha galvanizada 600 × 400 mm, sótanos 1 y 2.",
+"texto":"CUADRO DE REVISIONES: Rev. C — Recálculo de caudal.\nDUCTO DE EXTRACCIÓN DE-1: plancha galvanizada 800 × 400 mm, sótanos 1 y 2."},
+
+{"doc_id":"IM-120","tipo":"Lámina","titulo":"Detección y alarma · halls","especialidad":"Instalaciones mecánicas y ACI","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-29","emisor":"Proyectista de instalaciones mecánicas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nHALLS (niveles 1 a 12): estación manual y sirena con luz estroboscópica.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Se agrega detección.\nHALLS (niveles 1 a 12): estación manual, sirena con luz estroboscópica y un detector de humo por nivel (12 detectores)."},
+
+{"doc_id":"IM-130","tipo":"Lámina","titulo":"Montante ACI","especialidad":"Instalaciones mecánicas y ACI","revision":"B","revision_anterior":"A","fecha_recepcion":"2026-10-29","emisor":"Proyectista de instalaciones mecánicas",
+"texto_anterior":"CUADRO DE REVISIONES: Rev. A — Emisión para construcción.\nMONTANTE ACI: tubería de acero cédula 10 Ø4\", sótano 2 a nivel 12.",
+"texto":"CUADRO DE REVISIONES: Rev. B — Cambio de cédula por presión de trabajo.\nMONTANTE ACI: tubería de acero cédula 40 Ø4\", sótano 2 a nivel 12."},
+
+{"doc_id":"RFI-147","tipo":"RFI","titulo":"Respuesta del proyectista · acero en viga V-12","especialidad":"Estructuras","revision":"Respuesta","revision_anterior":"Consulta","fecha_recepcion":"2026-10-07","emisor":"Proyectista de estructuras",
+"texto_anterior":"CONSULTA: En el detalle 5 de la lámina E-209 la viga V-12 (nivel 4) no indica acero en el apoyo del eje 6. Se solicita confirmar el refuerzo.",
+"texto":"RESPUESTA: Agregar 2Ø5/8\" adicionales en la cara superior de la viga V-12 en el apoyo del eje 6, con longitud de 1,80 m a cada lado (detalle 5)."},
+
+{"doc_id":"RFI-152","tipo":"RFI","titulo":"Respuesta del proyectista · parapeto de azotea","especialidad":"Arquitectura","revision":"Respuesta","revision_anterior":"Consulta","fecha_recepcion":"2026-10-14","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CONSULTA: Se solicita confirmar la altura del parapeto de la azotea, que en la lámina A-510 se indica de 1,10 m.",
+"texto":"RESPUESTA: Se confirma la altura del parapeto de 1,10 m indicada en la lámina A-510. No hay cambios."},
+
+{"doc_id":"RFI-155","tipo":"RFI","titulo":"Respuesta del proyectista · piso del cuarto de bombas","especialidad":"Arquitectura","revision":"Respuesta","revision_anterior":"Consulta","fecha_recepcion":"2026-10-20","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CONSULTA: El cuadro de acabados indica porcelanato en el cuarto de bombas. Se consulta si es adecuado por la humedad y el tránsito de equipos.",
+"texto":"RESPUESTA: En el cuarto de bombas se reemplaza el porcelanato por piso de cemento pulido con endurecedor superficial y pintura epóxica de tráfico pesado."},
+
+{"doc_id":"RFI-160","tipo":"RFI","titulo":"Respuesta del proyectista · climatización sala de reuniones","especialidad":"Instalaciones mecánicas y ACI","revision":"Respuesta","revision_anterior":"Consulta","fecha_recepcion":"2026-10-22","emisor":"Proyectista de instalaciones mecánicas",
+"texto_anterior":"CONSULTA: La sala de reuniones del nivel 1 no tiene climatización en los planos. Se consulta si se requiere.",
+"texto":"RESPUESTA: Se requiere climatización. Instalar 2 equipos de aire acondicionado tipo split de 24 000 BTU en la sala de reuniones del nivel 1, con condensadoras en el patio de servicio."},
+
+{"doc_id":"RFI-163","tipo":"RFI","titulo":"Respuesta del proyectista · puertas de ingreso a departamentos","especialidad":"Arquitectura","revision":"Respuesta","revision_anterior":"Consulta","fecha_recepcion":"2026-10-26","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CONSULTA: El cuadro de vanos no define el tipo de puerta de ingreso a los departamentos (P-1). Se consulta especificación.",
+"texto":"RESPUESTA: La puerta P-1 de ingreso a departamentos será contraplacada de alma sólida con chapa de seguridad de tres golpes, 1,00 × 2,10 m, una por departamento (64 unidades)."},
+
+{"doc_id":"RFI-170","tipo":"RFI","titulo":"Respuesta del proyectista · tabique de cocina","especialidad":"Arquitectura","revision":"Respuesta","revision_anterior":"Consulta","fecha_recepcion":"2026-10-28","emisor":"Proyectista de arquitectura",
+"texto_anterior":"CONSULTA: Se solicita confirmar el espesor del tabique entre cocina y lavandería del departamento tipo A.",
+"texto":"RESPUESTA: El tabique es de drywall simple e = 0,10 m, tal como figura en la lámina A-115. Se mantiene lo indicado en planos."},
+
+{"doc_id":"CT-018","tipo":"Carta","titulo":"Carta de la propietaria · acabado de fachada norte","especialidad":"Arquitectura","revision":"Única","revision_anterior":"—","fecha_recepcion":"2026-10-15","emisor":"La Propietaria",
+"texto_anterior":"",
+"texto":"Lima, 15 de octubre de 2026. Señores EL CONTRATISTA. Asunto: Acabado de fachada norte.\nPor medio de la presente les informamos que el directorio aprobó la propuesta comercial del área de ventas.\nEn consecuencia, instruimos que el acabado de la fachada norte, niveles 3 a 6, cambie de pintura elastomérica a enchape de porcelanato 60 × 120 cm, según muestra aprobada.\nAgradeceremos coordinar con la supervisión. Atentamente, La Propietaria."},
+
+{"doc_id":"CT-021","tipo":"Carta","titulo":"Carta de la supervisión · observaciones de seguridad","especialidad":"General","revision":"Única","revision_anterior":"—","fecha_recepcion":"2026-10-19","emisor":"La Supervisión",
+"texto_anterior":"",
+"texto":"Lima, 19 de octubre de 2026. Señores EL CONTRATISTA. Asunto: Observaciones de seguridad.\nDurante la inspección del 16/10 se observó falta de barandas provisionales en el borde de losa del nivel 7.\nSe solicita subsanar en un plazo de 48 horas y remitir registro fotográfico.\nEsta observación no modifica el alcance contractual. Atentamente, La Supervisión."},
+
+{"doc_id":"CT-024","tipo":"Carta","titulo":"Carta de la propietaria · estacionamientos y escaleras","especialidad":"Arquitectura","revision":"Única","revision_anterior":"—","fecha_recepcion":"2026-10-21","emisor":"La Propietaria",
+"texto_anterior":"",
+"texto":"Lima, 21 de octubre de 2026. Señores EL CONTRATISTA. Asunto: Comentarios de la visita a obra.\nAgradecemos la presentación del avance del 20 de octubre y la visita guiada a los sótanos.\nRespecto a la señalización de estacionamientos, se mantiene lo indicado en planos.\nAsimismo, la Propietaria solicita que las barandas de las escaleras de evacuación, niveles 1 a 12, se ejecuten en acero inoxidable en lugar de fierro pintado.\nAtentamente, La Propietaria."},
+
+{"doc_id":"CT-027","tipo":"Carta","titulo":"Carta de la propietaria · aprobación de muestra","especialidad":"Arquitectura","revision":"Única","revision_anterior":"—","fecha_recepcion":"2026-10-27","emisor":"La Propietaria",
+"texto_anterior":"",
+"texto":"Lima, 27 de octubre de 2026. Señores EL CONTRATISTA. Asunto: Aprobación de muestra de porcelanato.\nSe aprueba la muestra de porcelanato 60 × 60 cm color marfil presentada el 23/10, que corresponde a la especificación contractual.\nPueden proceder con la compra. Atentamente, La Propietaria."},
+
+{"doc_id":"CT-030","tipo":"Carta","titulo":"Carta de la propietaria · tomacorrientes adicionales","especialidad":"Instalaciones eléctricas","revision":"Única","revision_anterior":"—","fecha_recepcion":"2026-10-29","emisor":"La Propietaria",
+"texto_anterior":"",
+"texto":"Lima, 29 de octubre de 2026. Señores EL CONTRATISTA. Asunto: Equipamiento de departamentos tipo B.\nComo resultado del estudio de mercado, se requiere mejorar el equipamiento de los departamentos tipo B.\nSe instruye adicionar seis (6) salidas de tomacorriente doble por departamento tipo B, niveles 3 a 10 (16 departamentos).\nAtentamente, La Propietaria."},
+
+{"doc_id":"CT-033","tipo":"Carta","titulo":"Carta de la propietaria · adelanto de entrega","especialidad":"General","revision":"Única","revision_anterior":"—","fecha_recepcion":"2026-10-30","emisor":"La Propietaria",
+"texto_anterior":"",
+"texto":"Lima, 30 de octubre de 2026. Señores EL CONTRATISTA. Asunto: Entrega anticipada del nivel 1.\nPor compromisos con el operador comercial, solicitamos adelantar en quince (15) días calendario la entrega del local comercial del nivel 1 respecto del hito contractual.\nAgradeceremos su propuesta de acciones de aceleración. Atentamente, La Propietaria."}
+]

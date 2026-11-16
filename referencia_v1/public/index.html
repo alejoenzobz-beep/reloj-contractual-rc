@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reloj Contractual · Grupo 4</title>
+<meta name="description" content="Asistente de trazabilidad documental y contractual en obra: del documento recibido en el CDE a la notificación dentro de plazo.">
+<meta name="theme-color" content="#0A1F44">
+<link rel="icon" type="image/svg+xml" href="img/icono.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A1F44; --navy2:#06142E; --navy3:#13315C; --amb:#5AA9E6; --amb2:#3E8ED0; --sem-amb:#D99700;
+  --bg:#F2F5FA; --card:#FFFFFF; --card2:#F8FAFC; --tx:#0F172A; --mut:#5B6B82; --bd:#E2E8F0; --bd2:#CBD5E1;
+  --ok:#047857; --okbg:#D1FAE5; --warn:#92400E; --warnbg:#FEF3C7; --err:#B91C1C; --errbg:#FEE2E2; --info:#1D4ED8; --infobg:#DBEAFE;
+  --gris:#64748B; --grisbg:#F1F5F9; --venc:#7F1D1D; --vencbg:#FECACA;
+  --sh:0 1px 2px rgba(15,23,42,.05),0 1px 3px rgba(15,23,42,.07); --sh2:0 12px 32px rgba(15,23,42,.14); --r:12px;
+  --fh:"Manrope","Inter",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#060E1C; --card:#0C1A30; --card2:#0A1628; --tx:#E5E9F0; --mut:#9AA6B8; --bd:#1A2C48; --bd2:#26406A;
+  --okbg:#06352A; --ok:#6EE7B7; --warnbg:#3A2A06; --warn:#FCD34D; --errbg:#3B1212; --err:#FCA5A5; --info:#93C5FD; --infobg:#172554;
+  --grisbg:#1A2333; --gris:#A3AEC0; --vencbg:#4C1010; --venc:#FECACA; --sh:0 1px 2px rgba(0,0,0,.5); --sh2:0 12px 32px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --bg:#060E1C; --card:#0C1A30; --card2:#0A1628; --tx:#E5E9F0; --mut:#9AA6B8; --bd:#1A2C48; --bd2:#26406A;
+  --okbg:#06352A; --ok:#6EE7B7; --warnbg:#3A2A06; --warn:#FCD34D; --errbg:#3B1212; --err:#FCA5A5; --info:#93C5FD; --infobg:#172554;
+  --grisbg:#1A2333; --gris:#A3AEC0; --vencbg:#4C1010; --venc:#FECACA; --sh:0 1px 2px rgba(0,0,0,.5); --sh2:0 12px 32px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0}
+body{font:14.5px/1.5 "Inter","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-family:var(--fh);letter-spacing:-.01em}
+h1{font-size:24px} h2{font-size:18px} h3{font-size:15px}
+p{margin:.3em 0} a{color:var(--info)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.ms{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;vertical-align:middle;-webkit-font-feature-settings:"liga";font-feature-settings:"liga"}
+.mono{font-family:var(--fm);font-size:.92em}
+.mut{color:var(--mut)} .peq{font-size:12.5px}
+:focus-visible{outline:3px solid var(--amb);outline-offset:2px;border-radius:6px}
+
+/* Portada */
+#portada{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(1200px 600px at 10% -10%,#1C4A85 0,transparent 60%),var(--navy2);color:#fff}
+.portada-caja{max-width:880px;width:100%;display:grid;gap:28px;grid-template-columns:1.2fr 1fr;align-items:center}
+.portada-caja h1{font-size:40px;line-height:1.1}
+.portada-caja .lema{font-size:17px;color:#C9D4E5;margin-top:12px}
+.portada-tarjeta{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:22px}
+.portada-tarjeta li{margin:6px 0;color:#DCE4F0}
+.chip-amb{display:inline-flex;align-items:center;gap:6px;background:rgba(90,169,230,.15);color:#9CCBF2;border:1px solid rgba(90,169,230,.4);padding:4px 10px;border-radius:999px;font-weight:600;font-size:12.5px}
+@media (max-width:760px){.portada-caja{grid-template-columns:1fr}.portada-caja h1{font-size:30px}}
+
+/* Estructura */
+#app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+#lateral{background:linear-gradient(180deg,var(--navy) 0%,var(--navy2) 100%);color:#DCE4F0;padding:18px 12px;position:sticky;top:0;height:100vh;overflow:auto}
+.marca{display:flex;gap:10px;align-items:center;padding:4px 8px 18px}
+.marca .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#5AA9E6,#2F6DB5);display:grid;place-items:center;color:#fff;font-weight:800}
+.marca b{font-family:var(--fh);font-size:15px;color:#fff;display:block}
+.marca small{color:#9FB0C8}
+#nav a{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:9px;color:#C9D4E5;text-decoration:none;font-weight:500;margin:2px 0}
+#nav a:hover{background:rgba(255,255,255,.07)}
+#nav a.on{background:rgba(90,169,230,.18);color:#fff;box-shadow:inset 3px 0 0 var(--amb)}
+#nav .sep{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7F93B0;padding:14px 10px 4px}
+#nav .cuenta{margin-left:auto;background:var(--amb);color:#06142E;border-radius:999px;font-size:11.5px;font-weight:700;padding:1px 7px}
+#principal{min-width:0}
+#barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+#barra .ruta{font-weight:600;font-family:var(--fh)}
+#barra .ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#contenido{padding:22px 24px 60px;max-width:1280px}
+@media (max-width:900px){
+  #app{grid-template-columns:1fr}
+  #lateral{position:static;height:auto;padding:10px 12px}
+  #nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px}
+  #nav a{white-space:nowrap;padding:7px 10px}
+  #nav .sep,.marca small{display:none}
+  .marca{padding:2px 4px 8px}
+  #barra,#contenido{padding-left:16px;padding-right:16px}
+}
+
+/* Componentes */
+.tarjeta{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:18px}
+.tarjeta+.tarjeta{margin-top:16px}
+.tarjeta h2{margin-bottom:4px}
+.cab{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.rejilla{display:grid;gap:16px}
+.r2{grid-template-columns:repeat(2,minmax(0,1fr))} .r3{grid-template-columns:repeat(3,minmax(0,1fr))} .r4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:900px){.r2,.r3,.r4{grid-template-columns:1fr}}
+@media (min-width:560px) and (max-width:900px){.r4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.kpi .v{font:800 28px/1.1 var(--fh);font-variant-numeric:tabular-nums}
+.kpi .e{color:var(--mut);font-size:12.5px;margin-top:4px}
+.kpi.rojo{border-left:4px solid var(--err)} .kpi.ambar{border-left:4px solid var(--sem-amb)} .kpi.verde{border-left:4px solid var(--ok)} .kpi.azul{border-left:4px solid var(--info)} .kpi.vencido{border-left:4px solid var(--venc)}
+.btn{text-decoration:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--bd2);background:var(--card);padding:8px 13px;border-radius:9px;font-weight:600;font-size:13.5px;transition:background .15s}
+.btn:hover{background:var(--card2)}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.pri:hover{background:var(--navy3)}
+:root[data-theme="dark"] .btn.pri{background:var(--amb);border-color:var(--amb);color:#06142E}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.pri{background:var(--amb);border-color:var(--amb);color:#06142E}}
+.btn.amb{background:var(--amb);border-color:var(--amb);color:#06142E}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.peligro{color:var(--err);border-color:var(--err)}
+.btn.chico{padding:5px 9px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.acciones{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-ok{background:var(--okbg);color:var(--ok)} .p-warn{background:var(--warnbg);color:var(--warn)} .p-err{background:var(--errbg);color:var(--err)} .p-info{background:var(--infobg);color:var(--info)} .p-gris{background:var(--grisbg);color:var(--gris)} .p-venc{background:var(--vencbg);color:var(--venc)}
+.dias{display:inline-grid;place-items:center;min-width:58px;padding:6px 8px;border-radius:10px;font:800 20px/1 var(--fh);font-variant-numeric:tabular-nums}
+.dias small{display:block;font:600 10.5px var(--fh);margin-top:3px;opacity:.85}
+.s-rojo{background:var(--errbg);color:var(--err)} .s-ambar{background:var(--warnbg);color:var(--warn)} .s-verde{background:var(--okbg);color:var(--ok)} .s-gris{background:var(--grisbg);color:var(--gris)} .s-vencido{background:var(--vencbg);color:var(--venc)}
+.tabla-env{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:600;color:var(--mut);background:var(--card2);padding:9px 10px;border-bottom:1px solid var(--bd);white-space:nowrap;font-size:12.5px}
+td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.clic{cursor:pointer} tr.clic:hover td{background:var(--card2)}
+.pestanas{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--bd);margin-bottom:12px}
+.pestanas button{border:0;background:none;padding:8px 12px;font-weight:600;color:var(--mut);border-bottom:2px solid transparent}
+.pestanas button.on{color:var(--tx);border-bottom-color:var(--amb)}
+label.campo{display:grid;gap:4px;font-weight:600;font-size:13px}
+input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{border:1px solid var(--bd2);background:var(--card);border-radius:8px;padding:7px 10px;width:100%;font-weight:400}
+textarea{min-height:120px;font-family:var(--fm);font-size:12.5px;line-height:1.45}
+.lamina{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:12px;white-space:pre-wrap;font-size:13px;line-height:1.55}
+.lamina h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:6px}
+mark{background:#FDE68A;color:#111;border-radius:3px;padding:0 2px}
+.crit{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--bd)}
+.crit:last-child{border-bottom:0}
+.crit .si{color:var(--ok);font-weight:800} .crit .no{color:var(--err);font-weight:800}
+.aviso{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;font-size:13.5px}
+.aviso.info{background:var(--infobg);color:var(--info)} .aviso.warn{background:var(--warnbg);color:var(--warn)} .aviso.err{background:var(--errbg);color:var(--err)} .aviso.ok{background:var(--okbg);color:var(--ok)}
+.pasos{counter-reset:p;display:grid;gap:10px}
+.paso{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+.paso .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:var(--grisbg);color:var(--mut);flex:none}
+.paso.hecho .n{background:var(--okbg);color:var(--ok)}
+.paso .t{flex:1;min-width:0}
+.barra-h{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.barra-h .et{width:160px;flex:none;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.barra-h .pista{flex:1;background:var(--grisbg);border-radius:6px;height:14px;overflow:hidden}
+.barra-h .rel{height:100%;border-radius:6px}
+.barra-h .num{width:40px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.carta{background:#fff;color:#111;border:1px solid var(--bd2);border-radius:6px;padding:34px 40px;font:14px/1.65 Georgia,"Times New Roman",serif;max-width:720px}
+.carta .cab-carta{display:flex;justify-content:space-between;border-bottom:2px solid #0A1F44;padding-bottom:8px;margin-bottom:16px;font-family:var(--fh)}
+.carta mark{background:#FEF08A}
+.cita-ok{color:var(--ok);font-weight:600}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;box-shadow:var(--sh2);z-index:50;max-width:min(560px,92vw);font-size:13.5px}
+.modal-fondo{position:fixed;inset:0;background:rgba(2,6,23,.55);display:grid;place-items:center;z-index:40;padding:16px}
+.modal{background:var(--card);border-radius:14px;box-shadow:var(--sh2);padding:20px;width:min(560px,100%);max-height:90vh;overflow:auto}
+details summary{cursor:pointer;font-weight:600}
+.cuadro-reloj{display:flex;gap:16px;align-items:center;padding:14px;border-radius:12px}
+.cuadro-reloj .grande{font:800 44px/1 var(--fh)}
+.carga{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:g .7s linear infinite;vertical-align:middle}
+@keyframes g{to{transform:rotate(360deg)}}
+.zona-arrastre{border:2px dashed var(--bd2);border-radius:12px;padding:22px;text-align:center;color:var(--mut)}
+.zona-arrastre.sobre{border-color:var(--amb);background:var(--infobg)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{#lateral,#barra,.no-imprimir{display:none!important}#app{display:block}.carta{border:0}}
+</style>
+</head>
+<body>
+<div id="portada">
+  <div class="portada-caja">
+    <div>
+      <span class="chip-amb"><span class="ms" style="font-size:16px">timer</span> Diplomado IA en Ingeniería y Construcción · Grupo 4</span>
+      <h1 style="margin-top:14px">Reloj Contractual</h1>
+      <p class="lema">Asistente de trazabilidad documental y contractual en obra: del documento recibido en el CDE a la notificación dentro de plazo.</p>
+      <p style="color:#9FB0C8;margin-top:14px">El modelo lee y propone. La fórmula cuenta. La persona decide.</p>
+      <div class="acciones" style="margin-top:22px">
+        <button class="btn amb" id="btn-entrar"><span class="ms">login</span> Entrar a la demostración</button>
+        <a class="btn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)" href="#/ayuda" id="btn-guia"><span class="ms">menu_book</span> Cómo se usa</a>
+      </div>
+      <p id="estado-entrada" style="color:#9FB0C8;margin-top:12px;font-size:13px">No se pide cuenta: cada visitante recibe un espacio de trabajo propio y aislado.</p>
+    </div>
+    <div class="portada-tarjeta">
+      <b style="font-family:var(--fh)">Flujo principal</b>
+      <ol style="padding-left:18px;margin:10px 0 0">
+        <li>Control documentario carga el registro del CDE: el reloj empieza a correr.</li>
+        <li>La IA describe el cambio con cita literal y propone la partida (regla R-V).</li>
+        <li>La hoja calcula la fecha límite según la cláusula validada.</li>
+        <li>Oficina técnica confirma, corrige o descarta.</li>
+        <li>Jefatura aprueba; la IA redacta el borrador; gerencia emite fuera del sistema.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <aside id="lateral">
+    <div class="marca"><div class="logo">RC</div><div><b>Reloj Contractual</b><small>Grupo 4 · Hito 3 · MVP</small></div></div>
+    <nav id="nav"></nav>
+  </aside>
+  <div id="principal">
+    <header id="barra">
+      <div class="ruta" id="ruta">Panorama</div>
+      <div class="ctrl">
+        <span id="modo-datos"></span>
+        <label class="peq mut" title="Fecha usada para calcular los días restantes">Hoy <input type="date" id="fecha-ref" style="width:auto;padding:4px 8px"></label>
+        <select id="rol" style="width:auto;padding:5px 8px" title="Rol con el que actúa (demostración)"></select>
+        <button class="btn chico" id="btn-tema" title="Cambiar tema"><span class="ms">contrast</span></button>
+      </div>
+    </header>
+    <main id="contenido"></main>
+  </div>
+</div>
+<div id="toast" hidden></div>
+<div id="modal" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

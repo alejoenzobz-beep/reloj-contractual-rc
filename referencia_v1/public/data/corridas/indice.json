@@ -1,0 +1,6 @@
+[
+  {"archivo": "corrida_v1.1.json", "nombre": "v1.1 · corrida 1", "aplicable": true, "descripcion": "Instrucción I1 v1.1 (una fila por elemento modificado) e I2 v1.0 sobre el corpus completo. Versión vigente."},
+  {"archivo": "corrida_v1.1_repeticion.json", "nombre": "v1.1 · repetición", "aplicable": false, "descripcion": "Misma entrada que la corrida 1 de v1.1, para medir repetibilidad: 0 documentos con diferencias."},
+  {"archivo": "corrida_v1.0.json", "nombre": "v1.0 · corrida 1", "aplicable": true, "descripcion": "Instrucciones I1 v1.0, I2 v1.0 e I3 v1.0 sobre los 50 documentos (48 aceptados en la ingesta). Base de la medición y del análisis de errores."},
+  {"archivo": "corrida_v1.0_repeticion.json", "nombre": "v1.0 · repetición", "aplicable": false, "descripcion": "Misma entrada que la corrida 1 de v1.0: 3 de 40 documentos cambian la forma de agrupar los cambios (origen de la v1.1)."}
+]
