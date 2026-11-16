@@ -115,7 +115,7 @@ function render() {
   const r = ruta();
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'tablero' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-  $('#ruta-vista').textContent = { inicio: 'Panorama', simulacion: 'Cómo funciona', tablero: 'Alertas', alerta: 'Detalle de alerta', probar: 'Prueba tu documento', resultados: 'Resultados' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', tablero: 'Alertas', alerta: 'Detalle de alerta', probar: 'Prueba tu documento', resultados: 'Resultados' }[r.vista];
   pintarFecha();
   ({ inicio: vInicio, simulacion: vSim, tablero: vTablero, alerta: () => vAlerta(r.id), probar: vProbar, resultados: vResultados })[r.vista]();
   ultimaVista = r;
@@ -158,12 +158,12 @@ function vInicio() {
   const dias = Array.from({ length: 10 }, (_, k) => N.sumarDias(est.hoy, k - 9));
   const cuenta = dias.map(f => docs.filter(d => d.fecha_recepcion === f).length);
   const semana = cuenta.slice(-7).reduce((s, x) => s + x, 0);
-  const casos = [['ALR-0002', 'E-204', '¿El cambio venía escondido en una nota?'], [alertas.find(a => a.doc_id === 'CT-024')?.id, 'CT-024', '¿Una instrucción en el cuarto párrafo de una carta?'], [alertas.find(a => a.doc_id === 'RFI-155')?.id, 'RFI-155', '¿Un RFI que cambia algo fuera del presupuesto?']];
+  const casos = [['ALR-0002', 'E-204', 'Cambio dentro de una nota de lámina'], [alertas.find(a => a.doc_id === 'CT-024')?.id, 'CT-024', 'Instrucción en el cuarto párrafo de una carta'], [alertas.find(a => a.doc_id === 'RFI-155')?.id, 'RFI-155', 'Absolución de RFI sin partida en el presupuesto']];
   $('#v-inicio').innerHTML = `
   <div class="pano">
     <div>
-      <div class="hero anim"><h1>Notifica <span class="grad">a tiempo</span>, con la prueba en la mano.</h1>
-        <p>Reloj Contractual lee cada revisión que llega al CDE, marca qué cambió, propone la partida y cuenta los días que te quedan para notificar el adicional.</p></div>
+      <div class="hero anim"><span class="sup-id">Asistente de trazabilidad documental y contractual</span><h1>Notifica <span class="grad">a tiempo</span>, con la prueba en la mano.</h1>
+        <p>Reloj Contractual compara cada revisión que llega al entorno común de datos (CDE), identifica qué cambió, propone la partida del presupuesto y calcula el plazo contractual que queda para notificar.</p></div>
       <div class="filtros-hero anim" style="animation-delay:.05s">
         <a class="pill" href="#tablero" data-ir="pendientes"><span class="dot" style="background:var(--verde)"></span>Por decidir <b class="num">${visibles.length}</b></a>
         <a class="pill" href="#tablero" data-ir="urgentes"><span class="dot" style="background:var(--ambar)"></span>Vencen en 3 días <b class="num">${urg}</b></a>
@@ -177,10 +177,10 @@ function vInicio() {
       ${d0 ? `<div class="nota anim" style="animation-delay:.15s"><h3>Alerta del día <span class="redondo" style="width:34px;height:34px">${ICO.doc}</span></h3>
         <p class="cuerpo">Notifica antes del <b>${N.fmtFecha(d0.limite)}</b>: ${esc(primeraFrase(d0.cambio))}</p>
         <div class="acciones-n"><span>${ICO.reloj} ${esc(diasTxt(d0).join(' '))}</span><a class="btn peq prim" href="#alerta-${d0.id.toLowerCase()}">Revisar ahora</a></div></div>` : ''}
-      <div class="vidrio reloj-card anim" style="animation-delay:.25s"><h3>El plazo se va en entender el cambio</h3>
+      <div class="vidrio reloj-card anim" style="animation-delay:.25s"><h3>Caso de referencia: el plazo se consume en entender el cambio</h3>
         <svg id="dial" viewBox="0 0 300 262" role="img" aria-label="Caso real: plazo de 5 días; entender el cambio tomó 3 a 4 días; queda 1 día para el sustento"></svg>
         <div class="ley"><span><i style="background:var(--naranja)"></i>Plazo del contrato · 5 días</span><span><i style="background:var(--azul-2)"></i>Entender el cambio · 3–4 días</span></div>
-        <p style="font-size:.78rem;color:var(--texto-3);margin-top:8px">Caso real de residencia de obra, consulta de nov. 2026. En el otro caso consultado: 2–3 días de un plazo de 7.</p></div>
+        <p style="font-size:.78rem;color:var(--texto-3);margin-top:8px">Fuente: consulta a residente de obra, 16/11/2026 (n = 2). En el otro caso consultado, oficina técnica: 2–3 días de un plazo de 7. Son casos observados, no la regla del contrato.</p></div>
       <div class="vidrio act-card anim" style="animation-delay:.35s"><div class="cab"><div><h3>Documentos que llegan</h3><small>${semana} en los últimos 7 días · cada uno arranca un plazo</small></div><a class="btn peq" href="#resultados">Resultados</a></div>
         <svg viewBox="0 0 300 130" role="img" aria-label="Documentos recibidos por día">${cuenta.map((c, k) => {
           const x = 14 + k * 28, h = c ? 14 + c * 16 : 4, y = 104 - h, hoy = k === 9;
@@ -188,7 +188,7 @@ function vInicio() {
         }).join('')}<defs><pattern id="raya" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-50)"><rect width="6" height="6" fill="rgba(143,176,255,.18)"/><rect width="2.5" height="6" fill="rgba(143,176,255,.55)"/></pattern><pattern id="rayaHoy" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-50)"><rect width="6" height="6" fill="rgba(143,176,255,.5)"/><rect width="3" height="6" fill="#fff"/></pattern></defs></svg></div>
     </aside>
   </div>
-  <section class="seccion-pano"><h2>¿Te ha pasado esto?</h2><p class="sub" style="margin-top:6px">Tres casos del proyecto de prueba donde el cambio que importa no está donde uno lo busca primero.</p>
+  <section class="seccion-pano"><h2>Casos del proyecto de demostración</h2><p class="sub" style="margin-top:6px">Tres documentos del proyecto R1 (sintético) en los que el cambio relevante no está en el cuadro de revisiones. Cada tarjeta muestra la cita literal verificada y la partida vinculada.</p>
     <div class="casos3">${casos.map(([id, dId, q]) => { const d = docPorId[dId], a = alertaPorId[id];
       return `<a class="vidrio caso3" href="#alerta-${id.toLowerCase()}"><span class="q">${esc(q)}</span><div class="frag">${conCita(d.texto.split('\n').find(l => l.includes(a.cita.slice(0, 18))) || d.texto.slice(0, 160), a.cita).replace('mark class="cita"', 'mark')}</div><span class="etq">${esc(dId)} · ${a.partida ? esc(a.partida) : 'sin partida'}</span></a>`; }).join('')}</div>
   </section>`;
@@ -243,20 +243,20 @@ function vSim() {
       <p class="explica">Recibe la revisión anterior, la nueva y una instrucción con formato fijo. Debe describir cada cambio que afecte costo, plazo o alcance y copiar literalmente el fragmento que lo sustenta.</p>
       <div class="dos"><div class="doc"><div class="cab"><span>Lo que cambió, marcado con nube de revisión</span></div>${diffHTML(d.texto_anterior, d.texto)}</div>
       <div><div class="salida" id="s-salida" aria-live="polite"></div><dl class="campos" id="s-campos"></dl><div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="s-repro">Ver la respuesta registrada</button>${sample ? '<button class="btn peq prim" id="s-vivo">Pedírselo a la IA en vivo</button>' : ''}</div></div></div>
-      <details class="tec"><summary>Detalle técnico: instrucción I1 v1.1</summary><pre>${esc(N.INSTRUCCIONES.I1['v1.1'].sistema)}</pre><p>Respuesta cruda registrada en la corrida medida:</p><pre>${esc(filaI1)}</pre></details>`,
+      <details class="tec"><summary>Ver instrucción enviada a la IA</summary><pre>${esc(N.INSTRUCCIONES.I1['v1.1'].sistema)}</pre><p>Respuesta registrada en la medición:</p><pre>${esc(filaI1)}</pre></details>`,
     () => `<span class="quien">Validador de la app</span><h2>La app comprueba que la cita exista</h2>
       <p class="explica">Busca, letra por letra, el fragmento que citó la IA dentro del documento. Si no lo encuentra, la alerta se rechaza: así una respuesta inventada no llega a la bandeja.</p>
       <div class="doc"><div class="cab"><span>E-204 rev. C · cita encontrada</span></div>${conCita(d.texto, a.cita)}</div>
       <div class="check"><span class="ico si">✓</span><div><b>Cita verificada.</b> «${esc(a.cita)}» aparece tal cual en la revisión C.</div></div>
       <div class="fila-btn"><button class="btn peq" id="s-inventa">Probar con una cita inventada</button></div><div id="s-inventa-r" aria-live="polite"></div>
-      <details class="tec"><summary>Detalle técnico</summary><p>Se usa la función <code>parsearI1</code> del MVP, la misma de las corridas medidas. Las filas sin cita, con cita inexistente o fuera de formato se rechazan (casos CP-10). En las corridas medidas, la trazabilidad fue de 100 %.</p></details>`,
+      <details class="tec"><summary>Detalle técnico</summary><p>Es la misma función de validación usada en las mediciones. Las filas sin cita, con cita inexistente o fuera de formato se rechazan. En las mediciones, el 100 % de las alertas tuvo una cita verificable.</p></details>`,
     () => `<span class="quien">Modelo de lenguaje + regla de la app</span><h2>Se propone la partida afectada</h2>
       <p class="explica">La IA busca en el presupuesto la partida que corresponde al cambio. La app no confía en la etiqueta de confianza del modelo: la recalcula con cuatro criterios.</p>
       <div class="panel"><p class="partida"><code>${esc(a.partida)}</code> ${esc(a.partida_desc)} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
       <div class="criterios">${['Mismo tipo de elemento', 'Misma especialidad', 'Ubicación compatible', 'Rango o unidad compatible'].map((t, i) => `<div class="check"><span class="ico ${a.criterios[i] ? 'si' : 'no'}">${a.criterios[i] ? '✓' : '✗'}</span>${t}</div>`).join('')}</div>
       <p style="font-size:.92rem;color:var(--texto-2)">${esc(a.sustento)}</p></div>
       <div class="aviso info" style="margin-top:12px">La placa pasa de 2,80 a 3,20 m, así que sale de la partida «${esc(partidaPorCod['03.02.04'].desc)}» y entra en la de más de 3 m. Ese es justo el detalle que se pierde cuando el cuadro de revisiones dice «se corrige una cota».</div>
-      <details class="tec"><summary>Detalle técnico: regla R-V</summary><p>4 de 4 criterios: confianza Alta · 3: Media · 2 o menos: Baja, con partida alternativa obligatoria. Instrucción I2 v1.0.</p></details>`,
+      <details class="tec"><summary>Detalle técnico: regla de confianza</summary><p>4 de 4 criterios: confianza Alta · 3: Media · 2 o menos: Baja, con partida alternativa obligatoria.</p></details>`,
     () => simPlazo(a),
     () => `<span class="quien">Oficina técnica</span><h2>Tú decides qué hacer con la alerta</h2>
       <p class="explica">Nada sale del sistema sin una persona. Elige una opción: si corriges la partida, la app guarda también lo que propuso la IA, para medir sus errores.</p>
@@ -321,7 +321,7 @@ function simPlazo(a) {
     <div class="fila-btn" role="group" aria-label="Tipo de días" style="margin-bottom:12px"><button class="btn peq ${tipoSim === 'calendario' ? 'prim' : ''}" data-tipo="calendario">7 días calendario (contrato R1)</button><button class="btn peq ${tipoSim === 'habiles' ? 'prim' : ''}" data-tipo="habiles">¿Y si fueran 7 días hábiles?</button></div>
     ${calendario(a.fecha_recepcion, lim, a.fecha_recepcion, FERIADOS, tipoSim === 'calendario')}
     <p style="margin-top:12px;font-size:1.05rem">Recibido el <b>${N.fmtFecha(a.fecha_recepcion)}</b> + ${p.plazo} días ${tipoSim === 'habiles' ? 'hábiles (sin fines de semana ni el feriado del 8 de octubre)' : 'calendario'} = vence el <b style="color:var(--nube)">${N.fmtFecha(lim)}</b>.</p>
-    <details class="tec"><summary>Detalle técnico</summary><p>Funciones <code>fechaLimite</code>, <code>sumarDias</code> y <code>sumarHabiles</code> de nucleo.js. Si la cláusula dijera «desde el conocimiento», la app usa igual la fecha de recepción (regla conservadora, caso CP-09).</p></details>`;
+    <details class="tec"><summary>Detalle técnico</summary><p>Funciones <code>fechaLimite</code>, <code>sumarDias</code> y <code>sumarHabiles</code> de nucleo.js. Si la cláusula dijera «desde el conocimiento», la app usa igual la fecha de recepción (regla conservadora).</p></details>`;
 }
 function wirePlazo(a) { document.querySelectorAll('[data-tipo]').forEach(b => b.onclick = () => { tipoSim = b.dataset.tipo; vSim(); }); }
 function cartaDe(a) {
@@ -368,7 +368,7 @@ function vTablero() {
         <div><div class="doc-id">${esc(a.doc_id)} <span>· ${esc(a.doc.titulo)}</span></div><div class="resumen-cambio">${esc(a.cambio)}</div></div>
         <div class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto</b>'}<span class="conf ${a.confianza}">Confianza ${a.confianza.toLowerCase()}</span></div>
         <div class="pista">${pista(a)}</div></a>`).join('') : `<div class="vacio">No hay alertas en este filtro para el ${N.fmtFecha(est.hoy)}. Mueve la fecha o elige «Todas».</div>`}</div>
-    <section class="seccion"><h3>Registro de decisiones</h3><p style="color:var(--texto-2);font-size:.9rem;margin:4px 0 10px">Cada decisión queda anotada con quién la tomó. En el MVP publicado, este registro vive en el servidor y no se puede editar ni borrar.</p>
+    <section class="seccion"><h3>Registro de decisiones</h3><p style="color:var(--texto-2);font-size:.9rem;margin:4px 0 10px">Cada decisión queda anotada con quién la tomó. En esta demostración el registro se guarda en este navegador.</p>
     <div class="panel"><ul class="registro">${est.registro.slice(0, 10).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || '<li><time>—</time><span>Todavía no hay decisiones. Abre una alerta y confírmala, corrígela o descártala.</span></li>'}</ul></div></section>`;
   const r = $('#hoy-r');
   r.oninput = () => { est.hoy = N.sumarDias(PRIMERA, Number(r.value)); vTablero(); pintarFecha(); $('#hoy-r').focus(); };
@@ -392,7 +392,7 @@ function vAlerta(id) {
           : `${d.texto_anterior ? `<div class="doc" style="margin-bottom:10px"><div class="cab"><span>${esc(d.revision_anterior)}</span></div>${esc(d.texto_anterior)}</div>` : ''}<div class="doc"><div class="cab"><span>${esc(d.tipo)} · ${esc(d.emisor)}</span><span>${N.fmtFecha(d.fecha_recepcion)}</span></div>${cuerpoNuevo}</div>`}
           <div class="check"><span class="ico si">✓</span><div><b>Cita verificada en el documento:</b> «${esc(a.cita)}»</div></div>
         </div>
-        <div class="panel"><h3>Registro de esta alerta</h3><ul class="registro">${est.registro.filter(r => r.que.includes(a.doc_id)).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || `<li><time>${N.fmtFecha(d.fecha_recepcion)}</time><span><b>Sistema:</b> alerta generada con instrucción I1 v1.1 y vínculo I2 v1.0.</span></li>`}</ul></div>
+        <div class="panel"><h3>Registro de esta alerta</h3><ul class="registro">${est.registro.filter(r => r.que.includes(a.doc_id)).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || `<li><time>${N.fmtFecha(d.fecha_recepcion)}</time><span><b>Sistema:</b> alerta generada por la IA (detección y vínculo a partida) con cita verificada.</span></li>`}</ul></div>
       </div>
       <div>
         <div class="panel"><h3>${dec ? 'Decisión tomada' : 'Tu decisión'}</h3>
@@ -434,14 +434,14 @@ function docProbar() {
 function vProbar() {
   const E = EJEMPLOS[ejemplo];
   $('#v-probar').innerHTML = `
-    <div class="tab-cab"><div><h2>Prueba con tu documento</h2><p style="color:var(--texto-2);max-width:48em">Pega dos versiones de una lámina, o el texto de una carta o RFI. La IA describe los cambios y la app aplica los mismos controles que en las corridas medidas: si la cita no está en tu texto, la fila se rechaza.</p></div></div>
+    <div class="tab-cab"><div><h2>Prueba con tu documento</h2><p style="color:var(--texto-2);max-width:48em">Pega dos versiones de una lámina, o el texto de una carta o RFI. La IA describe los cambios y la app aplica los mismos controles que en las mediciones: si la cita no está en tu texto, la fila se rechaza.</p></div></div>
     <p style="font-weight:700;color:var(--tinta)">Empieza con un ejemplo</p>
     <div class="ejemplos">${Object.entries(EJEMPLOS).map(([k, v]) => `<button class="btn peq ${k === ejemplo ? 'prim' : ''}" data-ej="${k}">${esc(v.titulo)}</button>`).join('')}</div>
     <div class="filtros"><label class="tit" for="p-tipo" style="align-self:center;margin:0">Tipo de documento</label><select id="p-tipo"><option ${E.tipo === 'Lámina' ? 'selected' : ''}>Lámina</option><option ${E.tipo === 'Carta' ? 'selected' : ''}>Carta</option><option>RFI</option></select></div>
     <div class="probar"><div><label class="tit" for="p-ant">Revisión anterior <span style="font-weight:400;color:var(--texto-2)">(vacía en cartas)</span></label><textarea id="p-ant">${esc(E.anterior)}</textarea></div><div><label class="tit" for="p-act">Revisión nueva o texto recibido</label><textarea id="p-act">${esc(E.actual)}</textarea></div></div>
-    ${sample ? '' : '<p class="aviso info" style="margin-top:14px">En esta vista ves respuestas registradas de la IA. Para analizar tu propio texto: copia la instrucción, pégala en Claude y pega su respuesta en «Modo manual». Dentro de claude.ai, el análisis en vivo se activa solo.</p>'}
-    <div class="fila-btn" style="margin-top:14px">${sample ? '<button class="btn prim" id="p-ia">Analizar con IA en vivo</button>' : ''}<button class="btn ${sample ? '' : 'prim'}" id="p-reg">Ver la respuesta registrada del ejemplo</button><button class="btn" id="p-copiar">Copiar instrucción para pegar en Claude</button></div>
-    <details class="tec" id="p-manual"><summary>Modo manual: pegar la respuesta de Claude</summary><label class="tit" for="p-resp" style="margin-top:8px">Respuesta</label><textarea id="p-resp" style="min-height:110px"></textarea><button class="btn peq" id="p-val" style="margin-top:8px">Validar respuesta</button></details>
+    ${sample ? '' : '<p class="aviso info" style="margin-top:14px">En esta vista ves respuestas registradas de la IA. Para analizar tu propio texto: copia la instrucción, pégala en el asistente de IA que uses y pega su respuesta en «Modo manual».</p>'}
+    <div class="fila-btn" style="margin-top:14px">${sample ? '<button class="btn prim" id="p-ia">Analizar con IA en vivo</button>' : ''}<button class="btn ${sample ? '' : 'prim'}" id="p-reg">Ver la respuesta registrada del ejemplo</button><button class="btn" id="p-copiar">Copiar instrucción</button></div>
+    <details class="tec" id="p-manual"><summary>Modo manual: pegar la respuesta de la IA</summary><label class="tit" for="p-resp" style="margin-top:8px">Respuesta</label><textarea id="p-resp" style="min-height:110px"></textarea><button class="btn peq" id="p-val" style="margin-top:8px">Validar respuesta</button></details>
     <div class="res-ia" id="p-res" aria-live="polite"></div>`;
   document.querySelectorAll('[data-ej]').forEach(b => b.onclick = () => { ejemplo = b.dataset.ej; vProbar(); });
   const instr = () => `${N.INSTRUCCIONES.I1['v1.1'].sistema}\n\n---\n\n${N.mensajeI1([docProbar()])}`;
@@ -454,13 +454,13 @@ function vProbar() {
       ${r.rechazadas.map(x => `<div class="hecho"><span class="est" style="color:var(--vencido)">✗ Fila rechazada</span><p>${esc(x.motivo)}</p><pre style="white-space:pre-wrap;font-size:.8rem">${esc(x.linea)}</pre></div>`).join('')}
       ${d.tipo === 'Lámina' && d.texto_anterior ? `<details class="tec"><summary>Comparación sin IA (lo que haría un comparador de texto)</summary><div class="doc">${marcado}</div><p>Marca todo lo que cambió, incluido el rótulo y las referencias, pero no dice qué importa ni a qué partida afecta.</p></details>` : ''}`;
   };
-  $('#p-reg').onclick = () => mostrar(EJEMPLOS[ejemplo].registrado, `Respuesta registrada de Claude Opus para el ejemplo «${EJEMPLOS[ejemplo].titulo}» (prueba con documentos nuevos, 16/11/2026). Si cambiaste el texto, la cita puede dejar de verificarse: es el control funcionando.`);
+  $('#p-reg').onclick = () => mostrar(EJEMPLOS[ejemplo].registrado, `Respuesta registrada (demostración) para el ejemplo «${EJEMPLOS[ejemplo].titulo}» (prueba con documentos nuevos, 16/11/2026). Si cambiaste el texto, la cita puede dejar de verificarse: es el control funcionando.`);
   $('#p-copiar').onclick = async () => { try { await navigator.clipboard.writeText(instr()); $('#p-copiar').textContent = 'Instrucción copiada'; } catch { $('#p-manual').open = true; $('#p-resp').value = instr(); $('#p-copiar').textContent = 'No se pudo copiar: la instrucción quedó abajo'; } $('#p-manual').open = true; };
   $('#p-val').onclick = () => mostrar($('#p-resp').value, 'Respuesta pegada en modo manual.');
   const ia = $('#p-ia'); if (ia) ia.onclick = async () => {
     ia.disabled = true; ia.classList.add('cargando');
     $('#p-res').innerHTML = '<div class="salida" id="p-stream">Pensando…</div>';
-    try { const t = await preguntarIA(instr(), x => { const s = $('#p-stream'); if (s) s.textContent = x; }); mostrar(t, 'Respuesta de Claude en vivo, pasada por el validador del MVP.'); }
+    try { const t = await preguntarIA(instr(), x => { const s = $('#p-stream'); if (s) s.textContent = x; }); mostrar(t, 'Respuesta de la IA en vivo, pasada por el validador de citas.'); }
     catch (e) { $('#p-res').innerHTML = `<div class="aviso mal">No se pudo consultar a la IA (${esc(e.message || e.code)}). Usa la respuesta registrada o el modo manual.</div>`; }
     ia.classList.remove('cargando'); ia.disabled = false;
   };
@@ -470,8 +470,8 @@ function vProbar() {
 function vResultados() {
   const b = cifras.corpus_base, pn = cifras.prueba_nueva, s = cifras.linea_base_sin_ia;
   const series = [
-    { n: 'Con IA · corpus base (v1.1)', c: 'var(--plano)', v: [b.v1_1.cobertura, b.v1_1.precision, b.v1_1.vinculacion] },
-    { n: 'Con IA · documentos nuevos (corrida más baja)', c: 'var(--tinta)', v: [pn.corrida_1.cobertura, pn.corrida_1.precision, pn.corrida_1.vinculacion] },
+    { n: 'Con IA · corpus base (instrucción vigente)', c: 'var(--plano)', v: [b.v1_1.cobertura, b.v1_1.precision, b.v1_1.vinculacion] },
+    { n: 'Con IA · documentos nuevos (medición más baja)', c: 'var(--tinta)', v: [pn.corrida_1.cobertura, pn.corrida_1.precision, pn.corrida_1.vinculacion] },
     { n: 'Sin IA · comparador de texto (corpus base)', c: 'var(--linea)', v: [s.corpus_base.cobertura, s.corpus_base.precision, null] },
   ];
   const umbral = [0.8, 0.7, 0.7], cats = ['Cobertura', 'Precisión', 'Vinculación a partida'];
@@ -484,25 +484,25 @@ function vResultados() {
     svg += `<line x1="${cx - 70}" x2="${cx + 70}" y1="${y(umbral[i])}" y2="${y(umbral[i])}" stroke="var(--nube)" stroke-width="2" stroke-dasharray="5 3"/><text x="${cx + 72}" y="${y(umbral[i]) + 4}" font-size="10" style="fill:var(--nube)">mín. ${umbral[i] * 100} %</text><text x="${cx}" y="276" text-anchor="middle" style="fill:var(--tinta);font-weight:700">${c}</text>`;
   });
   $('#v-resultados').innerHTML = `
-    <div class="tab-cab"><div><h2>Qué tan bien funciona</h2><p style="color:var(--texto-2);max-width:48em">Medido contra respuestas correctas escritas y congeladas antes de correr la IA. Dos conjuntos: el corpus con el que se construyó el MVP y 10 documentos nuevos que el sistema no conocía.</p></div></div>
+    <div class="tab-cab"><div><h2>Qué tan bien funciona</h2><p style="color:var(--texto-2);max-width:48em">Medido contra respuestas correctas escritas y congeladas antes de correr la IA. Dos conjuntos: el corpus con el que se construyó el prototipo y 10 documentos nuevos que el sistema no conocía.</p></div></div>
     <div class="metricas">
       <div class="panel grafico"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cobertura, precisión y vinculación por conjunto">${svg}</svg>
         <div class="leyenda">${series.map(s => `<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join('')}<span><i style="background:var(--nube);height:3px"></i>Umbral mínimo</span></div></div>
       <div class="panel lectura"><h3>Cómo leerlo</h3><p style="font-size:.9rem;color:var(--texto-2);margin-bottom:10px"><b>Cobertura:</b> de los cambios reales, cuántos encontró. <b>Precisión:</b> de las alertas que dio, cuántas eran cambios reales. <b>Vinculación:</b> de los cambios encontrados, en cuántos acertó la partida.</p><ul>
-        <li><b>Corpus base:</b> ${b.v1_1.detectados} de ${b.v1_1.cambios_referencia} cambios detectados, sin falsas alarmas. La instrucción v1.1 se afinó con este corpus, por eso importa la prueba nueva.</li>
-        <li><b>Documentos nuevos:</b> ${pn.corrida_1.detectados} y ${pn.corrida_2.detectados} de ${pn.cambios_referencia} en dos corridas. En una, la IA juntó tabique y puerta del cuarto de máquinas en una sola alerta y la puerta quedó sin partida.</li>
+        <li><b>Corpus base:</b> ${b.v1_1.detectados} de ${b.v1_1.cambios_referencia} cambios detectados, sin falsas alarmas. La instrucción vigente se afinó con este corpus, por eso importa la prueba nueva.</li>
+        <li><b>Documentos nuevos:</b> ${pn.corrida_1.detectados} y ${pn.corrida_2.detectados} de ${pn.cambios_referencia} en dos mediciones. En una, la IA juntó tabique y puerta del cuarto de máquinas en una sola alerta y la puerta quedó sin partida.</li>
         <li><b>Sin IA:</b> un comparador de texto encuentra ${s.corpus_base.detectados} de ${s.corpus_base.cambios} cambios, pero marca ${s.corpus_base.falsas_alarmas} líneas que no importan (rótulos, redacción), no lee cartas ni RFI y no propone partida.</li>
-        <li><b>Repetibilidad:</b> con la misma entrada, la v1.0 cambió su respuesta en ${b.docs_con_diferencias_entre_corridas.v1_0} de 40 documentos y la v1.1 en ${b.docs_con_diferencias_entre_corridas.v1_1}; con documentos nuevos, en 1 de 10.</li>
+        <li><b>Repetibilidad:</b> con la misma entrada, la primera instrucción cambió su respuesta en ${b.docs_con_diferencias_entre_corridas.v1_0} de 40 documentos y la vigente en ${b.docs_con_diferencias_entre_corridas.v1_1}; con documentos nuevos, en 1 de 10.</li>
       </ul></div>
     </div>
-    <section class="seccion"><h3>Todas las corridas</h3><div class="panel scroll-x" style="margin-top:10px"><table class="t"><thead><tr><th>Corrida</th><th>Cobertura</th><th>Precisión</th><th>Vinculación</th><th>Documentos sin cambios bien reconocidos</th></tr></thead><tbody>
-      ${[['Corpus base · v1.0', b.v1_0], ['Corpus base · v1.0, repetición', b.v1_0_rep], ['Corpus base · v1.1', b.v1_1], ['Corpus base · v1.1, repetición', b.v1_1_rep], ['Documentos nuevos · corrida 1', pn.corrida_1], ['Documentos nuevos · corrida 2', pn.corrida_2]].map(([n, m]) => `<tr><td>${n}</td><td>${pct(m.cobertura)}</td><td>${pct(m.precision)}</td><td>${pct(m.vinculacion)}</td><td>${m.docs_sin_cambio_ok}</td></tr>`).join('')}
+    <section class="seccion"><h3>Todas las mediciones</h3><div class="panel scroll-x" style="margin-top:10px"><table class="t"><thead><tr><th>Medición</th><th>Cobertura</th><th>Precisión</th><th>Vinculación</th><th>Documentos sin cambios bien reconocidos</th></tr></thead><tbody>
+      ${[['Corpus base · primera instrucción', b.v1_0], ['Corpus base · primera instrucción, repetición', b.v1_0_rep], ['Corpus base · instrucción vigente', b.v1_1], ['Corpus base · instrucción vigente, repetición', b.v1_1_rep], ['Documentos nuevos · medición 1', pn.corrida_1], ['Documentos nuevos · medición 2', pn.corrida_2]].map(([n, m]) => `<tr><td>${n}</td><td>${pct(m.cobertura)}</td><td>${pct(m.precision)}</td><td>${pct(m.vinculacion)}</td><td>${m.docs_sin_cambio_ok}</td></tr>`).join('')}
       <tr><td>Sin IA · corpus base</td><td>${pct(s.corpus_base.cobertura)}</td><td>${pct(s.corpus_base.precision)}</td><td>no vincula</td><td>—</td></tr>
       <tr><td>Sin IA · documentos nuevos</td><td>${pct(s.prueba_nueva.cobertura)}</td><td>${pct(s.prueba_nueva.precision)}</td><td>no vincula</td><td>—</td></tr></tbody></table></div>
       <p style="color:var(--texto-2);font-size:.88rem;margin-top:8px">Además: 12 de 12 casos de prueba del plan superados y 3 de 3 accesos indebidos bloqueados por las reglas del servidor.</p></section>
     <section class="seccion"><h3>Lo que dijeron al probarlo</h3><div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr))">
       <div class="vidrio caso3"><span class="etq">Residente de obra · plazo de 5 días</span><p>«Me sirve que permita comparar documentos y reconocer cambios sin tener que revisar manualmente todas las páginas.»</p><p style="font-size:.86rem;color:var(--texto-2)">Pide: código, nombre de la partida y página donde se origina el cambio. La app ya muestra código y nombre; la página entra en la versión 2.</p></div>
-      <div class="vidrio caso3"><span class="etq">Oficina técnica · plazo de 7 días</span><p>«Agregaría una alerta que indique qué cambios pueden afectar costos, metrados o partidas y cuánto plazo queda para notificarlos.»</p><p style="font-size:.86rem;color:var(--texto-2)">Es la función central del MVP: cada alerta trae la partida y los días que quedan.</p></div></div>
+      <div class="vidrio caso3"><span class="etq">Oficina técnica · plazo de 7 días</span><p>«Agregaría una alerta que indique qué cambios pueden afectar costos, metrados o partidas y cuánto plazo queda para notificarlos.»</p><p style="font-size:.86rem;color:var(--texto-2)">Es la función central del asistente: cada alerta trae la partida y los días que quedan.</p></div></div>
       <p style="font-size:.84rem;color:var(--texto-3);margin-top:8px">Consulta por WhatsApp a 2 integrantes del equipo con experiencia en obra, 16/11/2026. Ambos reportaron adicionales que se complicaron por plazo o por detectar tarde el cambio.</p></section>
     <section class="seccion"><h3>Lo que todavía no medimos</h3><div class="panel lectura" style="margin-top:10px"><ul>
       <li>La línea base del proceso actual viene de 2 casos del equipo (2 a 4 días para entender el cambio, con plazos de 5 y 7): sirve para dimensionar, no es una estadística.</li>
@@ -529,7 +529,7 @@ const FAQ = [
   [/bluebeam|procore|comparador|por qu[eé] ia/i, 'Un comparador marca todo lo que cambió, incluido el rótulo, pero no dice qué importa, no lee instrucciones en cartas ni propone la partida. La IA aporta esa lectura; la app la controla con citas, reglas y fórmulas.'],
   [/l[ií]mit|no (hace|mide)|falta/i, 'Limitaciones: documentos sintéticos en texto, sin DWG ni PDF escaneados; la línea base viene de solo 2 casos; falta un usuario externo; no se integra con el CDE.'],
 ];
-const SUG = { inicio: ['¿Qué es y para qué sirve?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], tablero: ['¿Qué hace el control «Hoy es»?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], probar: ['¿Qué hace el modo manual?', '¿Por qué no usar un comparador?'], resultados: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'] };
+const SUG = { inicio: ['¿Qué hace este asistente?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], tablero: ['¿Qué hace el control «Hoy es»?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], probar: ['¿Qué hace el modo manual?', '¿Por qué no usar un comparador?'], resultados: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'] };
 const chat = [];
 function pintarChat() {
   $('#asist-msgs').innerHTML = (chat.length ? '' : '<div class="msg ia">Hola. Puedo explicarte cualquier pantalla o decisión de la app. Elige una pregunta o escribe la tuya.</div>') + chat.map(m => `<div class="msg ${m.role === 'user' ? 'yo' : 'ia'}">${esc(m.content)}</div>`).join('');
@@ -558,10 +558,10 @@ async function enviar(texto) {
     } catch (e) { if (e?.code !== 'rate_limited') sample = sample; }
   }
   const f = FAQ.find(([re]) => re.test(texto));
-  m.content = f ? f[1] : 'Con las respuestas preparadas no tengo esa. Prueba con «¿Por dónde empiezo?», «¿Cómo evita que la IA invente?» o «¿Qué limitaciones tiene?». Al abrir la página en claude.ai, respondo con IA en vivo.';
+  m.content = f ? f[1] : 'Con las respuestas preparadas no tengo esa. Prueba con «¿Por dónde empiezo?», «¿Cómo evita que la IA invente?» o «¿Qué limitaciones tiene?». ';
   if (ruta().vista === 'alerta' && /partida|por qu/i.test(texto) && alertaPorId[ruta().id]) m.content = `Partida ${alertaPorId[ruta().id].partida || 'ninguna'}: ${alertaPorId[ruta().id].sustento}`;
   if (/corrij/i.test(texto)) m.content = 'Si corriges, la alerta guarda tu partida y también la que propuso la IA. Así se puede medir cuántas veces se equivoca el modelo sin perder el dato original.';
-  if (/manual/i.test(texto)) m.content = 'El modo manual sirve sin IA en vivo: copias la instrucción, la pegas en Claude, y pegas aquí su respuesta. La app aplica el mismo validador de citas.';
+  if (/manual/i.test(texto)) m.content = 'El modo manual sirve sin IA en vivo: copias la instrucción, la pegas en el asistente de IA que uses y pegas aquí su respuesta. La app aplica el mismo validador de citas.';
   if (/barra/i.test(texto)) m.content = 'En cada fila: la barra azul es el plazo desde la recepción, el punto rojo el vencimiento, la línea punteada el día 4, cuando sin el sistema recién se entiende el cambio (casos consultados: 2 a 4 días) y la línea oscura la fecha de hoy.';
   pintarChat();
 }
@@ -572,7 +572,7 @@ $('#asist-form').onsubmit = e => { e.preventDefault(); const i = $('#asist-in');
 // ---------- tema claro / oscuro ----------
 const SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 const LUNA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>';
-function aplicarTema(t) { document.documentElement.dataset.theme = t; const osc = t === 'dark'; $('#tema-ico').innerHTML = osc ? SOL : LUNA; $('#tema-txt').textContent = osc ? 'Modo claro' : 'Modo oscuro'; $('#tema').setAttribute('aria-label', osc ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'); try { localStorage.setItem('rc-tema', t); } catch { } }
+function aplicarTema(t) { document.documentElement.dataset.theme = t; const osc = t === 'dark'; $('#tema-ico').innerHTML = osc ? SOL : LUNA; $('#tema').title = osc ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'; $('#tema').setAttribute('aria-label', osc ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'); try { localStorage.setItem('rc-tema', t); } catch { } }
 let temaIni = 'dark'; try { temaIni = localStorage.getItem('rc-tema') || 'dark'; } catch { }
 aplicarTema(temaIni);
 $('#tema').onclick = () => { aplicarTema(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); if (ruta().vista === 'inicio') dibujarDial(); };
@@ -589,7 +589,7 @@ document.addEventListener('click', e => { if (!e.target.closest('#pop-fecha, #ch
 (async () => {
   try { sample = window.claude?.use ? await window.claude.use('sample') : null; } catch { sample = null; }
   $('#estado-ia').innerHTML = sample ? '<i></i>IA en vivo' : '<i></i>IA: respuestas registradas'; $('#estado-ia').classList.toggle('vivo', !!sample);
-  $('#asist-modo').textContent = sample ? 'Responde Claude con el contexto de esta pantalla' : 'Respuestas preparadas (abre la página en claude.ai para la IA en vivo)';
+  $('#asist-modo').textContent = sample ? 'Responde Claude con el contexto de esta pantalla' : 'Respuestas preparadas';
   render();
 })();
 render();
