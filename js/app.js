@@ -1,6 +1,8 @@
 // Reloj Contractual · interfaz v2 (Hito 3). La lógica es la del MVP (nucleo.js, sin cambios):
 // el modelo lee y propone, la fórmula cuenta, la persona decide.
 import * as N from './nucleo.js';
+import * as IA from './ia.js';
+import { vComparar } from './comparador.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -25,6 +27,26 @@ const alertas = reg.hechos.map(h => {
   return { ...h, ...v, partida_modelo: v.partida ?? null, fecha_recepcion, limite: N.fechaLimite(fecha_recepcion, PARAMS, FERIADOS), doc: d };
 });
 const alertaPorId = Object.fromEntries(alertas.map(a => [a.id, a]));
+// Alertas creadas en «Comparar revisiones»: se guardan en este navegador.
+let nuevas = [];
+try { nuevas = JSON.parse(localStorage.getItem('rc-nuevas') || '[]'); } catch { }
+function incorporar(doc, filas) {
+  docPorId[doc.doc_id] = doc;
+  return filas.map(f => { const a = { ...f, partida_modelo: f.partida ?? null, fecha_recepcion: doc.fecha_recepcion, limite: N.fechaLimite(doc.fecha_recepcion, PARAMS, FERIADOS), doc, origen: 'comparador' }; alertas.push(a); alertaPorId[a.id] = a; return a; });
+}
+nuevas.forEach(n => incorporar(n.doc, n.filas));
+function crearAlertas(doc, hechos) {
+  // Reemplaza las alertas anteriores del mismo documento comparado.
+  for (let k = alertas.length - 1; k >= 0; k--) if (alertas[k].origen === 'comparador' && alertas[k].doc_id === doc.doc_id) { delete alertaPorId[alertas[k].id]; alertas.splice(k, 1); }
+  nuevas = nuevas.filter(n => n.doc.doc_id !== doc.doc_id);
+  const sig = 1 + Math.max(0, ...alertas.filter(a => a.origen === 'comparador').map(a => Number(a.id.slice(5)) || 0), ...nuevas.flatMap(n => n.filas.map(f => Number(f.id.slice(5)) || 0)));
+  const filas = hechos.map((h, i) => ({ ...h, id: `ALR-C${String(sig + i).padStart(3, '0')}`, confianza: h.confianza || 'Sin propuesta', criterios: h.criterios || null, partida: h.partida ?? null, partida_desc: h.partida_desc || '', sustento: h.sustento || 'Sin propuesta de partida en el modo de IA usado.' }));
+  nuevas.push({ doc, filas });
+  try { localStorage.setItem('rc-nuevas', JSON.stringify(nuevas)); } catch { }
+  const res = incorporar(doc, filas);
+  registrar('Asistente', `${doc.doc_id} · ${res.length} cambio(s) detectado(s) al comparar revisiones ${doc.revision_anterior} y ${doc.revision}`);
+  return res;
+}
 const FECHAS = docs.map(d => d.fecha_recepcion).sort();
 const PRIMERA = N.sumarDias(FECHAS[0], -1), ULTIMA = N.sumarDias(FECHAS[FECHAS.length - 1], 10);
 
@@ -105,9 +127,10 @@ function fraseDias(a) {
 }
 
 // ---------- router ----------
-const VISTAS = ['inicio', 'simulacion', 'tablero', 'probar', 'resultados'];
+const VISTAS = ['inicio', 'simulacion', 'tablero', 'comparar', 'resultados'];
 function ruta() {
-  const h = location.hash.slice(1) || 'inicio';
+  let h = location.hash.slice(1) || 'inicio';
+  if (h === 'probar') h = 'comparar';
   if (h.startsWith('alerta-')) return { vista: 'alerta', id: h.slice(7).toUpperCase() };
   return { vista: VISTAS.includes(h) ? h : 'inicio' };
 }
@@ -115,9 +138,9 @@ function render() {
   const r = ruta();
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'tablero' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', tablero: 'Alertas', alerta: 'Detalle de alerta', probar: 'Prueba tu documento', resultados: 'Resultados' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', tablero: 'Alertas', alerta: 'Detalle de alerta', comparar: 'Comparar revisiones', resultados: 'Resultados' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, simulacion: vSim, tablero: vTablero, alerta: () => vAlerta(r.id), probar: vProbar, resultados: vResultados })[r.vista]();
+  ({ inicio: vInicio, simulacion: vSim, tablero: vTablero, alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), resultados: vResultados })[r.vista]();
   ultimaVista = r;
 }
 let ultimaVista = null;
@@ -417,55 +440,6 @@ function vAlerta(id) {
   const c = $('#d-carta'); if (c) c.onclick = () => { const { html, ver } = cartaDe(a); $('#d-carta-box').innerHTML = `<div class="carta" style="margin-top:12px">${html}</div><div class="check"><span class="ico ${ver.ok ? 'si' : 'no'}">${ver.ok ? '✓' : '✗'}</span><div>${ver.ok ? 'Todas las cifras y fechas vienen de los datos confirmados.' : `Cifras sin origen: ${esc(ver.fuera.join(', '))}`}</div></div>`; };
 }
 
-// ---------- PROBAR ----------
-const EJEMPLOS = {
-  nota: { titulo: 'Cambio escondido en una nota', tipo: 'Lámina', anterior: "CUADRO DE REVISIONES: Rev. B — Emisión para construcción.\nLOSAS MACIZAS: paño E–F/5–6 e = 0,20 m · paño F–G/5–6 e = 0,20 m.\nNOTA 1: Concreto f'c = 210 kg/cm². NOTA 2: Recubrimiento inferior 2,5 cm. NOTA 3: Ver detalle de pases en lámina E-262.", actual: "CUADRO DE REVISIONES: Rev. C — Se actualiza la numeración de notas y la referencia a la lámina de pases.\nLOSAS MACIZAS: paño E–F/5–6 e = 0,20 m · paño F–G/5–6 e = 0,20 m.\nNOTA 1: Concreto f'c = 210 kg/cm². NOTA 2: Recubrimiento inferior 2,5 cm. NOTA 3: Ver detalle de pases en lámina E-263.\nNOTA 5: En el paño E–F/5–6 del nivel 12, por la carga del nuevo tanque elevado, la losa se ejecuta con e = 0,25 m.",
-    registrado: "DOC-1 | 1 | La losa maciza del paño E–F/5–6 en el nivel 12 sube de 0,20 m a 0,25 m de espesor por la carga del nuevo tanque elevado. Aumentan el concreto y el encofrado de borde, y hay que revisar el acero. | Nivel 12, paño E–F/5–6 | Estructuras | Losa maciza paño E–F/5–6 | En el paño E–F/5–6 del nivel 12, por la carga del nuevo tanque elevado, la losa se ejecuta con e = 0,25 m." },
-  carta: { titulo: 'Instrucción al final de una carta', tipo: 'Carta', anterior: '', actual: 'Lima, 6 de noviembre de 2026. Señores EL CONTRATISTA. Asunto: Visita al departamento modelo del piso 12.\nAgradecemos la coordinación de la visita del 5 de noviembre y la limpieza de las áreas comunes.\nEl equipo comercial quedó conforme con la iluminación y la vista desde la terraza.\nRecordamos que el próximo comité de obra será el jueves a las 9:00 en la caseta.\nPor último, les pedimos que en los dormitorios del piso 12 el piso laminado se reemplace por porcelanato de 60 × 60 cm, igual al de la sala.\nAtentamente, La Propietaria.',
-    registrado: 'DOC-1 | 1 | La propietaria pide cambiar el piso laminado de 8 mm de los dormitorios del piso 12 por porcelanato de 60 × 60 cm, igual al de la sala. Es un cambio de especificación por carta que hay que formalizar como adicional. | Piso 12, dormitorios | Arquitectura | Piso de dormitorios | en los dormitorios del piso 12 el piso laminado se reemplace por porcelanato de 60 × 60 cm, igual al de la sala.' },
-  sin: { titulo: 'Solo cambia el rótulo', tipo: 'Lámina', anterior: 'CUADRO DE REVISIONES: Rev. C — Emisión para construcción.\nACABADOS: dormitorios piso laminado 8 mm · sala-comedor porcelanato 60 × 60 cm.\nTABIQUES: drywall simple e = 0,10 m entre dormitorios.', actual: 'CUADRO DE REVISIONES: Rev. D — Cambio de formato del rótulo al estándar del cliente y renumeración de la lámina (antes A-33).\nACABADOS: dormitorios piso laminado 8 mm · sala-comedor porcelanato 60 × 60 cm.\nTABIQUES: drywall simple e = 0,10 m entre dormitorios.',
-    registrado: 'DOC-1 | 1 | SIN CAMBIOS | Planta típica | Arquitectura | Rótulo | Cambio de formato del rótulo al estándar del cliente y renumeración de la lámina (antes A-33).' },
-};
-let ejemplo = 'nota';
-function docProbar() {
-  const t = $('#p-tipo').value;
-  return { doc_id: 'DOC-1', tipo: t, titulo: 'Documento de prueba', especialidad: 'Por determinar', revision: t === 'Lámina' ? 'nueva' : 'Única', revision_anterior: t === 'Lámina' ? 'anterior' : '—', fecha_recepcion: est.hoy, texto_anterior: $('#p-ant').value, texto: $('#p-act').value };
-}
-function vProbar() {
-  const E = EJEMPLOS[ejemplo];
-  $('#v-probar').innerHTML = `
-    <div class="tab-cab"><div><h2>Prueba con tu documento</h2><p style="color:var(--texto-2);max-width:48em">Pega dos versiones de una lámina, o el texto de una carta o RFI. La IA describe los cambios y la app aplica los mismos controles que en las mediciones: si la cita no está en tu texto, la fila se rechaza.</p></div></div>
-    <p style="font-weight:700;color:var(--tinta)">Empieza con un ejemplo</p>
-    <div class="ejemplos">${Object.entries(EJEMPLOS).map(([k, v]) => `<button class="btn peq ${k === ejemplo ? 'prim' : ''}" data-ej="${k}">${esc(v.titulo)}</button>`).join('')}</div>
-    <div class="filtros"><label class="tit" for="p-tipo" style="align-self:center;margin:0">Tipo de documento</label><select id="p-tipo"><option ${E.tipo === 'Lámina' ? 'selected' : ''}>Lámina</option><option ${E.tipo === 'Carta' ? 'selected' : ''}>Carta</option><option>RFI</option></select></div>
-    <div class="probar"><div><label class="tit" for="p-ant">Revisión anterior <span style="font-weight:400;color:var(--texto-2)">(vacía en cartas)</span></label><textarea id="p-ant">${esc(E.anterior)}</textarea></div><div><label class="tit" for="p-act">Revisión nueva o texto recibido</label><textarea id="p-act">${esc(E.actual)}</textarea></div></div>
-    ${sample ? '' : '<p class="aviso info" style="margin-top:14px">En esta vista ves respuestas registradas de la IA. Para analizar tu propio texto: copia la instrucción, pégala en el asistente de IA que uses y pega su respuesta en «Modo manual».</p>'}
-    <div class="fila-btn" style="margin-top:14px">${sample ? '<button class="btn prim" id="p-ia">Analizar con IA en vivo</button>' : ''}<button class="btn ${sample ? '' : 'prim'}" id="p-reg">Ver la respuesta registrada del ejemplo</button><button class="btn" id="p-copiar">Copiar instrucción</button></div>
-    <details class="tec" id="p-manual"><summary>Modo manual: pegar la respuesta de la IA</summary><label class="tit" for="p-resp" style="margin-top:8px">Respuesta</label><textarea id="p-resp" style="min-height:110px"></textarea><button class="btn peq" id="p-val" style="margin-top:8px">Validar respuesta</button></details>
-    <div class="res-ia" id="p-res" aria-live="polite"></div>`;
-  document.querySelectorAll('[data-ej]').forEach(b => b.onclick = () => { ejemplo = b.dataset.ej; vProbar(); });
-  const instr = () => `${N.INSTRUCCIONES.I1['v1.1'].sistema}\n\n---\n\n${N.mensajeI1([docProbar()])}`;
-  const mostrar = (txt, origen) => {
-    const d = docProbar(), r = N.parsearI1(txt, { 'DOC-1': d });
-    const marcado = d.tipo === 'Lámina' && d.texto_anterior ? diffHTML(d.texto_anterior, d.texto) : esc(d.texto);
-    $('#p-res').innerHTML = `<p style="color:var(--texto-2);font-size:.88rem">${esc(origen)}</p>
-      ${r.hechos.map(h => `<div class="hecho"><span class="est" style="color:var(--ok)">✓ Cita verificada</span><h3 style="margin:4px 0">${esc(h.elemento)}</h3><p>${esc(h.cambio)}</p><p style="font-size:.88rem;margin-top:6px">${conCita(d.texto, h.cita)}</p></div>`).join('')}
-      ${r.sinCambios.length ? '<div class="aviso ok">Sin cambios con impacto: no se genera alerta.</div>' : ''}
-      ${r.rechazadas.map(x => `<div class="hecho"><span class="est" style="color:var(--vencido)">✗ Fila rechazada</span><p>${esc(x.motivo)}</p><pre style="white-space:pre-wrap;font-size:.8rem">${esc(x.linea)}</pre></div>`).join('')}
-      ${d.tipo === 'Lámina' && d.texto_anterior ? `<details class="tec"><summary>Comparación sin IA (lo que haría un comparador de texto)</summary><div class="doc">${marcado}</div><p>Marca todo lo que cambió, incluido el rótulo y las referencias, pero no dice qué importa ni a qué partida afecta.</p></details>` : ''}`;
-  };
-  $('#p-reg').onclick = () => mostrar(EJEMPLOS[ejemplo].registrado, `Respuesta registrada (demostración) para el ejemplo «${EJEMPLOS[ejemplo].titulo}» (prueba con documentos nuevos, 16/11/2026). Si cambiaste el texto, la cita puede dejar de verificarse: es el control funcionando.`);
-  $('#p-copiar').onclick = async () => { try { await navigator.clipboard.writeText(instr()); $('#p-copiar').textContent = 'Instrucción copiada'; } catch { $('#p-manual').open = true; $('#p-resp').value = instr(); $('#p-copiar').textContent = 'No se pudo copiar: la instrucción quedó abajo'; } $('#p-manual').open = true; };
-  $('#p-val').onclick = () => mostrar($('#p-resp').value, 'Respuesta pegada en modo manual.');
-  const ia = $('#p-ia'); if (ia) ia.onclick = async () => {
-    ia.disabled = true; ia.classList.add('cargando');
-    $('#p-res').innerHTML = '<div class="salida" id="p-stream">Pensando…</div>';
-    try { const t = await preguntarIA(instr(), x => { const s = $('#p-stream'); if (s) s.textContent = x; }); mostrar(t, 'Respuesta de la IA en vivo, pasada por el validador de citas.'); }
-    catch (e) { $('#p-res').innerHTML = `<div class="aviso mal">No se pudo consultar a la IA (${esc(e.message || e.code)}). Usa la respuesta registrada o el modo manual.</div>`; }
-    ia.classList.remove('cargando'); ia.disabled = false;
-  };
-}
-
 // ---------- RESULTADOS ----------
 function vResultados() {
   const b = cifras.corpus_base, pn = cifras.prueba_nueva, s = cifras.linea_base_sin_ia;
@@ -526,10 +500,10 @@ const FAQ = [
   [/cita|invent|alucin/i, 'Cada alerta trae un fragmento copiado literalmente del documento. La app lo busca en el texto: si no aparece, la alerta se rechaza. En el paso 3 de «Cómo funciona» puedes probarlo con una cita inventada.'],
   [/plazo|d[ií]as|vence|cl[aá]usula/i, 'La cláusula 14.3 del proyecto da 7 días calendario desde la recepción. Administración contractual la valida una vez; luego la fecha límite sale de una fórmula, con feriados si son días hábiles. El modelo nunca calcula fechas.'],
   [/resultado|funciona bien|precisi|cobertura/i, 'En el corpus base detectó 41 de 41 cambios. Con 10 documentos nuevos, 7 y 8 de 8 en dos corridas. Un comparador de texto sin IA encontró 33 de 41 con 22 falsas alarmas y no lee cartas ni RFI.'],
-  [/bluebeam|procore|comparador|por qu[eé] ia/i, 'Un comparador marca todo lo que cambió, incluido el rótulo, pero no dice qué importa, no lee instrucciones en cartas ni propone la partida. La IA aporta esa lectura; la app la controla con citas, reglas y fórmulas.'],
+  [/detecta|bluebeam|procore|comparador|por qu[eé] ia/i, 'Primero un comparador sin IA marca cada zona y línea que cambió, incluido el rótulo. Luego la IA indica cuáles tienen impacto y propone la partida; la app verifica cada cita contra el texto y la confianza con 4 criterios.'],
   [/l[ií]mit|no (hace|mide)|falta/i, 'Limitaciones: documentos sintéticos en texto, sin DWG ni PDF escaneados; la línea base viene de solo 2 casos; falta un usuario externo; no se integra con el CDE.'],
 ];
-const SUG = { inicio: ['¿Qué hace este asistente?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], tablero: ['¿Qué hace el control «Hoy es»?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], probar: ['¿Qué hace el modo manual?', '¿Por qué no usar un comparador?'], resultados: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'] };
+const SUG = { inicio: ['¿Qué hace este asistente?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], tablero: ['¿Qué hace el control «Hoy es»?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], resultados: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'] };
 const chat = [];
 function pintarChat() {
   $('#asist-msgs').innerHTML = (chat.length ? '' : '<div class="msg ia">Hola. Puedo explicarte cualquier pantalla o decisión de la app. Elige una pregunta o escribe la tuya.</div>') + chat.map(m => `<div class="msg ${m.role === 'user' ? 'yo' : 'ia'}">${esc(m.content)}</div>`).join('');

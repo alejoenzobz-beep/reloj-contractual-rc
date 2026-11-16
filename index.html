@@ -280,6 +280,64 @@ table.t { width: 100%; border-collapse: collapse; font-size: .88rem; } table.t t
 .asist input { flex: 1; border: 1px solid var(--borde); border-radius: 999px; padding: 9px 14px; background: var(--vidrio); }
 .pie { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--borde); color: var(--texto-3); font-size: .82rem; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
+/* ---------- Comparar revisiones ---------- */
+.sub2 { color: var(--texto-2); max-width: 52em; }
+.pista-txt { color: var(--texto-2); font-size: .86rem; font-weight: 400; }
+.segmento { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--vidrio); border: 1px solid var(--borde); margin: 4px 0 14px; }
+.segmento button { border: 0; background: none; color: var(--texto-2); font: 600 .9rem var(--f-texto); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.segmento button[aria-selected="true"], .segmento button[aria-pressed="true"] { background: var(--azul); color: #fff; box-shadow: 0 4px 14px var(--brillo); }
+.segmento.peq { margin: 0; } .segmento.peq button { padding: 5px 11px; font-size: .8rem; }
+.cmp-ejemplo { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr); gap: 16px; align-items: center; }
+.mini-lamina { position: relative; } .mini-lamina img { width: 100%; display: block; border-radius: 10px; border: 1px solid var(--borde); }
+.mini-lamina .etq { position: absolute; top: 8px; left: 8px; }
+.rotulo-demo { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ambar); border: 1px solid var(--ambar); border-radius: 999px; padding: 2px 9px; margin-bottom: 6px; }
+.cmp-ejemplo-txt h3 { margin: 2px 0 6px; } .cmp-ejemplo-txt p { color: var(--texto-2); font-size: .92rem; margin: 0 0 6px; }
+.soltar { display: flex; flex-direction: column; gap: 4px; padding: 22px; border: 1.5px dashed var(--borde-luz); border-radius: 16px; cursor: pointer; background: var(--azul-suave); }
+.soltar:focus-within { outline: 3px solid var(--azul-2); outline-offset: 2px; }
+.soltar input { position: absolute; opacity: 0; width: 1px; height: 1px; } .soltar b { color: var(--tinta); } .soltar span { color: var(--texto-2); font-size: .88rem; word-break: break-all; }
+.cmp-acciones { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 16px 0 20px; }
+.btn.grande { padding: 13px 24px; font-size: 1rem; }
+.cmp-modo-ia { color: var(--texto-2); font-size: .88rem; } .cmp-modo-ia a { color: var(--enlace); font-weight: 600; }
+.cmp-grid { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1fr); gap: 16px; align-items: start; }
+.cmp-grid > .contador-panel:only-child { grid-column: 1 / -1; }
+.visor-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; } .visor-cab h3 { margin: 0; }
+.visor { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--borde); background: #F7F9FC; }
+.visor img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.zona { position: absolute; border: 2px solid var(--naranja); border-radius: 4px; background: rgba(255,138,76,.10); opacity: 0; transform: scale(1.25); transition: opacity .35s, transform .35s; cursor: pointer; padding: 0; }
+.zona.on { opacity: 1; transform: none; box-shadow: 0 0 0 3px rgba(255,138,76,.25), 0 0 18px rgba(255,138,76,.55); }
+.zona.sutil { border-style: dashed; }
+.zona span { position: absolute; top: -11px; left: -11px; width: 22px; height: 22px; border-radius: 50%; background: var(--naranja); color: #fff; font: 700 .72rem var(--f-titulo); display: grid; place-items: center; }
+.zona:focus-visible { outline: 3px solid var(--azul-2); }
+.barrido { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--azul-2), #fff, var(--azul-2), transparent); box-shadow: 0 0 22px 6px rgba(79,123,255,.55); animation: barrer 1.5s cubic-bezier(.45,.05,.55,.95) forwards; }
+.barrido::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 80px; background: linear-gradient(0deg, rgba(79,123,255,.18), transparent); }
+@keyframes barrer { from { top: 0; } to { top: 100%; } }
+.contador { display: flex; align-items: baseline; gap: 10px; } .contador b { font: 800 2.6rem var(--f-titulo); color: var(--tinta); } .contador span { color: var(--texto-2); }
+.resumen-ia { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--borde); }
+.resumen-ia b { font: 800 2.6rem var(--f-titulo); color: var(--naranja); } .resumen-ia.neutro b { color: var(--texto-2); } .resumen-ia span { color: var(--tinta); font-weight: 600; }
+.destacado-naranja { color: var(--tinta); margin: 6px 0; } .destacado-naranja b { color: var(--naranja); font-size: 1.2rem; }
+.origen { font-size: .8rem; color: var(--texto-3); margin-top: 8px; }
+.estado-ia { display: flex; align-items: center; gap: 10px; color: var(--texto-2); margin-top: 14px; }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--borde); border-top-color: var(--azul-2); animation: girar .8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+.ops { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; font-size: .85rem; } .ops li { border-left: 3px solid var(--borde-luz); padding-left: 10px; }
+.antes del, .ops del { background: rgba(255,90,90,.18); color: inherit; text-decoration: line-through; } .despues ins, .ops ins { background: rgba(255,138,76,.25); color: var(--tinta); text-decoration: none; font-weight: 700; border-radius: 3px; padding: 0 2px; }
+.antes { color: var(--texto-2); }
+.cmp-h { margin: 22px 0 10px; }
+.tarjetas-cmp { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.tarj-cmp { background: var(--vidrio); border: 1px solid var(--borde); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: box-shadow .3s; }
+.tarj-cmp.pulso { box-shadow: 0 0 0 3px var(--naranja); }
+.tarj-cmp header { display: flex; gap: 10px; align-items: flex-start; } .tarj-cmp header > div { flex: 1; min-width: 0; }
+.tarj-cmp h4 { margin: 0; font: 700 1.02rem var(--f-titulo); color: var(--tinta); } .tarj-cmp header small { color: var(--texto-2); }
+.tarj-cmp .n { width: 26px; height: 26px; flex: 0 0 26px; border-radius: 50%; background: var(--naranja); color: #fff; font: 700 .8rem var(--f-titulo); display: grid; place-items: center; }
+.tarj-cmp .cambio { margin: 0; color: var(--texto); }
+.ab { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .ab figure { margin: 0; } .ab figcaption, .ab small { font-size: .74rem; color: var(--texto-3); text-transform: uppercase; letter-spacing: .04em; }
+.ab img { width: 100%; border-radius: 8px; border: 1px solid var(--borde); background: #fff; display: block; }
+.ab.txt p { margin: 2px 0 0; font-size: .86rem; overflow-wrap: anywhere; }
+.partida-prop { border-top: 1px solid var(--borde); padding-top: 10px; } .partida-prop p { margin: 4px 0; } .tit2 { font-size: .74rem; color: var(--texto-3); text-transform: uppercase; letter-spacing: .04em; }
+.crudo { white-space: pre-wrap; font-size: .78rem; max-height: 320px; overflow: auto; }
+.cmp-final { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 22px 0 10px; padding: 18px; border-radius: var(--r); background: var(--azul-suave); border: 1px solid var(--borde-luz); }
+@media (max-width: 900px) { .cmp-ejemplo, .cmp-grid { grid-template-columns: 1fr; } .tarjetas-cmp { grid-template-columns: 1fr; } }
+
 @media (max-width: 1100px) { .pano { grid-template-columns: 1fr; } .casos3 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; } .lateral { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 14px; gap: 10px; }
@@ -302,7 +360,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: .88rem; } table.t t
       <a href="#inicio"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="txt">Inicio</span></a>
       <a href="#simulacion"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor"/></svg></span><span class="txt">Cómo funciona</span></a>
       <a href="#tablero"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span class="txt">Alertas</span></a>
-      <a href="#probar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="txt">Prueba tu documento</span></a>
+      <a href="#comparar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="txt">Comparar revisiones</span></a>
       <a href="#resultados"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="txt">Resultados</span></a>
     </nav>
     <div class="lateral-pie">
@@ -328,7 +386,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: .88rem; } table.t t
       <section class="vista" id="v-simulacion" aria-label="Cómo funciona" hidden></section>
       <section class="vista" id="v-tablero" aria-label="Alertas" hidden></section>
       <section class="vista" id="v-alerta" aria-label="Detalle de alerta" hidden></section>
-      <section class="vista" id="v-probar" aria-label="Prueba tu documento" hidden></section>
+      <section class="vista" id="v-comparar" aria-label="Comparar revisiones" hidden></section>
       <section class="vista" id="v-resultados" aria-label="Resultados" hidden></section>
     </main>
     <footer class="pie"><span><b>Reloj Contractual</b> · Asistente de trazabilidad documental y contractual · Grupo 4 · Kevin Vega, Emmanuel Enriquez, Shirley Coronado, Aldo Tinco · Diplomado IA en Ingeniería y Construcción (AECODE)</span><span>Datos de demostración: proyecto ficticio R1 con documentos sintéticos. Ninguna salida es asesoría legal.</span></footer>
