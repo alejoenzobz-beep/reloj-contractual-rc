@@ -241,11 +241,14 @@ async function procesarIA(ctx, r) {
   r.fase = 'ia'; pintarTarjetas(ctx);
   await espera(600);
   try {
-    const { texto, origen, demo } = await IA.detectar(r.doc);
+    let d1 = await IA.detectar(r.doc);
+    if (d1.manual) { const t = await pedirManual('Paso 1 de 2 · Detección de cambios', d1.prompt, false); d1 = { texto: t, origen: 'Respuesta pegada en modo manual, pasada por el validador de citas.' }; r.fase = 'ia'; pintarTarjetas(ctx); }
+    const { texto, origen, demo } = d1;
     const res = N.parsearI1(texto, { [r.doc.doc_id]: r.doc });
     r.hechos = res.hechos.map((h, i) => ({ ...h, id: `H${i + 1}` })); r.rechazadas = res.rechazadas; r.sinCambios = res.sinCambios.length > 0; r.origen = origen; r.respuestaI1 = texto;
-    const v = r.hechos.length ? await IA.vincular(r.doc, r.hechos, ctx.proyecto.partidas, demo) : null;
-    if (v) { const p = N.parsearI2(v.texto, ctx.partidaPorCod, new Set(r.hechos.map(h => h.id))); r.vinculos = p.vinculos; r.rechazadasI2 = p.rechazadas; }
+    let v = r.hechos.length ? await IA.vincular(r.doc, r.hechos, ctx.proyecto.partidas, demo) : null;
+    if (v?.manual) { const t = await pedirManual('Paso 2 de 2 · Partida del presupuesto', v.prompt, true, r.hechos.length); v = t ? { texto: t } : null; r.fase = 'ia'; pintarTarjetas(ctx); }
+    if (v) { const p = N.parsearI2(v.texto, ctx.partidaPorCod, new Set(r.hechos.map(h => h.id))); r.vinculos = p.vinculos; r.rechazadasI2 = p.rechazadas; r.respuestaI2 = v.texto; }
     else r.vinculos = {};
     enlazar(r);
     r.fase = 'listo';
@@ -253,6 +256,24 @@ async function procesarIA(ctx, r) {
     r.fase = 'error-ia'; r.errorIA = e.message || String(e);
   }
   pintarTarjetas(ctx);
+}
+
+// Modo manual: muestra la instrucción completa, permite copiarla y espera la respuesta pegada.
+function pedirManual(titulo, prompt, omitible, n = 0) {
+  return new Promise(ok => {
+    const T = $('#cmp-tarjetas'), R = $('#cmp-resumen');
+    if (R) R.innerHTML = `<p class="estado-ia">Modo manual: esperando la respuesta de la IA que uses.</p>`;
+    T.innerHTML = `<div class="panel manual"><span class="rotulo-demo" style="color:var(--azul-2);border-color:var(--azul-2)">IA: manual</span><h3>${esc(titulo)}</h3>
+      <ol class="pasos-manual"><li>Copia la instrucción completa.</li><li>Pégala en el asistente de IA que prefieras (Gemini, ChatGPT, Claude u otro).</li><li>Pega aquí su respuesta y pulsa «Validar respuesta». La app verifica ${omitible ? 'cada código de partida contra el presupuesto' : 'cada cita contra el texto de la revisión B'}.</li></ol>
+      <div class="fila-btn"><button class="btn" id="man-copiar">Copiar instrucción</button>${omitible ? '<button class="btn" id="man-omitir">Omitir: asignar partida después</button>' : ''}</div>
+      <details class="tec" open><summary>Ver instrucción completa (${prompt.length} caracteres)</summary><pre class="crudo" id="man-prompt">${esc(prompt)}</pre></details>
+      <label class="tit" for="man-resp">Respuesta de la IA${omitible ? ` (una fila por cambio: ${n})` : ''}</label><textarea id="man-resp" spellcheck="false" placeholder="${omitible ? 'H1 | código | descripción | …' : 'DOC | 1 | cambio | ubicación | especialidad | elemento | cita'}"></textarea>
+      <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="man-ok">Validar respuesta</button></div><div id="man-msg" aria-live="polite"></div></div>`;
+    $('#man-copiar').onclick = async () => { try { await navigator.clipboard.writeText(prompt); $('#man-copiar').textContent = 'Instrucción copiada'; } catch { const sel = getSelection(), rg = document.createRange(); rg.selectNodeContents($('#man-prompt')); sel.removeAllRanges(); sel.addRange(rg); $('#man-copiar').textContent = 'Selecciónala y cópiala con Ctrl+C'; } };
+    $('#man-ok').onclick = () => { const t = $('#man-resp').value.trim(); if (!t) { $('#man-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">Pega primero la respuesta de la IA.</p>'; return; } ok(t); };
+    const om = $('#man-omitir'); if (om) om.onclick = () => ok(null);
+    $('#man-resp').focus({ preventScroll: true });
+  });
 }
 
 // Une cada hecho con su línea de diff y con las zonas de la lámina.
@@ -316,7 +337,7 @@ function pintarTarjetas(ctx) {
     return;
   }
   if (r.fase === 'error-ia') {
-    R.innerHTML = `<div class="aviso mal">${esc(r.errorIA)}</div>`;
+    R.innerHTML = `<div class="aviso mal">${esc(r.errorIA)} <a href="#ajustes">Abrir Ajustes de IA</a></div>`;
     T.innerHTML = r.ops.length ? `<h3 class="cmp-h">Diferencias encontradas (sin interpretar)</h3><div class="tarjetas-cmp">${r.ops.map((o, k) => tarjetaDiff(o, k)).join('')}</div>` : '';
     return;
   }
@@ -333,7 +354,7 @@ function pintarTarjetas(ctx) {
   T.innerHTML = `${hs.length ? `<h3 class="cmp-h">Cambios con impacto</h3><div class="tarjetas-cmp">${cards}</div>` : ''}
     ${rech.length ? `<div class="panel"><h3>Filas rechazadas por el validador</h3>${rech.map(x => `<div class="check"><span class="ico no">✗</span><div><b>${esc(x.motivo)}</b><pre class="crudo">${esc(x.linea)}</pre></div></div>`).join('')}</div>` : ''}
     ${hs.length ? `<div class="cmp-final"><button class="btn prim grande" id="cmp-alerta">Crear alerta con estos cambios</button><span class="pista-txt">Pasa ${hs.length === 1 ? 'el cambio' : `los ${hs.length} cambios`} a la bandeja con su plazo y abre el detalle. Ninguna alerta se emite sin tu decisión.</span></div>` : ''}
-    <details class="tec"><summary>Ver instrucción enviada a la IA</summary><pre class="crudo">${esc(IA.promptI1(r.doc))}</pre>${r.respuestaI1 ? `<p>Respuesta recibida:</p><pre class="crudo">${esc(r.respuestaI1)}</pre>` : ''}</details>`;
+    <details class="tec"><summary>Ver instrucción enviada a la IA</summary><pre class="crudo">${esc(IA.promptI1(r.doc))}</pre>${r.respuestaI1 ? `<p>Respuesta recibida:</p><pre class="crudo">${esc(r.respuestaI1)}</pre>` : ''}${r.respuestaI2 ? `<p>Instrucción para la partida (paso 2):</p><pre class="crudo">${esc(IA.I2())}</pre><p>Respuesta recibida:</p><pre class="crudo">${esc(r.respuestaI2)}</pre>` : ''}</details>`;
   const b = $('#cmp-alerta');
   if (b) b.onclick = () => {
     const doc = { ...r.doc, fecha_recepcion: ctx.est.hoy };

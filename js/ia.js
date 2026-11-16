@@ -59,21 +59,68 @@ export function fijarModo(m) { modo = m; try { sessionStorage.setItem('rc-ia-mod
 
 export class SinRespuesta extends Error { constructor(msg, codigo) { super(msg); this.codigo = codigo; } }
 
-// Paso I1 (detección) para un documento. Devuelve { texto, origen }.
+// ---------- clave propia (solo en esta pestaña) ----------
+export const MODELO_DIRECTO = 'gemini-2.5-flash';
+export const claveUsuario = () => { try { return sessionStorage.getItem('rc-gemini-clave') || ''; } catch { return ''; } };
+export function fijarClave(k) { try { if (k) sessionStorage.setItem('rc-gemini-clave', k.trim()); else sessionStorage.removeItem('rc-gemini-clave'); } catch { } }
+
+// Estado del servidor: { servidor, clave, modelo } o { servidor:false, motivo }
+export async function estadoServidor() {
+  try {
+    const r = await fetch('/.netlify/functions/ia', { headers: { accept: 'application/json' } });
+    if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return { servidor: false, motivo: 'La app se abrió sin Netlify Functions (por ejemplo, con un servidor estático).' };
+    return await r.json();
+  } catch { return { servidor: false, motivo: 'Sin conexión con el servidor.' }; }
+}
+
+async function llamarServidor(cuerpo) {
+  let r;
+  try { r = await fetch('/.netlify/functions/ia', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo) }); }
+  catch { throw new SinRespuesta('Sin conexión con el servidor de IA. Revisa tu red o usa el modo manual o el de demostración.', 'red'); }
+  const tipo = r.headers.get('content-type') || '';
+  if (!tipo.includes('json')) throw new SinRespuesta('No se encontró el servidor de IA: la app se abrió sin Netlify Functions. Usa el modo manual o el de demostración.', 'sin_servidor');
+  const d = await r.json();
+  if (d.error === 'sin_clave') throw new SinRespuesta('Servidor sin clave: usa el modo manual o el de demostración, o pega tu propia clave en Ajustes.', 'sin_clave');
+  if (!r.ok) throw new SinRespuesta(d.mensaje || `El servidor respondió ${r.status}.`, d.error || 'servidor');
+  return { texto: d.texto, origen: `Respuesta de Gemini en vivo (${d.modelo}, vía servidor), pasada por el validador de citas.` };
+}
+
+// Llamada directa con la clave que pegó el usuario (se guarda solo en sessionStorage).
+async function llamarDirecto(sistema, mensaje) {
+  let r;
+  try {
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO_DIRECTO}:generateContent`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': claveUsuario() },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: sistema }] }, contents: [{ role: 'user', parts: [{ text: mensaje }] }], generationConfig: { temperature: 0 } }),
+    });
+  } catch { throw new SinRespuesta('No se pudo contactar a Gemini desde el navegador. Revisa tu red.', 'red'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new SinRespuesta(`Gemini respondió ${r.status}: ${d?.error?.message || 'sin detalle'}. Revisa tu clave en Ajustes.`, 'gemini');
+  const t = (d.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('').trim();
+  if (!t) throw new SinRespuesta('Gemini devolvió una respuesta vacía.', 'vacia');
+  return { texto: t, origen: `Respuesta de Gemini en vivo (${MODELO_DIRECTO}, con tu clave), pasada por el validador de citas.` };
+}
+
+const docEnvio = d => ({ doc_id: d.doc_id, tipo: d.tipo, titulo: d.titulo, especialidad: d.especialidad, revision: d.revision, revision_anterior: d.revision_anterior, texto: d.texto, texto_anterior: d.texto_anterior || '' });
+const hechosEnvio = hs => hs.map(h => ({ id: h.id, cambio: h.cambio, ubicacion: h.ubicacion, especialidad: h.especialidad, elemento: h.elemento }));
+
+// Paso I1 (detección) para un documento. Devuelve { texto, origen } o { manual: true, prompt }.
 export async function detectar(doc) {
   if (modo === 'demo') {
     const d = demoPara(doc);
     if (!d) throw new SinRespuesta('No hay respuesta registrada para este texto. Para analizar documentos propios, cambia a «Gemini (en vivo)» o «Manual» en Ajustes.', 'sin_registro');
     return { texto: d.i1, origen: d.nota, demo: d };
   }
-  throw new SinRespuesta('Este modo de IA todavía no está disponible.', 'no_disponible');
+  if (modo === 'manual') return { manual: true, prompt: promptI1(doc) };
+  if (claveUsuario()) return llamarDirecto(I1(), N.mensajeI1([doc]));
+  return llamarServidor({ paso: 'I1', doc: docEnvio(doc) });
 }
 
-// Paso I2 (vínculo a partida). Devuelve { texto, origen } o null si no hay respuesta.
+// Paso I2 (vínculo a partida). Devuelve { texto, origen }, { manual: true, prompt } o null.
 export async function vincular(doc, hechos, partidas, demo) {
-  if (modo === 'demo') {
-    if (demo?.i2) return { texto: demo.i2, origen: demo.nota };
-    return null;
-  }
-  return null;
+  if (modo === 'demo') return demo?.i2 ? { texto: demo.i2, origen: demo.nota } : null;
+  const ps = partidas.map(p => ({ codigo: p.codigo, desc: p.desc, und: p.und, esp: p.esp }));
+  if (modo === 'manual') return { manual: true, prompt: promptI2(hechosEnvio(hechos), ps) };
+  if (claveUsuario()) return llamarDirecto(I2(), N.mensajeI2(hechosEnvio(hechos), ps));
+  return llamarServidor({ paso: 'I2', hechos: hechosEnvio(hechos), partidas: ps });
 }
