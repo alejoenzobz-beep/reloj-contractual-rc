@@ -262,10 +262,10 @@ Cómo evaluar en 5 minutos: ver el panel «Cómo evaluar esto en 5 minutos» en 
   const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = 'reloj-contractual_datos-de-prueba.zip'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 const EVALUAR = [
-  ['Elige un rol y el proyecto', 'En la bienvenida (o desde el avatar). Empieza como oficina técnica en «Edificio multifamiliar R1».'],
+  ['Entra al proyecto de ejemplo', 'Se entra como oficina técnica en «Edificio multifamiliar R1». El rol se cambia arriba, en «Ver como».'],
   ['Compara la lámina de ejemplo', '«Comparar revisiones» → «Detectar cambios»: 3 cambios con impacto, 2 no evidentes a simple vista, cada uno con su cita verificada.'],
-  ['Decide', '«Crear alerta con estos cambios» → Confirmar. Cambia a jefe/a de oficina técnica desde el avatar y aprueba la variación.'],
-  ['Emite', 'Como gerente, en «Documentos de salida»: revisa los avisos, descarga el DOCX o el correo .eml y registra la emisión.'],
+  ['Decide y aprueba', '«Crear alerta con estos cambios» → «Confirmar los 3 cambios». Luego «Cambiar a Jefe/a de oficina técnica» y «Aprobar y habilitar la carta».'],
+  ['Emite', '«Cambiar a Gerente de proyecto» → la carta lista los 3 cambios con su cita y su partida. Descarga el DOCX o el correo .eml y registra la emisión.'],
   ['Audita y revisa la evidencia', '«Registro de auditoría» → «Verificar integridad». En «Calidad» está qué se midió, con qué n y qué no se afirma.'],
 ];
 function vInicio() {

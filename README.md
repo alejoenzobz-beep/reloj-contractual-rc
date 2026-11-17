@@ -11,10 +11,10 @@ Entrega final del Hito 3 · Diplomado IA en Ingeniería y Construcción (AECODE)
 
 ## Cómo evaluarlo en 5 minutos
 
-1. Abre el sitio, elige un rol y el proyecto «Edificio multifamiliar R1» (o pulsa «Saltar»).
+1. Abre el sitio y pulsa «Entrar al proyecto de ejemplo»: se entra como oficina técnica en «Edificio multifamiliar R1». El rol se cambia arriba, en «Ver como».
 2. **Comparar revisiones** → «Detectar cambios» con la lámina de ejemplo E-301: 3 cambios con impacto, 2 no evidentes a simple vista.
-3. **Crear alerta con estos cambios** → en el detalle, decide como oficina técnica (Confirmar); cambia a jefe/a de oficina técnica desde el avatar y aprueba.
-4. **Documentos de salida** (como gerente): revisa la carta, descárgala en DOCX o como correo `.eml` y registra la emisión.
+3. **Crear alerta con estos cambios** → «Confirmar los 3 cambios»; luego «Cambiar a Jefe/a de oficina técnica» y aprueba.
+4. «Cambiar a Gerente de proyecto» → **Documentos de salida**: la carta lista los 3 cambios con su cita y su partida; descárgala en DOCX o como correo `.eml` y registra la emisión.
 5. **Registro de auditoría** → «Verificar integridad». En **Calidad → Evidencia** está qué se midió, con qué n y qué no se afirma.
 
 También hay un recorrido guiado de 6 pasos (botón «?» de la barra superior) y un paquete de **datos de prueba** descargable desde Inicio («Cómo evaluar esto en 5 minutos»).
