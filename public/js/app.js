@@ -10,6 +10,7 @@ import * as AUD from './auditoria.js';
 import * as CAL from './calendario.js';
 import * as DRIVE from './drive.js';
 import { casosDePrueba } from './pruebas.js';
+import * as EV from './evidencia.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -21,6 +22,8 @@ const pct = x => (x * 100).toFixed(1).replace('.', ',').replace(',0', '') + ' %'
 // ---------- datos ----------
 const [docs, proyecto, reg, cifras] = await Promise.all(
   ['data/documentos.json', 'data/proyecto.json', 'data/registrado.json', 'data/cifras.json'].map(u => fetch(u).then(r => r.json())));
+// Consulta a profesionales (opcional): si falta, la vista Evidencia muestra «sin medir todavía».
+const consulta = await fetch('data/consulta.json').then(r => r.ok ? r.json() : null).catch(() => null);
 const docPorId = Object.fromEntries(docs.map(d => [d.doc_id, d]));
 const partidaPorCod = Object.fromEntries(proyecto.partidas.map(p => [p.codigo, p]));
 const clausula143 = reg.clausulas.find(c => c.clausula === '14.3');
@@ -158,7 +161,7 @@ function barraPlazo(a, compacta = false) {
     <div class="pb-fila"><span class="pb-et">Para entender el cambio</span><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"><i>Sin asistente: ${REF.min}–${REF.max} días</i></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-asist"><i>Con asistente: día 0</i></span>${hoyM}</div></div>
     <div class="pb-fila"><span class="pb-et">Para sustentar</span><div class="pb-pista"><span class="pb-margen" style="left:1.5%;width:98.5%"><i>Margen con asistente: ${margenCon} día${margenCon === 1 ? '' : 's'}</i></span><span class="pb-fin"></span>${hoyM.replace(/<b>Hoy<\/b>/, '')}</div></div>
     <div class="pb-escala pb-et-pad"><span>Día 0 · recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}</span></div>
-    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = 2), ver <a href="#calidad">Calidad → Casos de referencia</a>. La revisión humana de una alerta todavía no se ha cronometrado.</p></div>`;
+    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = 2), ver <a href="#calidad">Calidad → Casos de referencia</a>. El tiempo de revisión humana se cronometra en este navegador (Calidad → Evidencia).</p></div>`;
 }
 function diasBadge(a, cls = '') {
   const e = estadoDe(a);
@@ -191,8 +194,9 @@ function render() {
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'bandeja' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   pintarProyecto();
   $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Registro de auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
+  if (r.vista === 'alerta' && !(ultimaVista?.vista === 'alerta' && ultimaVista.id === r.id) && !est.decisiones[r.id]) EV.abrirDetalle(r.id);
   pintarFecha();
-  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); EV.conectarEvidencia(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -626,7 +630,7 @@ function vAlerta(id) {
         <div class="panel"><div class="plazo-cab"><h3>Trazabilidad del caso</h3><a class="pista-txt" href="#auditoria">Registro de auditoría sellado</a></div>${trazaCaso(a)}</div>
       </div>
       <div>
-        ${panelDecision(a)}
+        ${panelDecision(a)}<div id="opinion-slot"></div>
         <div class="panel"><h3>Lo que propone la IA ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
         <div class="panel"><h3>Partida del presupuesto</h3>
           <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto contractual</b>'} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
@@ -636,7 +640,7 @@ function vAlerta(id) {
         </div>
       </div>
     </div>`;
-  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar(rolN(), `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
+  const decidir = (estado, partida) => { EV.registrarDecision({ id: a.id, doc: a.doc_id, rol: rolN(), estado, partida_propuesta: a.partida, partida_final: partida ?? a.partida, demo: true }); est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar(rolN(), `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); EV.ofrecerOpinion($('#opinion-slot'), `decision:${a.id}`, rolN()); };
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
   $('#d-ics').onclick = () => { CAL.descargarIcs(icsDe(a), `plazo_${a.doc_id}_${a.id}.ics`.replace(/[^\w.-]+/g, '_')); registrar(rolN(), `${a.doc_id} · fecha límite agregada al calendario (.ics)`, { tipo: 'registro', alerta: a.id }); };
@@ -668,6 +672,8 @@ function vCalidad() {
   });
   $('#v-calidad').innerHTML = `
     <div class="tab-cab"><div><h2>Calidad: qué tan bien funciona</h2><p style="color:var(--texto-2);max-width:48em">Medido contra respuestas correctas escritas y congeladas antes de correr la IA. Dos conjuntos: el corpus con el que se construyó el prototipo y 10 documentos nuevos que el sistema no conocía.</p></div></div>
+    ${EV.vistaEvidencia({ cifras, consulta })}
+    <h3 style="margin-top:22px">Mediciones de la IA (detalle)</h3>
     <div class="metricas">
       <div class="panel grafico"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cobertura, precisión y vinculación por conjunto">${svg}</svg>
         <div class="leyenda">${series.map(s => `<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join('')}<span><i style="background:var(--nube);height:3px"></i>Umbral mínimo</span></div></div>
@@ -827,7 +833,7 @@ async function pasoGuia() {
   $('#g-saltar').onclick = cerrarGuia;
   const ant = $('#g-ant'); if (ant) ant.onclick = () => { guiaPaso--; pasoGuia(); };
   $('#g-sig').onclick = async () => {
-    if (guiaPaso === 5) return cerrarGuia();
+    if (guiaPaso === 5) { cerrarGuia(); const f = $('#opinion-flotante'); EV.ofrecerOpinion(f, 'recorrido', rolN()); return; }
     guiaPaso++; pasoGuia();
   };
   if (g.antes) { $('#g-sig').disabled = true; await g.antes(); $('#g-sig').disabled = false; }

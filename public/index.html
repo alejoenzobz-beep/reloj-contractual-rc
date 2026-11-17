@@ -574,6 +574,26 @@ button.avatar { border: 0; cursor: pointer; }
 .conex { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: var(--vidrio); border: 1px solid var(--borde); } .conex b { color: var(--tinta); } .conex small { color: var(--texto-2); font-size: .8rem; }
 
 .evaluar summary { cursor: pointer; } .pasos-evaluar { margin: 10px 0 12px 20px; padding: 0; display: grid; gap: 6px; font-size: .92rem; } .pasos-evaluar b { color: var(--tinta); }
+/* ---------- Evidencia, cronómetro y opinión ---------- */
+.opinion { margin-top: 12px; } .opinion h3 { margin: 0; }
+.op-p { border: 0; padding: 0; margin: 10px 0 0; } .op-p legend { font-weight: 600; color: var(--tinta); font-size: .9rem; }
+.op-escala { display: flex; gap: 6px; margin: 6px 0 2px; } .op-escala label { cursor: pointer; } .op-escala input { position: absolute; opacity: 0; }
+.op-escala span { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--borde-luz); background: var(--vidrio); font-weight: 700; }
+.op-escala input:checked + span { background: var(--azul); color: #fff; border-color: var(--azul); } .op-escala input:focus-visible + span { outline: 3px solid var(--azul-2); }
+.opinion textarea { min-height: 60px; }
+.opinion-flotante { position: fixed; left: 16px; bottom: 16px; z-index: 65; width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.opinion-flotante:empty { display: none; } .opinion-flotante .opinion { margin: 0; box-shadow: var(--sombra); background: var(--vidrio-2); backdrop-filter: blur(14px); }
+.capas { display: grid; gap: 14px; }
+.capa { padding: 16px 18px; border-radius: var(--r); background: var(--vidrio); border: 1px solid var(--borde); }
+.capa header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; } .capa h4 { margin: 0; font: 700 1.02rem var(--f-titulo); color: var(--tinta); }
+.capa-n { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; display: grid; place-items: center; background: var(--azul); color: #fff; font: 700 .85rem var(--f-titulo); }
+.capa-meta { margin: 4px 0 0; font-size: .8rem; color: var(--texto-2); } .capa-meta .etq { margin-right: 6px; }
+.capa-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.capa-cifras > div { padding: 10px 12px; border-radius: 12px; background: var(--azul-suave); } .capa-cifras b { display: block; font: 800 1.5rem var(--f-titulo); color: var(--tinta); } .capa-cifras span { font-size: .8rem; color: var(--texto-2); }
+.sin-medir { padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--borde-luz); color: var(--texto-2); font-size: .88rem; } .sin-medir b { color: var(--ambar); }
+.capa-local { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--borde); font-size: .88rem; } .capa-local p { margin: 6px 0; }
+.no-afirmamos { margin-top: 16px; } .no-afirmamos h4 { margin: 0 0 8px; }
+
 @media (max-width: 1100px) { .beta { display: none; } }
 @media (max-width: 1500px) { #ruta-vista, #ruta-vista + span, .ruta > span:nth-of-type(1) { display: none; } }
 @media (max-width: 900px) { .inicio-hero, .panorama-grid { grid-template-columns: 1fr; } .resumen-dia.cuatro { grid-template-columns: 1fr 1fr; } .chip-cde span { display: none; } }
@@ -648,6 +668,7 @@ button.avatar { border: 0; cursor: pointer; }
   </div>
 </div>
 
+<div class="opinion-flotante" id="opinion-flotante" aria-live="polite"></div>
 <div class="bienvenida" id="bienvenida" hidden role="dialog" aria-modal="true" aria-labelledby="bv-titulo"></div>
 <aside class="asist" id="asist" hidden aria-label="Asistente">
   <div class="asist-cab"><b>Asistente</b><div class="fila-btn" style="flex-wrap:nowrap"><button class="btn peq" id="asist-borrar" title="Empezar una conversación nueva">Nueva conversación</button><button class="btn peq" id="asist-cerrar">Cerrar</button></div><small id="asist-modo" class="asist-nota"></small></div>
