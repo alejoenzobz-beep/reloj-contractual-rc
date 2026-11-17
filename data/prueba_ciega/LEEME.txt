@@ -1,2 +1,2 @@
-Coloca aquí los 10 documentos nuevos de la prueba ciega (documentos.json) y su referencia congelada (referencia.json).
-Luego: npm run medir-ia
+Coloca aquí documentos_nuevos.json, referencia_nueva.json y CONGELADO.txt (líneas «sha256  archivo»).
+Luego: npm run medir-ia (verifica la huella y agrega la fila a cifras.json).

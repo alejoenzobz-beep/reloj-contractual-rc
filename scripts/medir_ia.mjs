@@ -9,11 +9,25 @@ import * as N from '../public/js/nucleo.js';
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const URL_FN = arg('url', 'https://reloj-contractual-rc.netlify.app/.netlify/functions/ia');
 const DIR = arg('datos', 'data/prueba_ciega');
-const docsF = path.join(DIR, 'documentos.json'), refF = path.join(DIR, 'referencia.json');
+const primero = (...n) => n.map(x => path.join(DIR, x)).find(f => fs.existsSync(f)) || path.join(DIR, n[0]);
+const docsF = primero('documentos_nuevos.json', 'documentos.json'), refF = primero('referencia_nueva.json', 'referencia.json');
 if (!fs.existsSync(docsF) || !fs.existsSync(refF)) {
-  console.error(`Faltan ${docsF} y/o ${refF}.\nCopia ahí los 10 documentos nuevos de la prueba ciega (mismo formato que public/data/documentos.json)\ny su referencia congelada (mismo formato que public/data/referencia_corpus.json) y vuelve a correr «npm run medir-ia».`);
+  console.error(`Faltan ${docsF} y/o ${refF} (o documentos_nuevos.json y referencia_nueva.json).\nCopia ahí los 10 documentos nuevos de la prueba ciega (mismo formato que public/data/documentos.json)\ny su referencia congelada (mismo formato que public/data/referencia_corpus.json) y vuelve a correr «npm run medir-ia».`);
   process.exit(2);
 }
+// Huella: si existe CONGELADO.txt (líneas «sha256  archivo»), cada archivo debe coincidir o no se mide.
+const congF = path.join(DIR, 'CONGELADO.txt');
+if (fs.existsSync(congF)) {
+  const { createHash } = await import('node:crypto');
+  const lineas = [...fs.readFileSync(congF, 'utf8').matchAll(/([0-9a-fA-F]{64})\s+\*?([^\s]+)/g)];
+  if (!lineas.length) { console.error('CONGELADO.txt no tiene líneas «sha256  archivo».'); process.exit(3); }
+  for (const [, h, f] of lineas) {
+    const ruta = path.join(DIR, path.basename(f));
+    const real = fs.existsSync(ruta) ? createHash('sha256').update(fs.readFileSync(ruta)).digest('hex') : 'archivo ausente';
+    console.log(`${path.basename(f)}: ${real === h.toLowerCase() ? 'huella correcta' : `NO COINCIDE (esperada ${h.slice(0, 12)}…, real ${real.slice(0, 12)}…)`}`);
+    if (real !== h.toLowerCase()) { console.error('La prueba ciega no coincide con la versión congelada: no se mide.'); process.exit(3); }
+  }
+} else console.log('Aviso: no hay CONGELADO.txt; se mide sin verificar la huella.');
 const docs = JSON.parse(fs.readFileSync(docsF, 'utf8')), referencia = JSON.parse(fs.readFileSync(refF, 'utf8'));
 const proyecto = JSON.parse(fs.readFileSync('public/data/proyecto.json', 'utf8'));
 const porId = Object.fromEntries(docs.map(d => [d.doc_id, d])), partidas = Object.fromEntries(proyecto.partidas.map(p => [p.codigo, p]));
