@@ -53,25 +53,35 @@ export function demoPara(doc) {
 }
 
 // ---------- modo activo ----------
-export const ETIQUETA = { demo: 'IA: respuestas registradas', servidor: 'IA: Gemini (en vivo)', manual: 'IA: manual' };
+// servidor = «IA registrada» (la de la app, en su servidor; por defecto Gemini) · clave = «Mi propia clave API» · manual · demo
+export const ETIQUETA = { servidor: 'IA registrada', clave: 'IA: mi clave', manual: 'IA: manual', demo: 'IA: demostración' };
+export const NOMBRE_MODO = { servidor: 'IA registrada (por defecto)', clave: 'Mi propia clave API', manual: 'Manual (copiar y pegar el prompt)', demo: 'Respuestas de demostración (sin IA en vivo)' };
 let modo = 'demo', elegido = false;
-try { const g = sessionStorage.getItem('rc-ia-modo'); if (g) { modo = g; elegido = true; } } catch { }
+try { const g = sessionStorage.getItem('rc-ia-modo'); if (g && NOMBRE_MODO[g]) { modo = g; elegido = true; } } catch { }
 export const modoIA = () => modo;
 export function fijarModo(m) { modo = m; elegido = true; try { sessionStorage.setItem('rc-ia-modo', m); } catch { } }
-// Modo por defecto: si la persona no eligió uno y el servidor tiene clave, arranca en Gemini en vivo.
 export let estadoInicial = null;
+// Si la persona no eligió un modo y el servidor tiene clave, arranca con la IA registrada.
 export async function iniciarModo() {
   estadoInicial = await estadoServidor();
-  if (!elegido) modo = (estadoInicial.servidor && estadoInicial.clave) || claveUsuario() ? 'servidor' : 'demo';
+  if (!elegido) modo = estadoInicial.servidor && estadoInicial.clave ? 'servidor' : claveUsuario() ? 'clave' : 'demo';
   return estadoInicial;
 }
 
 export class SinRespuesta extends Error { constructor(msg, codigo) { super(msg); this.codigo = codigo; } }
 
-// ---------- clave propia (solo en esta pestaña) ----------
-export const MODELO_DIRECTO = 'gemini-2.5-flash';
-export const claveUsuario = () => { try { return sessionStorage.getItem('rc-gemini-clave') || ''; } catch { return ''; } };
-export function fijarClave(k) { try { if (k) sessionStorage.setItem('rc-gemini-clave', k.trim()); else sessionStorage.removeItem('rc-gemini-clave'); } catch { } }
+// ---------- clave propia de cualquier proveedor compatible (solo en esta pestaña) ----------
+export const PROVEEDORES = {
+  gemini: { n: 'Google Gemini (AI Studio)', modelo: 'gemini-2.5-flash', base: 'https://generativelanguage.googleapis.com/v1beta' },
+  openai: { n: 'Compatible con OpenAI (OpenAI, Groq, OpenRouter, Mistral, DeepSeek…)', modelo: 'gpt-4o-mini', base: 'https://api.openai.com/v1' },
+  anthropic: { n: 'Anthropic (Claude)', modelo: 'claude-haiku-5-5', base: 'https://api.anthropic.com/v1' },
+};
+const leerSS = (k, d = '') => { try { return sessionStorage.getItem(k) || d; } catch { return d; } };
+const fijarSS = (k, v) => { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch { } };
+export const claveUsuario = () => leerSS('rc-ia-clave') || leerSS('rc-gemini-clave');
+export const configClave = () => { const prov = leerSS('rc-ia-prov', 'gemini'); const P = PROVEEDORES[prov] || PROVEEDORES.gemini; return { prov, modelo: leerSS('rc-ia-modelo') || P.modelo, base: (leerSS('rc-ia-base') || P.base).replace(/\/+$/, '') }; };
+export function fijarClave(k, cfg = {}) { fijarSS('rc-ia-clave', k?.trim()); fijarSS('rc-gemini-clave', ''); if (cfg.prov) fijarSS('rc-ia-prov', cfg.prov); fijarSS('rc-ia-modelo', cfg.modelo?.trim()); fijarSS('rc-ia-base', cfg.base?.trim()); }
+const nombreProv = () => { const c = configClave(); return `${c.prov === 'openai' ? new URL(c.base).hostname : PROVEEDORES[c.prov].n.split(' (')[0]} · ${c.modelo}`; };
 
 // Estado del servidor: { servidor, clave, modelo } o { servidor:false, motivo }
 export async function estadoServidor() {
@@ -87,27 +97,48 @@ async function llamarServidor(cuerpo) {
   try { r = await fetch('/.netlify/functions/ia', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo) }); }
   catch { throw new SinRespuesta('Sin conexión con el servidor de IA. Revisa tu red o usa el modo manual o el de demostración.', 'red'); }
   const tipo = r.headers.get('content-type') || '';
-  if (!tipo.includes('json')) throw new SinRespuesta('No se encontró el servidor de IA: la app se abrió sin Netlify Functions. Usa el modo manual o el de demostración.', 'sin_servidor');
+  if (!tipo.includes('json')) throw new SinRespuesta('No se encontró el servidor de IA: la app se abrió sin Netlify Functions. Usa tu propia clave, el modo manual o el de demostración.', 'sin_servidor');
   const d = await r.json();
-  if (d.error === 'sin_clave') throw new SinRespuesta('Servidor sin clave: usa el modo manual o el de demostración, o pega tu propia clave en Ajustes.', 'sin_clave');
+  if (d.error === 'sin_clave') throw new SinRespuesta('El servidor no tiene clave de IA configurada: usa tu propia clave, el modo manual o el de demostración.', 'sin_clave');
   if (!r.ok) throw new SinRespuesta(d.mensaje || `El servidor respondió ${r.status}.`, d.error || 'servidor');
-  return { texto: d.texto, accion: d.accion, modelo: d.modelo, origen: `Respuesta de Gemini en vivo (${d.modelo}, vía servidor), pasada por el validador de citas.` };
+  return { texto: d.texto, accion: d.accion, modelo: d.modelo, ms: d.ms, origen: `Respuesta de la IA registrada (${d.modelo}, vía servidor), pasada por el validador de citas.` };
 }
 
-// Llamada directa con la clave que pegó el usuario (se guarda solo en sessionStorage).
-async function llamarDirecto(sistema, mensaje, gen = { temperature: 0 }) {
+// Llamada directa desde el navegador con la clave del usuario (proveedor elegido en Ajustes).
+async function llamarDirecto(sistema, mensaje, { json = false } = {}) {
+  const c = configClave(), k = claveUsuario();
+  if (!k) throw new SinRespuesta('No hay una clave guardada en esta pestaña. Pégala en Ajustes.', 'sin_clave');
+  let url, opts, leer;
+  if (c.prov === 'gemini') {
+    url = `${c.base}/models/${encodeURIComponent(c.modelo)}:generateContent`;
+    opts = { headers: { 'content-type': 'application/json', 'x-goog-api-key': k }, body: { systemInstruction: { parts: [{ text: sistema }] }, contents: [{ role: 'user', parts: [{ text: mensaje }] }], generationConfig: json ? GEN_CHAT : { temperature: 0 } } };
+    leer = d => (d.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('');
+  } else if (c.prov === 'anthropic') {
+    url = `${c.base}/messages`;
+    opts = { headers: { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: { model: c.modelo, max_tokens: 2048, temperature: 0, system: sistema, messages: [{ role: 'user', content: mensaje }] } };
+    leer = d => (d.content || []).map(x => x.text || '').join('');
+  } else {
+    url = `${c.base}/chat/completions`;
+    opts = { headers: { 'content-type': 'application/json', authorization: `Bearer ${k}` }, body: { model: c.modelo, temperature: 0, messages: [{ role: 'system', content: sistema }, { role: 'user', content: mensaje }] } };
+    leer = d => d.choices?.[0]?.message?.content || '';
+  }
   let r;
-  try {
-    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO_DIRECTO}:generateContent`, {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': claveUsuario() },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: sistema }] }, contents: [{ role: 'user', parts: [{ text: mensaje }] }], generationConfig: gen }),
-    });
-  } catch { throw new SinRespuesta('No se pudo contactar a Gemini desde el navegador. Revisa tu red.', 'red'); }
+  try { r = await fetch(url, { method: 'POST', headers: opts.headers, body: JSON.stringify(opts.body) }); }
+  catch { throw new SinRespuesta(`No se pudo contactar a ${new URL(url).hostname} desde el navegador (red o CORS). Revisa la dirección del proveedor o usa el modo manual.`, 'red'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new SinRespuesta(`Gemini respondió ${r.status}: ${d?.error?.message || 'sin detalle'}. Revisa tu clave en Ajustes.`, 'gemini');
-  const t = (d.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('').trim();
-  if (!t) throw new SinRespuesta('Gemini devolvió una respuesta vacía.', 'vacia');
-  return { texto: t, origen: `Respuesta de Gemini en vivo (${MODELO_DIRECTO}, con tu clave), pasada por el validador de citas.` };
+  if (!r.ok) throw new SinRespuesta(`${new URL(url).hostname} respondió ${r.status}: ${d?.error?.message || d?.error?.type || d?.message || 'sin detalle'}`, 'proveedor');
+  const t = String(leer(d) || '').trim();
+  if (!t) throw new SinRespuesta('El proveedor devolvió una respuesta vacía.', 'vacia');
+  return { texto: t, origen: `Respuesta de tu IA (${nombreProv()}, con tu clave), pasada por el validador de citas.` };
+}
+
+// «Probar conexión»: llamada real y mínima; devuelve { ok, detalle } con el error real si falla.
+export async function probarConexion(cual) {
+  const t0 = performance.now();
+  try {
+    if (cual === 'clave') { const r = await llamarDirecto('Responde solo con la palabra OK.', 'Prueba de conexión.'); return { ok: true, detalle: `Respondió «${r.texto.slice(0, 40)}» en ${Math.round(performance.now() - t0)} ms (${nombreProv()}).` }; }
+    const r = await llamarServidor({ paso: 'P' }); return { ok: true, detalle: `Respondió «${String(r.texto).slice(0, 40)}» en ${Math.round(performance.now() - t0)} ms (modelo ${r.modelo}).` };
+  } catch (e) { return { ok: false, detalle: e.message }; }
 }
 
 const docEnvio = d => ({ doc_id: d.doc_id, tipo: d.tipo, titulo: d.titulo, especialidad: d.especialidad, revision: d.revision, revision_anterior: d.revision_anterior, texto: d.texto, texto_anterior: d.texto_anterior || '' });
@@ -117,11 +148,11 @@ const hechosEnvio = hs => hs.map(h => ({ id: h.id, cambio: h.cambio, ubicacion: 
 export async function detectar(doc) {
   if (modo === 'demo') {
     const d = demoPara(doc);
-    if (!d) throw new SinRespuesta('No hay respuesta registrada para este texto. Para analizar documentos propios, cambia a «Gemini (en vivo)» o «Manual» en Ajustes.', 'sin_registro');
+    if (!d) throw new SinRespuesta('No hay respuesta registrada para este texto. Para analizar documentos propios, elige «IA registrada», «Mi propia clave API» o «Manual» en Ajustes.', 'sin_registro');
     return { texto: d.i1, origen: d.nota, demo: d };
   }
   if (modo === 'manual') return { manual: true, prompt: promptI1(doc) };
-  if (claveUsuario()) return llamarDirecto(I1(), N.mensajeI1([doc]));
+  if (modo === 'clave') return llamarDirecto(I1(), N.mensajeI1([doc]));
   return llamarServidor({ paso: 'I1', doc: docEnvio(doc) });
 }
 
@@ -130,7 +161,7 @@ export async function vincular(doc, hechos, partidas, demo) {
   if (modo === 'demo') return demo?.i2 ? { texto: demo.i2, origen: demo.nota } : null;
   const ps = partidas.map(p => ({ codigo: p.codigo, desc: p.desc, und: p.und, esp: p.esp }));
   if (modo === 'manual') return { manual: true, prompt: promptI2(hechosEnvio(hechos), ps) };
-  if (claveUsuario()) return llamarDirecto(I2(), N.mensajeI2(hechosEnvio(hechos), ps));
+  if (modo === 'clave') return llamarDirecto(I2(), N.mensajeI2(hechosEnvio(hechos), ps));
   return llamarServidor({ paso: 'I2', hechos: hechosEnvio(hechos), partidas: ps });
 }
 
@@ -139,28 +170,29 @@ export async function herramienta(clave, texto) {
   const h = HERRAMIENTAS[clave];
   if (modo === 'demo') throw new SinRespuesta('demo', 'demo');
   if (modo === 'manual') return { manual: true, prompt: `${h.sistema}\n\n---\n\n${texto}` };
-  if (claveUsuario()) return llamarDirecto(h.sistema, texto);
+  if (modo === 'clave') return llamarDirecto(h.sistema, texto);
   return llamarServidor({ paso: 'H', herramienta: clave, texto });
 }
 
-// Asistente conversacional. Usa Gemini solo con el modo «Gemini en vivo» (servidor o clave propia).
-// Envía la pregunta, la pantalla y un resumen del proyecto; nunca documentos del usuario.
-export const chatEnVivo = () => modo === 'servidor';
+// Asistente conversacional: usa la IA en vivo (registrada o con tu clave). Envía la pregunta, la pantalla y un resumen
+// del proyecto; nunca documentos del usuario.
+export const chatEnVivo = () => modo === 'servidor' || modo === 'clave';
 export async function chat({ pregunta, pantalla, contexto, historial, ids }) {
-  if (!chatEnVivo()) throw new SinRespuesta('El asistente con IA usa el modo «Gemini en vivo».', 'modo');
-  if (claveUsuario()) {
-    const r = await llamarDirecto(SISTEMA_CHAT, mensajeChat({ pregunta, pantalla, contexto, historial }), GEN_CHAT);
-    return { ...leerSalidaChat(r.texto, ids), origen: `Gemini (${MODELO_DIRECTO}, con tu clave)` };
+  if (!chatEnVivo()) throw new SinRespuesta('El asistente con IA usa la IA registrada o tu propia clave.', 'modo');
+  if (modo === 'clave') {
+    const r = await llamarDirecto(SISTEMA_CHAT, mensajeChat({ pregunta, pantalla, contexto, historial }), { json: true });
+    return { ...leerSalidaChat(r.texto, ids), origen: `Tu IA (${nombreProv()})` };
   }
   const r = await llamarServidor({ paso: 'C', pregunta, pantalla, contexto, historial });
   const accion = r.accion && (!ids || !r.accion.startsWith('ir:alerta-') || ids.has(r.accion.slice(10))) ? r.accion : null;
-  return { texto: r.texto, accion, origen: `Gemini (${r.modelo}, vía servidor)` };
+  return { texto: r.texto, accion, origen: `IA registrada (${r.modelo}, vía servidor)` };
 }
 
 // Etiqueta visible de origen para todo resultado de un modelo (o preparado para la demostración).
 const CHIP = {
-  vivo: ['vivo', 'IA · Gemini en vivo'], registrada: ['reg', 'IA · respuesta registrada'], manual: ['man', 'IA · respuesta pegada (manual)'],
+  vivo: ['vivo', 'IA en vivo'], registrada: ['reg', 'IA · respuesta guardada en la medición'], manual: ['man', 'IA · respuesta pegada (manual)'],
   preparada: ['prep', 'Demostración · respuesta preparada, sin IA'],
 };
 export const chipIA = t => { const [c, x] = CHIP[t] || CHIP.registrada; return `<span class="chip-ia ${c}">${x}</span>`; };
 export const tipoOrigen = r => r?.demo ? (r.demo.origen === 'preparada' ? 'preparada' : 'registrada') : r?.manual ? 'manual' : 'vivo';
+export const etiquetaModo = () => modo === 'clave' ? `IA: mi clave · ${nombreProv()}` : ETIQUETA[modo];

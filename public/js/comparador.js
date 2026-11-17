@@ -182,7 +182,7 @@ export function vComparar(ctx) {
     <div class="tab-cab"><div><h2>Comparar revisiones</h2><p class="sub2">Elige dos revisiones de un mismo documento. El comparador marca cada diferencia sin usar IA; luego la IA indica cuáles tienen impacto y propone la partida, y la app verifica cada cita contra el texto.</p></div></div>
     <div class="segmento" role="tablist" aria-label="Tipo de entrada">${modos.map(([k, t]) => `<button role="tab" aria-selected="${S.modo === k}" data-modo="${k}">${t}</button>`).join('')}</div>
     <div class="cmp-entrada panel" id="cmp-entrada"></div>
-    <div class="cmp-acciones">${ctx.puede('comparar') ? '<button class="btn prim grande" id="cmp-ir">Detectar cambios</button>' : ctx.notaRol('comparar', 'Comparar revisiones')}<span class="cmp-modo-ia">Modo de IA: <a href="#ajustes" id="cmp-modo">${esc(IA.ETIQUETA[IA.modoIA()])}</a></span></div>
+    <div class="cmp-acciones">${ctx.puede('comparar') ? '<button class="btn prim grande" id="cmp-ir">Detectar cambios</button>' : ctx.notaRol('comparar', 'Comparar revisiones')}<span class="cmp-modo-ia">Modo de IA: <a href="#ajustes" id="cmp-modo">${esc(IA.etiquetaModo())}</a></span></div>
     <div id="cmp-res" aria-live="polite"></div>`;
   raiz.querySelectorAll('[data-modo]').forEach(b => b.onclick = () => { S.modo = b.dataset.modo; S.res = null; vComparar(ctx); });
   pintarEntrada(ctx);
@@ -350,7 +350,7 @@ function pedirManual(titulo, prompt, omitible, n = 0) {
     const T = $('#cmp-tarjetas'), R = $('#cmp-resumen');
     if (R) R.innerHTML = `<p class="estado-ia">Modo manual: esperando la respuesta de la IA que uses.</p>`;
     T.innerHTML = `<div class="panel manual"><span class="rotulo-demo" style="color:var(--azul-2);border-color:var(--azul-2)">IA: manual</span><h3>${esc(titulo)}</h3>
-      <ol class="pasos-manual"><li>Copia la instrucción completa.</li><li>Pégala en el asistente de IA que prefieras (Gemini, ChatGPT, Claude u otro).</li><li>Pega aquí su respuesta y pulsa «Validar respuesta». La app verifica ${omitible ? 'cada código de partida contra el presupuesto' : 'cada cita contra el texto de la revisión B'}.</li></ol>
+      <ol class="pasos-manual"><li>Copia la instrucción completa.</li><li>Pégala en el asistente de IA que prefieras (Gemini, ChatGPT, Claude u otra).</li><li>Pega aquí su respuesta y pulsa «Validar respuesta». La app verifica ${omitible ? 'cada código de partida contra el presupuesto' : 'cada cita contra el texto de la revisión B'}.</li></ol>
       <div class="fila-btn"><button class="btn" id="man-copiar">Copiar instrucción</button>${omitible ? '<button class="btn" id="man-omitir">Omitir: asignar partida después</button>' : ''}</div>
       <details class="tec" open><summary>Ver instrucción completa (${prompt.length} caracteres)</summary><pre class="crudo" id="man-prompt">${esc(prompt)}</pre></details>
       <label class="tit" for="man-resp">Respuesta de la IA${omitible ? ` (una fila por cambio: ${n})` : ''}</label><textarea id="man-resp" spellcheck="false" placeholder="${omitible ? 'H1 | código | descripción | …' : 'DOC | 1 | cambio | ubicación | especialidad | elemento | cita'}"></textarea>
@@ -415,7 +415,7 @@ async function pintarResultado(ctx, animar) {
 function pintarTarjetas(ctx) {
   const r = S.res, T = $('#cmp-tarjetas'), R = $('#cmp-resumen');
   if (!T) return;
-  if (r.fase === 'ia') { R.innerHTML = `<p class="estado-ia"><span class="spin" aria-hidden="true"></span>La IA revisa qué diferencias tienen impacto (${esc(IA.ETIQUETA[IA.modoIA()])})…</p>`; T.innerHTML = ''; return; }
+  if (r.fase === 'ia') { R.innerHTML = `<p class="estado-ia"><span class="spin" aria-hidden="true"></span>La IA revisa qué diferencias tienen impacto (${esc(IA.etiquetaModo())})…</p>`; T.innerHTML = ''; return; }
   if (r.fase === 'sin-texto') {
     R.innerHTML = `<p class="aviso info">${r.ocrError ? `No se pudo leer el texto con OCR (${esc(r.ocrError)}).` : 'El OCR no encontró texto legible en la imagen.'} Sin texto no hay cita literal que verificar ni partida que proponer; las zonas sirven para ubicar el cambio en la lámina.</p>`;
     T.innerHTML = `<h3 class="cmp-h">Zonas detectadas</h3><div class="tarjetas-cmp">${r.regiones.map((g, k) => `<article class="tarj-cmp" data-tz="${k}"><header><span class="n">${k + 1}</span><div><h4>Zona ${k + 1}</h4><small>${zonaDe(g, r.W, r.H)} · ${(g.frac * 100).toFixed(2).replace('.', ',')} % del área</small></div>${g.frac < UMBRAL_EVIDENTE ? '<span class="etq ambar">No evidente a simple vista</span>' : ''}</header>

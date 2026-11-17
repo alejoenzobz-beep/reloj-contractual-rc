@@ -371,7 +371,7 @@ function vSim() {
     () => `<span class="quien">Modelo de lenguaje</span><h2>La IA compara las dos revisiones</h2>
       <p class="explica">Recibe la revisión anterior, la nueva y una instrucción con formato fijo. Debe describir cada cambio que afecte costo, plazo o alcance y copiar literalmente el fragmento que lo sustenta.</p>
       <div class="dos"><div class="doc"><div class="cab"><span>Lo que cambió, marcado con nube de revisión</span></div>${diffHTML(d.texto_anterior, d.texto)}</div>
-      <div><div class="salida" id="s-salida" aria-live="polite"></div><dl class="campos" id="s-campos"></dl><div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="s-repro">Ver la respuesta registrada</button>${IA.modoIA() === 'servidor' ? '<button class="btn peq prim" id="s-vivo">Procesar con Gemini en vivo</button>' : ''}</div></div></div>
+      <div><div class="salida" id="s-salida" aria-live="polite"></div><dl class="campos" id="s-campos"></dl><div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="s-repro">Ver la respuesta registrada</button>${IA.chatEnVivo() ? '<button class="btn peq prim" id="s-vivo">Procesar con la IA en vivo</button>' : ''}</div></div></div>
       <details class="tec"><summary>Ver instrucción enviada a la IA</summary><pre>${esc(IA.I1())}</pre><p>Respuesta registrada en la medición:</p><pre>${esc(filaI1)}</pre></details>`,
     () => `<span class="quien">Validador de la app</span><h2>La app comprueba que la cita exista</h2>
       <p class="explica">Busca, letra por letra, el fragmento que citó la IA dentro del documento. Si no lo encuentra, la alerta se rechaza: así una respuesta inventada no llega a la bandeja.</p>
@@ -404,7 +404,7 @@ function vSim() {
     const escribir = () => { $('#s-campos').innerHTML = ''; const txt = 'Cambio: ' + a.cambio; if (reducido) { S.textContent = txt; campos(); return; } let k = 0; const t = setInterval(() => { k += 5; S.textContent = txt.slice(0, k); if (k >= txt.length) { clearInterval(t); campos(); } }, 16); };
     escribir(); $('#s-repro').onclick = escribir;
     const v = $('#s-vivo'); if (v) v.onclick = async () => {
-      v.disabled = true; v.classList.add('cargando'); S.textContent = 'Consultando a Gemini…';
+      v.disabled = true; v.classList.add('cargando'); S.textContent = 'Consultando a la IA…';
       try {
         const txt = (await IA.detectar(d)).texto; S.textContent = txt;
         const r = N.parsearI1(txt, docPorId);
@@ -807,53 +807,55 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && guiaPaso >= 0) cerr
 // ---------- AJUSTES ----------
 function pintarModoIA() {
   const m = IA.modoIA(), b = $('#estado-ia');
-  b.innerHTML = `<i></i>${esc(m === 'servidor' && IA.claveUsuario() ? 'IA: Gemini (tu clave)' : IA.ETIQUETA[m])}`; b.classList.toggle('vivo', m === 'servidor'); b.classList.toggle('manual', m === 'manual');
+  b.innerHTML = `<i></i>${esc(IA.ETIQUETA[m])}`; b.title = IA.etiquetaModo(); b.classList.toggle('vivo', m === 'servidor' || m === 'clave'); b.classList.toggle('manual', m === 'manual');
   b.title = 'Cambiar el modo de IA';
 }
 function vAjustes() {
-  const m = IA.modoIA(), clave = IA.claveUsuario(), e = IA.estadoInicial;
-  const activo = m === 'servidor' ? (clave ? 'clave' : 'servidor') : m;
-  const srv = !e ? '' : e.servidor && e.clave ? `<span class="aud-ok">✓ Servidor listo (${esc(e.modelo)})</span>` : e.servidor ? '<span class="aud-mal">Servidor sin clave</span>' : '<span class="aud-mal">Servidor no disponible en esta versión</span>';
+  const m = IA.modoIA(), clave = IA.claveUsuario(), e = IA.estadoInicial, cfg = IA.configClave();
+  const srv = !e ? '' : e.servidor && e.clave ? `<span class="aud-ok">✓ Disponible</span>` : e.servidor ? '<span class="aud-mal">El servidor no tiene clave configurada</span>' : '<span class="aud-mal">Servidor no disponible en esta versión</span>';
   const caminos = [
-    ['servidor', 'Servidor de la app (Gemini)', 'La app consulta Gemini con la clave guardada en su servidor. La clave nunca llega al navegador.', 'Conviene para la demostración: no necesitas configurar nada.', srv],
-    ['clave', 'Mi propia clave de Gemini', 'Las consultas salen desde este navegador con tu clave de Google AI Studio (gratuita, sin tarjeta). Se guarda solo en esta pestaña.', 'Conviene si el servidor alcanzó su límite por hora o quieres usar tu propia cuota.', clave ? '<span class="aud-ok">✓ Clave guardada en esta pestaña</span>' : ''],
-    ['manual', 'Manual: copiar y pegar', 'La app te muestra la instrucción completa; la pegas en la IA que prefieras y pegas su respuesta. Se valida igual.', 'Conviene si prefieres otra IA (ChatGPT, Claude) o no quieres que la app envíe datos.', ''],
+    ['servidor', IA.NOMBRE_MODO.servidor, 'La app consulta la IA configurada en su servidor. La clave vive en el servidor y nunca llega al navegador.', 'Conviene para evaluar la app: no necesitas configurar nada.', `${srv}<small class="pista-txt">Por defecto: Gemini${e?.modelo ? ` (${esc(e.modelo)})` : ''}.</small>`],
+    ['clave', IA.NOMBRE_MODO.clave, 'Usa tu propia clave de un proveedor compatible: Gemini, cualquier API compatible con OpenAI (OpenAI, Groq, OpenRouter, Mistral, DeepSeek…) o Anthropic. Las consultas salen desde este navegador.', 'Conviene si prefieres tu proveedor o tu cuota, o si la IA registrada alcanzó su límite.', clave ? `<span class="aud-ok">✓ Clave guardada en esta pestaña</span><small class="pista-txt">${esc(IA.PROVEEDORES[cfg.prov].n.split(' (')[0])} · ${esc(cfg.modelo)}</small>` : ''],
+    ['manual', IA.NOMBRE_MODO.manual, 'La app te muestra el prompt completo; lo pegas en la IA que prefieras y pegas su respuesta. Se valida igual.', 'Conviene si no quieres que la app envíe datos o usas una IA sin API.', ''],
   ];
   $('#v-ajustes').innerHTML = `
     <div class="tab-cab"><div><h2>Ajustes de IA</h2><p class="sub2">El modelo solo lee y propone. En todos los caminos, la app verifica cada cita contra el texto, recalcula la confianza de la partida y calcula los plazos con fórmulas, nunca con la IA.</p></div></div>
     <h3 style="margin:6px 0 10px">Cómo conectar la IA</h3>
-    <fieldset class="modos"><legend class="sr">Camino de IA</legend>${caminos.map(([k, t, d, c, st]) => `<label class="modo ${activo === k ? 'activo' : ''}"><input type="radio" name="modo-ia" value="${k}" ${activo === k ? 'checked' : ''}><span class="modo-t">${t}</span><span class="modo-d">${d}</span><span class="modo-c"><b>Cuándo conviene:</b> ${c}</span>${st ? `<span class="modo-st">${st}</span>` : ''}</label>`).join('')}</fieldset>
-    <label class="modo modo-sin ${activo === 'demo' ? 'activo' : ''}"><input type="radio" name="modo-ia" value="demo" ${activo === 'demo' ? 'checked' : ''}><span class="modo-t">Sin IA en vivo: respuestas registradas <span class="etq ambar">demostración</span></span><span class="modo-d">Usa las respuestas guardadas en la prueba con documentos nuevos (16/11/2026) y la preparada para la lámina E-301. No envía datos. Solo procesa los ejemplos; el asistente responde con preguntas preparadas.</span></label>
+    <fieldset class="modos"><legend class="sr">Camino de IA</legend>${caminos.map(([k, t, d, c, st]) => `<label class="modo ${m === k ? 'activo' : ''}"><input type="radio" name="modo-ia" value="${k}" ${m === k ? 'checked' : ''}><span class="modo-t">${t}</span><span class="modo-d">${d}</span><span class="modo-c"><b>Cuándo conviene:</b> ${c}</span>${st ? `<span class="modo-st">${st}</span>` : ''}</label>`).join('')}</fieldset>
+    <label class="modo modo-sin ${m === 'demo' ? 'activo' : ''}"><input type="radio" name="modo-ia" value="demo" ${m === 'demo' ? 'checked' : ''}><span class="modo-t">${IA.NOMBRE_MODO.demo} <span class="etq ambar">demostración</span></span><span class="modo-d">Usa las respuestas guardadas en la medición con documentos nuevos (16/11/2026) y la preparada para la lámina E-301. No envía datos. Solo procesa los ejemplos; el asistente responde con preguntas preparadas.</span></label>
     <div class="ajustes-grid" style="margin-top:16px">
-      <div class="panel"><h3>Servidor de IA</h3><p class="pista-txt">Comprueba si el servidor de la app tiene configurada la clave de Gemini (<code>GEMINI_API_KEY</code> en las variables de entorno de Netlify).</p>
-        <div class="fila-btn"><button class="btn" id="aj-probar">Probar conexión con el servidor</button></div><div id="aj-estado" aria-live="polite"></div></div>
-      <div class="panel" id="aj-panel-clave"><h3>Mi propia clave de Gemini</h3><p class="pista-txt">Se obtiene gratis y sin tarjeta en aistudio.google.com. Se guarda solo en esta pestaña (sessionStorage) y se borra al cerrarla.</p>
-        <label class="tit" for="aj-clave">Clave de API de Google AI Studio</label><input type="password" id="aj-clave" autocomplete="off" spellcheck="false" placeholder="${clave ? 'Clave guardada en esta pestaña' : 'Pega aquí tu clave'}">
-        <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar y usar mi clave</button>${clave ? '<button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite"></div></div>
+      <div class="panel"><h3>IA registrada</h3><p class="pista-txt">Hace una consulta real y corta a la IA del servidor y muestra la respuesta o el error tal como llega.</p>
+        <div class="fila-btn"><button class="btn" id="aj-probar">Probar conexión</button></div><div id="aj-estado" aria-live="polite"></div></div>
+      <form class="panel" id="aj-panel-clave" onsubmit="return false"><h3>Mi propia clave API</h3><p class="pista-txt">Se guarda solo en esta pestaña (sessionStorage) y se borra al cerrarla. Nunca se envía al servidor de la app.</p>
+        <label class="tit" for="aj-prov">Proveedor</label><select id="aj-prov">${Object.entries(IA.PROVEEDORES).map(([k, P]) => `<option value="${k}" ${cfg.prov === k ? 'selected' : ''}>${esc(P.n)}</option>`).join('')}</select>
+        <div class="campos-plazo"><div><label class="tit" for="aj-modelo">Modelo</label><input id="aj-modelo" value="${esc(cfg.modelo)}" spellcheck="false"></div><div><label class="tit" for="aj-base">Dirección de la API</label><input id="aj-base" value="${esc(cfg.base)}" spellcheck="false"></div></div>
+        <label class="tit" for="aj-clave">Clave API</label><input type="password" id="aj-clave" autocomplete="off" spellcheck="false" placeholder="${clave ? 'Clave guardada en esta pestaña' : 'Pega aquí tu clave'}">
+        <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar y usar mi clave</button>${clave ? '<button class="btn" id="aj-probar-clave">Probar conexión</button><button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite"></div></form>
     </div>
     <section class="seccion"><h3>Conexiones</h3><div class="conexiones">
-      <div class="conex"><b>Gemini (Google AI Studio)</b><span>${e?.servidor && e?.clave ? '<span class="aud-ok">✓ Activo en el servidor</span>' : clave ? '<span class="aud-ok">✓ Con tu clave</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Variable de Netlify: <code>GEMINI_API_KEY</code>.</small></div>
+      <div class="conex"><b>IA registrada</b><span>${e?.servidor && e?.clave ? '<span class="aud-ok">✓ Activa en el servidor</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Por defecto: Gemini. Variables de Netlify: <code>GEMINI_API_KEY</code> y, opcional, <code>GEMINI_MODEL</code>.</small></div>
       <div class="conex"><b>Google Drive</b><span>${DRIVE.activo() ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Elegir revisiones en Comparar y guardar la carta. Requiere <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_API_KEY</code> en Netlify.</small></div>
       <div class="conex"><b>Telegram</b><span>${TG.activo ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Aviso al celular con el cambio y su fecha límite. Requiere <code>TELEGRAM_BOT_TOKEN</code> y <code>TELEGRAM_CHAT_ID</code> en Netlify.</small></div>
       <div class="conex"><b>Autodesk Construction Cloud y Notion</b><span><span class="etq ambar">demostración</span></span><small>Se muestran como conexión de demostración: no leen archivos reales.</small></div></div></section>
-    <div class="aviso info" style="margin-top:16px"><b>Privacidad.</b> En el plan gratuito de Google AI Studio, Google puede usar los datos enviados para mejorar sus productos. Por eso al asistente solo se le envía tu pregunta y un resumen del proyecto de demostración, nunca documentos; y en Comparar conviene usar solo documentos de demostración o sin información sensible.</div>
+    <div class="aviso info" style="margin-top:16px"><b>Privacidad.</b> En los planes gratuitos, algunos proveedores (como Google AI Studio) pueden usar los datos enviados para mejorar sus productos. Por eso al asistente solo se le envía tu pregunta y un resumen del proyecto de demostración, nunca documentos; y en Comparar conviene usar solo documentos de demostración o sin información sensible.</div>
     <section class="seccion"><h3>Instrucciones que recibe la IA</h3><p class="pista-txt">Son las mismas en todos los caminos y las mismas con las que se midieron los resultados.</p>
       <details class="tec"><summary>Detectar cambios con impacto</summary><pre class="crudo">${esc(IA.I1())}</pre></details>
       <details class="tec"><summary>Proponer la partida del presupuesto</summary><pre class="crudo">${esc(IA.I2())}</pre></details>
       <details class="tec"><summary>Asistente conversacional</summary><pre class="crudo">${esc(SISTEMA_CHAT)}</pre></details></section>`;
   document.querySelectorAll('[name="modo-ia"]').forEach(r => r.onchange = () => {
-    if (r.value === 'clave' && !IA.claveUsuario()) { IA.fijarModo('servidor'); vAjustes(); pintarModoIA(); $('#aj-clave').focus(); $('#aj-clave-msg').innerHTML = '<p class="aviso info" style="margin-top:8px">Pega tu clave y pulsa «Guardar y usar mi clave».</p>'; return; }
-    if (r.value === 'servidor') IA.fijarClave('');
-    IA.fijarModo(r.value === 'clave' ? 'servidor' : r.value); vAjustes(); pintarModoIA();
+    if (r.value === 'clave' && !IA.claveUsuario()) { vAjustes(); $('#aj-clave').focus(); $('#aj-clave-msg').innerHTML = '<p class="aviso info" style="margin-top:8px">Elige el proveedor, pega tu clave y pulsa «Guardar y usar mi clave».</p>'; return; }
+    IA.fijarModo(r.value); vAjustes(); pintarModoIA();
   });
-  $('#aj-probar').onclick = async () => {
-    const b = $('#aj-probar'); b.disabled = true; $('#aj-estado').innerHTML = '<p class="estado-ia"><span class="spin"></span>Consultando…</p>';
-    const e = await IA.estadoServidor(); b.disabled = false;
-    $('#aj-estado').innerHTML = !e.servidor ? `<p class="aviso mal" style="margin-top:8px">${esc(e.motivo)} Usa tu propia clave, el modo manual o las respuestas registradas.</p>`
-      : e.clave ? `<p class="aviso ok" style="margin-top:8px">Servidor listo. Modelo: ${esc(e.modelo)}.</p>` : '<p class="aviso mal" style="margin-top:8px">Servidor sin clave: usa el modo manual o el de demostración.</p>';
+  $('#aj-prov').onchange = () => { const P = IA.PROVEEDORES[$('#aj-prov').value]; $('#aj-modelo').value = P.modelo; $('#aj-base').value = P.base; };
+  const probar = async (btn, dest, cual) => { btn.disabled = true; dest.innerHTML = '<p class="estado-ia"><span class="spin"></span>Consultando…</p>'; const r = await IA.probarConexion(cual); btn.disabled = false; dest.innerHTML = `<p class="aviso ${r.ok ? 'ok' : 'mal'}" style="margin-top:8px">${r.ok ? '✓ Conexión correcta. ' : 'La conexión falló. '}${esc(r.detalle)}</p>`; };
+  $('#aj-probar').onclick = () => probar($('#aj-probar'), $('#aj-estado'), 'servidor');
+  const pc = $('#aj-probar-clave'); if (pc) pc.onclick = () => probar(pc, $('#aj-clave-msg'), 'clave');
+  $('#aj-guardar').onclick = async () => {
+    const v = $('#aj-clave').value.trim(); if (!v && !IA.claveUsuario()) { $('#aj-clave-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">Pega primero la clave.</p>'; return; }
+    IA.fijarClave(v || IA.claveUsuario(), { prov: $('#aj-prov').value, modelo: $('#aj-modelo').value, base: $('#aj-base').value }); IA.fijarModo('clave'); vAjustes(); pintarModoIA();
+    probar($('#aj-probar-clave'), $('#aj-clave-msg'), 'clave');
   };
-  $('#aj-guardar').onclick = () => { const v = $('#aj-clave').value.trim(); if (!v) { $('#aj-clave-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">Pega primero la clave.</p>'; return; } IA.fijarClave(v); IA.fijarModo('servidor'); vAjustes(); pintarModoIA(); };
-  const o = $('#aj-olvidar'); if (o) o.onclick = () => { IA.fijarClave(''); vAjustes(); pintarModoIA(); };
+  const o = $('#aj-olvidar'); if (o) o.onclick = () => { IA.fijarClave(''); if (IA.modoIA() === 'clave') IA.fijarModo('demo'); vAjustes(); pintarModoIA(); };
 }
 
 // ---------- ASISTENTE ----------
@@ -866,11 +868,11 @@ const FAQ = [
   [/plazo|d[ií]as|vence|cl[aá]usula/i, 'Cada proyecto tiene su plazo, en «Plazos y parámetros». En R1, la cláusula 14.3 da 7 días calendario desde la recepción. Administración contractual la valida una vez; luego la fecha límite sale de una fórmula, con feriados si son días hábiles. El modelo nunca calcula fechas.'],
   [/resultado|funciona bien|precisi|cobertura/i, 'En el corpus base detectó 41 de 41 cambios. Con 10 documentos nuevos, 7 y 8 de 8 en dos mediciones. Un comparador de texto sin IA encontró 33 de 41 con 22 falsas alarmas y no lee cartas ni RFI.'],
   [/detecta|bluebeam|procore|comparador|por qu[eé] ia/i, 'Primero un comparador sin IA marca cada zona y línea que cambió, incluido el rótulo. Luego la IA indica cuáles tienen impacto y propone la partida; la app verifica cada cita contra el texto y la confianza con 4 criterios.'],
-  [/modo|gemini|clave|manual|ia en vivo/i, 'Hay tres modos de IA, en Ajustes: demostración (respuestas registradas o preparadas), Gemini en vivo (vía el servidor, sin exponer la clave) y manual (copias la instrucción, la pegas en tu asistente de IA y pegas su respuesta). En los tres, la app verifica cada cita.'],
+  [/modo|gemini|clave|manual|ia en vivo/i, 'En Ajustes eliges cómo conectar la IA: la IA registrada de la app (por defecto, Gemini, con la clave en el servidor), tu propia clave API de un proveedor compatible, o el modo manual (copias el prompt, lo pegas en tu IA y pegas su respuesta). También hay respuestas de demostración sin IA en vivo. En todos los casos la app verifica cada cita.'],
   [/hash|sello|borra|audit|integridad/i, 'Cada evento guarda el sello SHA-256 del anterior. Si alguien cambia o borra un evento, los sellos dejan de coincidir y «Verificar integridad» marca en rojo desde ese punto. En esta demostración el registro vive en el navegador; en producción iría en un servidor de solo anexado.'],
   [/l[ií]mit|no (hace|mide)|falta/i, 'Limitaciones: documentos sintéticos en texto, sin DWG ni PDF escaneados; la línea base viene de solo 2 casos; falta un usuario externo; no se integra con el CDE.'],
 ];
-const SUG = { inicio: ['¿Qué vence primero y qué hago hoy?', '¿Qué hace este asistente?'], salidas: ['¿Qué falta para emitir esta carta?', '¿Exportar es lo mismo que emitir?'], plazos: ['¿Cómo se calcula la fecha límite?', '¿Qué pasa si son días hábiles?'], ajustes: ['¿Qué modo de IA me conviene?', '¿Qué datos se envían a Gemini?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], bandeja: ['¿Qué hace la fecha simulada?', '¿Qué significan las barras?'], alerta: ['¿Qué hago hoy con este cambio?', '¿Por qué esta partida?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], calidad: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'], auditoria: ['¿Para qué sirve el hash?', '¿Qué pasa si alguien borra un evento?'] };
+const SUG = { inicio: ['¿Qué vence primero y qué hago hoy?', '¿Qué hace este asistente?'], salidas: ['¿Qué falta para emitir esta carta?', '¿Exportar es lo mismo que emitir?'], plazos: ['¿Cómo se calcula la fecha límite?', '¿Qué pasa si son días hábiles?'], ajustes: ['¿Qué modo de IA me conviene?', '¿Qué datos se envían a la IA?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], bandeja: ['¿Qué hace la fecha simulada?', '¿Qué significan las barras?'], alerta: ['¿Qué hago hoy con este cambio?', '¿Por qué esta partida?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], calidad: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'], auditoria: ['¿Para qué sirve el hash?', '¿Qué pasa si alguien borra un evento?'] };
 // Resumen del proyecto activo para el asistente: las fechas y los días ya vienen calculados por nucleo.js.
 function contextoChat() {
   const r = ruta(), id = est.proyecto, pp = paramsProy(id);
@@ -896,7 +898,7 @@ let chat = [];
 try { chat = JSON.parse(sessionStorage.getItem('rc-chat') || '[]'); } catch { }
 const guardarChat = () => { try { sessionStorage.setItem('rc-chat', JSON.stringify(chat.slice(-30))); } catch { } };
 function pintarModoChat() {
-  $('#asist-modo').innerHTML = IA.chatEnVivo() ? `${IA.chipIA('vivo')} Solo se envía tu pregunta y un resumen del proyecto de demostración, nunca tus documentos.` : `<span class="chip-ia basico">Asistente básico (sin IA)</span> Respuestas preparadas. Para usar Gemini, elige «Gemini en vivo» en <a href="#ajustes">Ajustes</a>.`;
+  $('#asist-modo').innerHTML = IA.chatEnVivo() ? `${IA.chipIA('vivo')} Solo se envía tu pregunta y un resumen del proyecto de demostración, nunca tus documentos.` : `<span class="chip-ia basico">Asistente básico (sin IA)</span> Respuestas preparadas. Para usar IA en vivo, elige «IA registrada» o «Mi propia clave API» en <a href="#ajustes">Ajustes</a>.`;
 }
 function pintarChat() {
   pintarModoChat();
@@ -924,7 +926,7 @@ function respuestaBasica(texto) {
   if (/corrij/i.test(texto)) return { texto: 'Si corriges, el cambio guarda tu partida y también la que propuso la IA. Así se puede medir cuántas veces se equivoca el modelo sin perder el dato original.' };
   if (/barra/i.test(texto)) return { texto: `Cada barra va de la recepción (día 0) al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, 2 casos de referencia); la línea vertical es hoy y el punto naranja, el límite.` };
   const f = FAQ.find(([re]) => re.test(texto));
-  return { texto: f ? f[1] : 'No tengo una respuesta preparada para eso. Prueba con «¿Qué vence primero?», «¿Qué plazo tiene E-204?» o «¿Cómo evita que la IA invente?». Con Gemini en vivo puedo responder preguntas abiertas sobre el proyecto.' };
+  return { texto: f ? f[1] : 'No tengo una respuesta preparada para eso. Prueba con «¿Qué vence primero?», «¿Qué plazo tiene E-204?» o «¿Cómo evita que la IA invente?». Con la IA en vivo puedo responder preguntas abiertas sobre el proyecto.' };
 }
 async function enviar(texto) {
   texto = texto.trim().slice(0, 600);
@@ -935,7 +937,7 @@ async function enviar(texto) {
   if (IA.chatEnVivo()) {
     const { txt, ids } = contextoChat();
     try { const r = await IA.chat({ pregunta: texto, pantalla: NOMBRE_VISTA[ruta().vista] || ruta().vista, contexto: txt, historial, ids }); Object.assign(m, { content: r.texto, accion: r.accion, origen: r.origen, pendiente: false }); }
-    catch (e) { Object.assign(m, respuestaBasica(texto), { basico: true, pendiente: false, aviso: `Gemini no respondió: ${e.message.replace(/\.?$/, '.')} Esta es la respuesta del asistente básico.` }); m.content = m.texto; }
+    catch (e) { Object.assign(m, respuestaBasica(texto), { basico: true, pendiente: false, aviso: `La IA no respondió: ${e.message.replace(/\.?$/, '.')} Esta es la respuesta del asistente básico.` }); m.content = m.texto; }
   } else { const r = respuestaBasica(texto); Object.assign(m, { content: r.texto, accion: r.accion, basico: true, pendiente: false }); }
   delete m.texto; guardarChat(); pintarChat();
 }

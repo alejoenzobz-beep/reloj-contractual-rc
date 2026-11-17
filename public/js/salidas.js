@@ -172,7 +172,7 @@ export function vSalidas(ctx, idSel) {
           <div class="fila-btn"><span class="tit2">Exportar</span><button class="btn peq" data-exp="docx">Descargar DOCX</button><button class="btn peq" data-exp="pdf">Imprimir o guardar PDF</button><button class="btn peq" data-exp="md">Descargar MD</button><button class="btn peq" data-exp="ics">Agregar fecha límite al calendario</button>${ctx.drive?.activo ? '<button class="btn peq" data-exp="drive">Guardar DOCX en Google Drive</button>' : ''}</div>
           <div class="fila-btn"><span class="tit2">Enviar</span><button class="btn peq prim" data-env="eml">Correo con el DOCX adjunto (.eml)</button><button class="btn peq" data-env="mailto">Abrir en mi correo</button><button class="btn peq" data-env="copiar">Copiar texto de la carta</button>${ctx.telegram?.activo ? '<button class="btn peq" data-env="telegram">Enviar aviso por Telegram</button>' : ''}</div>
           <div class="fila-btn"><span class="tit2">Redactar con mi IA</span><button class="btn peq" data-env="instruccion">Copiar instrucción para mi IA</button><span class="pista-txt">La instrucción usa solo los datos confirmados; si pegas aquí la respuesta, la app la verifica igual.</span></div>
-          <div class="fila-btn"><span class="tit2">Herramientas · ${esc(IA.ETIQUETA[IA.modoIA()])}</span>${Object.entries(HERRAMIENTAS).map(([k, h]) => `<button class="btn peq" data-her="${k}">${h.titulo}</button>`).join('')}</div>
+          <div class="fila-btn"><span class="tit2">Herramientas · ${esc(IA.etiquetaModo())}</span>${Object.entries(HERRAMIENTAS).map(([k, h]) => `<button class="btn peq" data-her="${k}">${h.titulo}</button>`).join('')}</div>
         </div>
         <div id="sal-env" aria-live="polite"></div>
         <div id="sal-her" aria-live="polite"></div>
@@ -248,8 +248,8 @@ async function usarHerramienta(k, texto, c, vencido) {
   const copiar = () => { const b = $('#her-copiar'); if (b) b.onclick = async () => { try { await navigator.clipboard.writeText($('#her-txt').textContent); b.textContent = 'Copiado'; } catch { b.textContent = 'Selecciona y copia con Ctrl+C'; } }; };
   if (IA.modoIA() === 'demo') {
     if (k === 'resumir') out.innerHTML = caja(h.titulo, `• Cambio: ${c.cambio} (${c.ubicacion}).\n• Partida afectada: ${c.partida}.\n• Notificar según la cláusula ${c.clausula} hasta el ${c.fecha_limite}.`, 'Resumen armado por la app con los datos confirmados (modo demostración, sin IA).', '<span class="chip-ia basico">Sin IA · armado por la app</span>');
-    else if (k === 'revisar') { const r = revisar(texto, c, vencido); out.innerHTML = caja(h.titulo, r.av.length ? r.av.map(x => `• ${x.t}`).join('\n') : 'Sin observaciones: la cita, la fecha límite y las cifras coinciden con los datos confirmados.', 'Revisión automática de la app (modo demostración, sin IA). Con Gemini o el modo manual, la IA revisa además la redacción.', '<span class="chip-ia basico">Sin IA · armado por la app</span>'); }
-    else out.innerHTML = `<div class="aviso info">En modo demostración no hay una traducción registrada para este texto. Cambia a «Gemini en vivo» o «Manual» en <a href="#ajustes">Ajustes</a> para traducirlo.</div>`;
+    else if (k === 'revisar') { const r = revisar(texto, c, vencido); out.innerHTML = caja(h.titulo, r.av.length ? r.av.map(x => `• ${x.t}`).join('\n') : 'Sin observaciones: la cita, la fecha límite y las cifras coinciden con los datos confirmados.', 'Revisión automática de la app (modo demostración, sin IA). Con IA en vivo o el modo manual, la IA revisa además la redacción.', '<span class="chip-ia basico">Sin IA · armado por la app</span>'); }
+    else out.innerHTML = `<div class="aviso info">En modo demostración no hay una traducción registrada para este texto. Elige «IA registrada», «Mi propia clave API» o «Manual» en <a href="#ajustes">Ajustes</a> para traducirlo.</div>`;
     copiar(); return;
   }
   out.innerHTML = `<p class="estado-ia"><span class="spin"></span>${esc(h.titulo)}…</p>`;
