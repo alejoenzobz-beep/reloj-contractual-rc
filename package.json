@@ -1,0 +1,12 @@
+{
+  "name": "reloj-contractual",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Asistente de trazabilidad documental y contractual para obras (Hito 3, Diplomado IA AECODE, Grupo 4).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "cd public && python3 -m http.server 8765"
+  },
+  "engines": { "node": ">=20" }
+}
