@@ -1,0 +1,5 @@
+Congelado: 2026-11-16T19:37:56+00:00
+Autoría: documentos y referencia escritos por el orquestador (Claude Opus 5.5) a partir de proyecto.json. Antes de redactarlos vio 5 entradas de referencia.json (RFI-155, CT-033, E-108, E-105, CT-024) solo para copiar el esquema; no vio las instrucciones I1–I4 completas ni las salidas de las corridas.
+Validación humana independiente: no (P1 por defecto).
+1864cbdb3bc5ba298377e43018ca13f3e71259eff0673a46a6b2fc29b9a1be5c  documentos_nuevos.json
+1624d44ad065dc370ef090c01340cac782ecb85431365bfe6f2a4910295be7f2  referencia_nueva.json

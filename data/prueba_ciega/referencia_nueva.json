@@ -1,0 +1,20 @@
+{
+ "descripcion": "Referencia de la prueba con documentos nuevos (10 documentos, proyecto R1). Escrita junto con los documentos y antes de ejecutar el modelo. No se edita después de correr; los errores de la referencia se registran en arbitraje.md.",
+ "version": "1.0 · congelada antes de la corrida",
+ "reservados": { "descripcion": "No aplica en esta prueba.", "docs": [] },
+ "arbitraje": { "fecha": null, "descripcion": "Sin casos.", "casos": [] },
+ "documentos": {
+  "E-260": [{"id":"E-260-1","cambio":"Losa maciza E–F/5–6 del nivel 12 pasa de e = 0,20 a 0,25 m (cambio solo en la nota 5; el cuadro de revisiones no lo declara)","claves":["losa","0,25"],"partida":"03.01.04","aceptables":["03.01.04"],"tamano":"pequeño"}],
+  "E-270": [{"id":"E-270-1","cambio":"Columna C-8: acero de 8Ø5/8\" a 8Ø3/4\" (el cuadro de revisiones solo declara corrección de ejes)","claves":["c-8","3/4"],"partida":"03.03.02","aceptables":["03.03.02"],"tamano":"pequeño"}],
+  "A-330": [],
+  "A-340": [
+   {"id":"A-340-1","cambio":"Cuarto de máquinas: tabique de drywall simple 0,10 m a drywall acústico con lana mineral 0,15 m","claves":["acustico","lana mineral","tabique"],"partida":"04.02.02","aceptables":["04.02.02"],"tamano":"grande"},
+   {"id":"A-340-2","cambio":"Cuarto de máquinas: puerta contraplacada a puerta cortafuego de 90 minutos","claves":["cortafuego","puerta"],"partida":"07.01.02","aceptables":["07.01.02"],"tamano":"pequeño"}],
+  "IS-240": [],
+  "IE-080": "rechazo",
+  "IM-140": [{"id":"IM-140-1","cambio":"Se agregan 6 rociadores en depósitos D-1 a D-6","claves":["rociador"],"partida":"12.01.01","aceptables":["12.01.01","12.01.02"],"tamano":"grande"}],
+  "RFI-175": [{"id":"RFI-175-1","cambio":"Junta sísmica de 2\" en el eje 8 en todos los niveles, con sello elastomérico","claves":["junta","sismica","poliestireno"],"partida":"03.04.01","aceptables":["03.04.01"],"tamano":"grande"}],
+  "RFI-178": [{"id":"RFI-178-1","cambio":"Impermeabilización interior de la cisterna con membrana cementicia (sin partida en el presupuesto)","claves":["impermeabiliz","membrana"],"partida":null,"aceptables":[null],"tamano":"grande"}],
+  "CT-036": [{"id":"CT-036-1","cambio":"Dormitorios del piso 12: piso laminado reemplazado por porcelanato 60 × 60 (instrucción en el último párrafo)","claves":["porcelanato","laminado"],"partida":"06.02.01","aceptables":["06.02.01"],"tamano":"pequeño"}]
+ }
+}
