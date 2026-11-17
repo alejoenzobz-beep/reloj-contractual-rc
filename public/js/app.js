@@ -4,7 +4,7 @@ import * as N from './nucleo.js';
 import * as IA from './ia.js';
 import { SISTEMA_CHAT } from './asistente_ia.js';
 import { vComparar } from './comparador.js';
-import { vSalidas, zip } from './salidas.js';
+import { vSalidas, zip, SIN_PARTIDA } from './salidas.js';
 import { laminaSVG } from './lamina_demo.js';
 import * as AUD from './auditoria.js';
 import * as CAL from './calendario.js';
@@ -592,7 +592,7 @@ function panelDecision(a) {
     ['Emitir la carta', 'Gerente', emi ? `Emitida el ${N.fmtFecha(emi.fecha)}` : ap?.estado === 'archivada' || (!pend.length && !dec.length) ? 'No aplica' : null],
   ];
   const actual = pasos.findIndex(p => !p[2]);
-  const opciones = x => `${proyecto.partidas.map(p => `<option value="${p.codigo}" ${p.codigo === x.partida ? 'selected' : ''}>${p.codigo} ${esc(p.desc)}</option>`).join('')}<option value="" ${x.partida ? '' : 'selected'}>Sin partida: por definir (posible precio nuevo)</option><option value="__desc">Descartar este cambio</option>`;
+  const opciones = x => `${proyecto.partidas.map(p => `<option value="${p.codigo}" ${p.codigo === x.partida ? 'selected' : ''}>${p.codigo} ${esc(p.desc)}</option>`).join('')}<option value="" ${x.partida ? '' : 'selected'}>Sin partida equivalente (precio nuevo o modificar precio unitario; revisar)</option><option value="__desc">Descartar este cambio</option>`;
   let accion = '';
   if (pend.length) accion = puede('decidir') ? `<div class="acciones"><button class="btn prim" data-d="confirmada">${pend.length === 1 ? 'Confirmar' : `Confirmar los ${pend.length} cambios`}</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar${pend.length === 1 ? '' : ' todos'}</button></div>
       <div id="d-corr" hidden style="margin-top:10px">${pend.map(x => `<label class="tit" for="d-sel-${x.id}">${esc(x.elemento)}</label><select id="d-sel-${x.id}" data-sel="${x.id}" style="max-width:100%;width:100%">${opciones(x)}</select>`).join('')} <button class="btn peq prim" id="d-corr-ok" style="margin-top:8px">Guardar decisión</button></div>` : notaRol('decidir', 'Decidir estos cambios');
@@ -630,7 +630,7 @@ function vAlerta(id) {
         ${grupoDe(a).length > 1 ? `<div class="panel"><h3>Cambios de esta alerta</h3><ul class="cambios-alerta">${grupoDe(a).map(x => `<li class="${x.id === a.id ? 'actual' : ''}">${x.id === a.id ? `<b>${esc(x.elemento)}</b>` : `<a href="#alerta-${x.id.toLowerCase()}">${esc(x.elemento)}</a>`}<small>${esc(primeraFrase(x.cambio))} · ${x.partida ? `partida ${esc(x.partida)}` : 'sin partida'}${est.decisiones[x.id] ? ` · ${esc(est.decisiones[x.id].estado)}` : ''}</small></li>`).join('')}</ul></div>` : ''}
         <div class="panel"><h3>Lo que propone la IA${grupoDe(a).length > 1 ? ` · ${esc(a.elemento)}` : ''} ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
         <div class="panel"><h3>Partida del presupuesto</h3>
-          <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto contractual</b>'} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
+          <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : `<b>${esc(SIN_PARTIDA)}</b>`} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
           ${a.criterios ? `<div class="criterios">${['Mismo elemento', 'Misma especialidad', 'Ubicación compatible', 'Rango o unidad'].map((t, i) => `<div class="check"><span class="ico ${a.criterios[i] ? 'si' : 'no'}">${a.criterios[i] ? '✓' : '✗'}</span>${t}</div>`).join('')}</div>` : ''}
           ${a.alternativa ? `<p style="font-size:.88rem">Alternativa: <code>${esc(a.alternativa)}</code> ${esc(a.alternativa_desc)}</p>` : ''}
           <details class="tec"><summary>Por qué esta partida</summary><p>${esc(a.sustento)}</p></details>

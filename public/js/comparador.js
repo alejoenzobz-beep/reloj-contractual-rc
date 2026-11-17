@@ -3,6 +3,7 @@
 // cada cita se verifica literalmente con parsearI1 y cada partida con parsearI2.
 import * as N from './nucleo.js';
 import * as IA from './ia.js';
+import { SIN_PARTIDA } from './salidas.js';
 import { laminaSVG, DOC_DEMO, W as WD, H as HD } from './lamina_demo.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -484,7 +485,7 @@ function tarjetaHecho(ctx, r, h, k) {
     ${crops}
     ${h.antes != null || h.despues ? `<div class="ab txt">${h.antes != null ? `<div><small>Antes</small><p class="antes">${m.A}</p></div>` : ''}<div><small>Después</small><p class="despues">${h.antes != null ? m.B : esc(h.despues)}</p></div></div>` : ''}
     <div class="check"><span class="ico si">✓</span><div><b>Cita literal verificada en la revisión B:</b> «${esc(h.cita)}»</div></div>
-    <div class="partida-prop">${v ? `<span class="tit2">Partida propuesta${r.tipoIA === 'preparada' ? ' (demostración)' : ' por la IA'}</span><p><code>${esc(v.partida || '—')}</code> ${esc(v.partida_desc)} <span class="etq ${conf}">Confianza ${esc(v.confianza.toLowerCase())}</span></p>${v.confianza_ajustada ? `<small class="pista-txt">La IA dijo «${esc(v.confianza_modelo)}»; la app la recalcula con los 4 criterios.</small>` : ''}<details class="tec"><summary>Por qué esta partida</summary><p>${esc(v.sustento)}</p></details>`
+    <div class="partida-prop">${v ? `<span class="tit2">Partida propuesta${r.tipoIA === 'preparada' ? ' (demostración)' : ' por la IA'}</span><p>${v.partida ? `<code>${esc(v.partida)}</code> ${esc(v.partida_desc)}` : `<b>${esc(SIN_PARTIDA)}</b>`} <span class="etq ${conf}">Confianza ${esc(v.confianza.toLowerCase())}</span></p>${v.confianza_ajustada ? `<small class="pista-txt">La IA dijo «${esc(v.confianza_modelo)}»; la app la recalcula con los 4 criterios.</small>` : ''}<details class="tec"><summary>Por qué esta partida</summary><p>${esc(v.sustento)}</p></details>`
       : `<span class="tit2">Partida</span><p class="pista-txt">Sin propuesta de partida en este modo. Se puede asignar en el detalle de la alerta.</p>`}</div>
   </article>`;
 }
