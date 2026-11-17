@@ -425,6 +425,7 @@ a.pastilla { text-decoration: none; cursor: pointer; } a.pastilla:hover { border
 .guia .pasos-g { display: flex; gap: 6px; margin-bottom: 10px; } .guia .pasos-g span { flex: 1; height: 4px; border-radius: 2px; background: var(--borde); } .guia .pasos-g span.on { background: var(--azul-2); }
 .guia h3 { margin: 2px 0 6px; } .guia p { margin: 0 0 12px; color: var(--texto); font-size: .92rem; } .guia small { color: var(--texto-3); font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
 .guia .fila-btn { justify-content: space-between; }
+.guia.arriba { bottom: auto; top: 84px; }
 .foco-guia { outline: 3px solid var(--naranja) !important; outline-offset: 4px; border-radius: 14px; animation: latido 1.6s ease-in-out infinite; }
 @keyframes latido { 50% { outline-color: rgba(255,138,76,.35); } }
 @media (max-width: 900px) { .det-cuerpo > div:last-child { order: -1; } .menu-grupo { display: none; } .menu a, .lateral-pie .pie-enlace, .lateral-pie button { width: auto; padding: 0; } .lateral .logo { width: 100%; } .guia { padding: 14px; } .guia p { font-size: .86rem; margin-bottom: 8px; } .guia h3 { font-size: 1rem; } .saludo, .inicio-grid { grid-template-columns: 1fr; } .proy-sel, .resumen-dia, .accesos { grid-template-columns: 1fr; } .guia { right: 16px; bottom: 16px; } }
@@ -489,6 +490,50 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
 .modo-c { font-size: .84rem; color: var(--texto); } .modo-st { font-size: .8rem; }
 .modo-sin { flex-direction: column; margin-bottom: 4px; } .modo-sin .modo-t { font-size: .95rem; }
 
+/* ---------- Bloque B: barra superior, roles, bienvenida, inicio y panorama ---------- */
+.pop-ancla { position: relative; }
+.pop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 70; min-width: 280px; max-width: min(360px, calc(100vw - 32px)); background: var(--vidrio-2); backdrop-filter: blur(14px); border: 1px solid var(--borde-luz); border-radius: 16px; box-shadow: var(--sombra); padding: 12px; }
+.pop[hidden] { display: none; } .pop-der { left: auto; right: 0; }
+.pop h4 { margin: 2px 4px 8px; font: 700 .8rem var(--f-texto); color: var(--texto-3); text-transform: uppercase; letter-spacing: .06em; }
+.pop-op { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; border: 1px solid transparent; background: none; border-radius: 12px; padding: 9px 10px; cursor: pointer; color: var(--texto); font: inherit; }
+.pop-op:hover, .pop-op:focus-visible { background: var(--azul-suave); } .pop-op[aria-checked="true"] { border-color: var(--borde-luz); background: var(--azul-suave); }
+.pop-op b { color: var(--tinta); font-size: .92rem; } .pop-op small { color: var(--texto-2); font-size: .78rem; line-height: 1.35; }
+.pop p { margin: 8px 4px 2px; font-size: .78rem; color: var(--texto-3); }
+.chip-proy { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--borde); background: var(--vidrio); color: var(--tinta); font: 700 .88rem var(--f-texto); padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.chip-cde { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--borde); background: var(--vidrio); color: var(--texto-2); font: 600 .8rem var(--f-texto); padding: 7px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.chip-cde i { width: 8px; height: 8px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px var(--verde); } .chip-cde.off i { background: var(--texto-3); box-shadow: none; }
+.beta { font-size: .72rem; font-weight: 700; color: var(--ambar); border: 1px dashed rgba(255,193,90,.5); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+button.avatar { border: 0; cursor: pointer; }
+.nota-rol { margin: 6px 0 0; font-size: .86rem; color: var(--texto-2); padding: 10px 12px; border-radius: 12px; background: var(--vidrio); border: 1px dashed var(--borde-luz); } .nota-rol b { color: var(--tinta); }
+.pasos-dec { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; counter-reset: pd; }
+.pasos-dec li { counter-increment: pd; display: grid; grid-template-columns: 26px 1fr; column-gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; }
+.pasos-dec li::before { content: counter(pd); grid-row: span 2; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 .76rem var(--f-titulo); background: var(--vidrio); border: 1px solid var(--borde); color: var(--texto-2); }
+.pasos-dec li.hecho::before { content: "✓"; background: var(--verde-suave); color: var(--verde); border-color: transparent; } .pasos-dec li.actual { background: var(--azul-suave); } .pasos-dec li.actual::before { background: var(--azul); color: #fff; border-color: transparent; }
+.pasos-dec b { color: var(--tinta); font-size: .9rem; } .pasos-dec small { color: var(--texto-2); font-size: .78rem; }
+.bienvenida { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: radial-gradient(1100px 700px at 75% -10%, rgba(79,123,255,.35), transparent 60%), linear-gradient(180deg, var(--fondo-1), var(--fondo-2)); overflow-y: auto; }
+.bienvenida[hidden] { display: none; }
+.bv-caja { width: min(860px, 100%); }
+.bv-marca { display: flex; align-items: center; gap: 10px; color: var(--tinta); font: 800 1.05rem var(--f-titulo); margin-bottom: 18px; } .bv-marca small { display: block; font: 500 .74rem var(--f-texto); color: var(--texto-2); }
+.bv-pasos { display: flex; gap: 6px; margin-bottom: 12px; } .bv-pasos span { flex: 1; height: 4px; border-radius: 2px; background: var(--borde); } .bv-pasos span.on { background: var(--azul-2); }
+.bv-caja h1 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); margin: 4px 0 6px; } .bv-caja > p { color: var(--texto-2); margin: 0 0 18px; }
+.bv-ops { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.bv-op { text-align: left; border: 1.5px solid var(--borde); background: var(--vidrio); border-radius: var(--r); padding: 16px; cursor: pointer; color: var(--texto); font: inherit; display: flex; flex-direction: column; gap: 6px; }
+.bv-op:hover { border-color: var(--borde-luz); } .bv-op[aria-checked="true"] { border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-suave), 0 0 24px var(--brillo); }
+.bv-op b { font: 700 1rem var(--f-titulo); color: var(--tinta); } .bv-op small { color: var(--texto-2); font-size: .84rem; line-height: 1.4; } .bv-op .etq { align-self: flex-start; }
+.bv-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; } .bv-pie .fila-btn { margin: 0; }
+.inicio-hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; align-items: start; margin-bottom: 18px; }
+.accion-principal { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; padding: 22px; border-radius: var(--r); background: linear-gradient(135deg, rgba(79,123,255,.32), rgba(79,123,255,.08)); border: 1px solid var(--borde-luz); }
+.accion-principal h2 { margin: 0; font-size: 1.35rem; } .accion-principal p { margin: 0; color: var(--texto); } .accion-principal .btn { align-self: flex-start; }
+.rol-hoy { font-size: .86rem; color: var(--texto-2); margin-top: 6px; }
+.agenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; } .agenda > li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: start; }
+.agenda time { font: 700 .86rem var(--f-titulo); color: var(--tinta); } .agenda time small { display: block; font: 500 .74rem var(--f-texto); color: var(--texto-2); }
+.agenda ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; } .agenda a { color: var(--texto); text-decoration: none; font-size: .88rem; } .agenda a:hover { color: var(--tinta); text-decoration: underline; }
+.panorama-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; } .panorama-grid > .panel { margin: 0; }
+.resumen-dia.cuatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .beta { display: none; } }
+@media (max-width: 1500px) { #ruta-vista, #ruta-vista + span, .ruta > span:nth-of-type(1) { display: none; } }
+@media (max-width: 900px) { .inicio-hero, .panorama-grid { grid-template-columns: 1fr; } .resumen-dia.cuatro { grid-template-columns: 1fr 1fr; } .chip-cde span { display: none; } }
+
 @media (max-width: 1100px) { .pano { grid-template-columns: 1fr; } .casos3 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; } .lateral { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 14px; gap: 10px; }
@@ -511,6 +556,7 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
     <nav class="menu" id="menu" aria-label="Secciones">
       <span class="menu-grupo">Trabajo</span>
       <a href="#inicio"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="txt">Inicio</span></a>
+      <a href="#panorama"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="txt">Panorama</span></a>
       <a href="#bandeja"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span class="txt">Bandeja de cambios</span></a>
       <a href="#comparar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="txt">Comparar revisiones</span></a>
       <a href="#salidas"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/></svg></span><span class="txt">Documentos de salida</span></a>
@@ -527,20 +573,23 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
 
   <div class="principal">
     <header class="superior">
-      <div class="ruta"><span id="ruta-proy">Proyecto R1</span><span>/</span><b id="ruta-vista">Panorama</b><span>/</span>
+      <div class="ruta"><div class="pop-ancla"><button class="chip-proy" id="proy-btn" aria-haspopup="true" aria-expanded="false" aria-controls="pop-proy"><span id="ruta-proy">Proyecto R1</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button><div class="pop" id="pop-proy" hidden></div></div><span>/</span><b id="ruta-vista">Panorama</b><span>/</span>
         <div style="position:relative"><button class="chip-fecha" id="chip-fecha" aria-expanded="false" aria-controls="pop-fecha"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="chip-fecha-t">Hoy</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>
           <div class="pop-fecha" id="pop-fecha" hidden><label for="pop-r" style="font-weight:700;color:var(--tinta)">Simular la fecha de hoy</label><input type="range" id="pop-r"><p style="font-size:.82rem;color:var(--texto-2);margin-top:6px">Mueve la fecha y mira cómo corren los plazos de todas las alertas.</p></div></div>
       </div>
       <div class="superior-der">
+        <span class="beta" title="Versión beta: los proyectos y documentos son datos de demostración">Beta · datos de demostración</span>
+        <div class="pop-ancla"><button class="chip-cde" id="cde-btn" aria-haspopup="true" aria-expanded="false" aria-controls="pop-cde"><i></i><span id="cde-txt">CDE</span></button><div class="pop" id="pop-cde" hidden></div></div>
         <a class="pastilla" id="estado-ia" href="#ajustes"><i></i>IA: respuestas registradas</a>
         <button class="redondo" id="guia-abrir" aria-label="Recorrido guiado" title="Recorrido guiado de 6 pasos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg></button>
         <a class="redondo" href="#bandeja" aria-label="Cambios urgentes en la bandeja" id="campana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></a>
         <button class="redondo tema-btn" id="tema" aria-label="Cambiar a modo claro" title="Cambiar tema"><span id="tema-ico"></span></button>
-        <span class="avatar" title="Oficina técnica" aria-label="Oficina técnica">OT</span>
+        <div class="pop-ancla"><button class="avatar" id="rol-btn" aria-haspopup="true" aria-expanded="false" aria-controls="pop-rol" title="Rol activo">OT</button><div class="pop pop-der" id="pop-rol" hidden></div></div>
       </div>
     </header>
     <main id="main">
       <section class="vista" id="v-inicio" aria-label="Inicio"></section>
+      <section class="vista" id="v-panorama" aria-label="Panorama" hidden></section>
       <section class="vista" id="v-simulacion" aria-label="Cómo funciona" hidden></section>
       <section class="vista" id="v-bandeja" aria-label="Bandeja de cambios" hidden></section>
       <section class="vista" id="v-alerta" aria-label="Detalle de alerta" hidden></section>
@@ -555,6 +604,7 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
   </div>
 </div>
 
+<div class="bienvenida" id="bienvenida" hidden role="dialog" aria-modal="true" aria-labelledby="bv-titulo"></div>
 <aside class="asist" id="asist" hidden aria-label="Asistente">
   <div class="asist-cab"><b>Asistente</b><div class="fila-btn" style="flex-wrap:nowrap"><button class="btn peq" id="asist-borrar" title="Empezar una conversación nueva">Nueva conversación</button><button class="btn peq" id="asist-cerrar">Cerrar</button></div><small id="asist-modo" class="asist-nota"></small></div>
   <div class="asist-msgs" id="asist-msgs" aria-live="polite"></div>

@@ -136,17 +136,19 @@ function descargar(blob, nombre) { const u = URL.createObjectURL(blob), a = docu
 const S = { tipo: 'carta', res: null };
 export function vSalidas(ctx, idSel) {
   const { est } = ctx;
-  const decididas = ctx.alertas.filter(a => ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado)).sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
-  const a = ctx.alertaPorId[idSel] && est.decisiones[idSel] ? ctx.alertaPorId[idSel] : decididas[0];
+  const esperan = ctx.alertas.filter(a => ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado) && !est.aprobaciones[a.id]);
+  const decididas = ctx.alertas.filter(a => est.aprobaciones[a.id]?.estado === 'aprobada').sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
+  const a = ctx.alertaPorId[idSel] && est.aprobaciones[idSel]?.estado === 'aprobada' ? ctx.alertaPorId[idSel] : decididas[0];
   const raiz = $('#v-salidas');
   const lista = decididas.length ? `<ul class="sal-lista">${decididas.map(x => { const e = est.emitidas[x.id]; return `<li><a href="#salidas-${x.id.toLowerCase()}" ${a && x.id === a.id ? 'aria-current="true"' : ''}><b>${esc(x.doc_id)} · ${esc(x.elemento)}</b><small>${esc(ctx.PROY[x.proyecto].nombre)} · ${e ? `<span class="ok-t">${esc(TIPOS[e.tipo])} emitida el ${N.fmtFecha(e.fecha)}</span>` : `notificar hasta el ${N.fmtFecha(x.limite)}`}</small></a></li>`; }).join('')}</ul>`
-    : `<p class="vacio">Todavía no hay cambios decididos. Abre un cambio en la <a href="#bandeja">bandeja</a> y confírmalo o corrige su partida: solo entonces se puede redactar su documento.</p>`;
-  if (!a) { raiz.innerHTML = cab() + `<div class="sal-grid"><div class="panel">${lista}</div></div>`; return; }
+    : `<p class="vacio">Todavía no hay variaciones aprobadas. Un cambio llega aquí cuando oficina técnica lo confirma y el jefe/a de oficina técnica aprueba notificarlo.</p>`;
+  const espera = esperan.length ? `<p class="pista-txt" style="margin-top:10px">${esperan.length} cambio${esperan.length === 1 ? '' : 's'} confirmado${esperan.length === 1 ? '' : 's'} espera${esperan.length === 1 ? '' : 'n'} la aprobación del jefe/a de oficina técnica: ${esperan.map(x => `<a href="#alerta-${x.id.toLowerCase()}">${esc(x.doc_id)}</a>`).join(', ')}.</p>` : '';
+  if (!a) { raiz.innerHTML = cab() + `<div class="sal-grid"><div class="panel">${lista}${espera}</div></div>`; return; }
   const c = camposDe(ctx, a), clave = `${a.id}:${S.tipo}`, texto = est.borradores[clave] ?? plantilla(S.tipo, c);
   const vencido = N.diasRestantes(a.limite, est.hoy) < 0, emi = est.emitidas[a.id];
   raiz.innerHTML = cab() + `
     <div class="sal-grid">
-      <aside class="panel"><h3>Cambios decididos</h3>${lista}</aside>
+      <aside class="panel"><h3>Variaciones aprobadas</h3>${lista}${espera}</aside>
       <section class="sal-editor">
         <div class="sal-barra"><div class="segmento" role="tablist" aria-label="Tipo de documento">${Object.entries(TIPOS).map(([k, t]) => `<button role="tab" aria-selected="${S.tipo === k}" data-tipo="${k}">${t}</button>`).join('')}</div>
           <span class="pista-txt">${esc(a.doc_id)} rev. ${esc(a.doc.revision)} · decisión: ${esc(c.decision)}</span></div>
@@ -159,7 +161,7 @@ export function vSalidas(ctx, idSel) {
         </div>
         <div id="sal-her" aria-live="polite"></div>
         <div class="sal-emitir ${emi ? 'hecho' : ''}">${emi ? `<p><b>✓ ${esc(TIPOS[emi.tipo])} emitida</b> el ${N.fmtFecha(emi.fecha)} por ${esc(emi.quien)}. Queda en el registro de auditoría.</p><button class="btn peq" id="sal-anular">Anular registro de emisión</button>`
-          : `<p><b>¿Listo para firmar?</b> Exportar no es emitir. Registra la emisión cuando el documento se firme y envíe: queda en el registro con fecha y responsable.</p><button class="btn prim" id="sal-emitir">Registrar emisión</button>`}</div>
+          : ctx.puede('emitir') ? `<p><b>¿Listo para firmar?</b> Exportar no es emitir. Registra la emisión cuando el documento se firme y envíe: queda en el registro con fecha y responsable.</p><button class="btn prim" id="sal-emitir">Registrar emisión</button>` : `<div><p><b>Exportar no es emitir.</b> La firma y el registro de la emisión los hace el gerente de proyecto.</p>${ctx.notaRol('emitir', 'Registrar la emisión')}</div>`}</div>
       </section>
     </div>`;
   function cab() { return `<div class="tab-cab"><div><h2>Documentos de salida</h2><p class="sub2">El borrador usa solo datos confirmados por una persona: la cita literal, la partida y la fecha límite calculada por la fórmula. La app avisa si una cifra no tiene origen.</p></div></div>`; }
@@ -181,18 +183,18 @@ export function vSalidas(ctx, idSel) {
     if (b.dataset.exp === 'docx') descargar(docx(`${TIPOS[S.tipo]} · ${a.doc_id}`, t), `${nombre}.docx`);
     else if (b.dataset.exp === 'md') descargar(new Blob([`# ${TIPOS[S.tipo]} · ${a.doc_id}\n\n${t.replace(/\n(?!\n)/g, '  \n')}\n`], { type: 'text/markdown' }), `${nombre}.md`);
     else { ed.blur(); window.print(); }
-    ctx.registrar('Oficina técnica', `${a.doc_id} · ${TIPOS[S.tipo].toLowerCase()} exportada (${b.dataset.exp.toUpperCase()})`);
+    ctx.registrar(ctx.rolN(), `${a.doc_id} · ${TIPOS[S.tipo].toLowerCase()} exportada (${b.dataset.exp.toUpperCase()})`);
   });
   raiz.querySelectorAll('[data-her]').forEach(b => b.onclick = () => usarHerramienta(b.dataset.her, leerEditor(ed), c, vencido));
   const em = $('#sal-emitir');
   if (em) em.onclick = () => {
     const r = pintarAvisos();
     if (!r.ok && !confirm('El documento tiene avisos sin resolver. ¿Registrar la emisión de todos modos?')) return;
-    est.emitidas[a.id] = { tipo: S.tipo, fecha: est.hoy, quien: 'Oficina técnica', fuera_de_plazo: vencido };
-    ctx.registrar('Oficina técnica', `${a.doc_id} · ${TIPOS[S.tipo].toLowerCase()} emitida${vencido ? ' fuera de plazo' : ''}${r.ok ? '' : ' con avisos sin resolver'}`, { tipo: 'emitido', alerta: a.id });
+    est.emitidas[a.id] = { tipo: S.tipo, fecha: est.hoy, quien: ctx.rolN(), fuera_de_plazo: vencido };
+    ctx.registrar(ctx.rolN(), `${a.doc_id} · ${TIPOS[S.tipo].toLowerCase()} emitida${vencido ? ' fuera de plazo' : ''}${r.ok ? '' : ' con avisos sin resolver'}`, { tipo: 'emitido', alerta: a.id });
     vSalidas(ctx, a.id);
   };
-  const an = $('#sal-anular'); if (an) an.onclick = () => { delete est.emitidas[a.id]; ctx.registrar('Oficina técnica', `${a.doc_id} · registro de emisión anulado`, { tipo: 'corregido', alerta: a.id }); vSalidas(ctx, a.id); };
+  const an = ctx.puede('emitir') ? $('#sal-anular') : ($('#sal-anular')?.remove(), null); if (an) an.onclick = () => { delete est.emitidas[a.id]; ctx.registrar(ctx.rolN(), `${a.doc_id} · registro de emisión anulado`, { tipo: 'corregido', alerta: a.id }); vSalidas(ctx, a.id); };
 }
 
 async function usarHerramienta(k, texto, c, vencido) {

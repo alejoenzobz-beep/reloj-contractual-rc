@@ -80,12 +80,30 @@ const FECHAS = docs.map(d => d.fecha_recepcion).sort();
 const PRIMERA = N.sumarDias(FECHAS[0], -1), ULTIMA = N.sumarDias(FECHAS[FECHAS.length - 1], 10);
 
 // ---------- estado (en memoria; recuerda decisiones en este navegador si se puede) ----------
-const est = { hoy: '2026-10-09', proyecto: 'R1', decisiones: {}, emitidas: {}, borradores: {}, registro: [], filtro: 'pendientes', esp: 'todas', simPaso: 0, simDecision: null };
+const est = { hoy: '2026-10-09', proyecto: 'R1', rol: 'ot', decisiones: {}, aprobaciones: {}, emitidas: {}, borradores: {}, registro: [], filtro: 'pendientes', esp: 'todas', simPaso: 0, simDecision: null };
 try { const pa = localStorage.getItem('rc-proyecto-activo'); if (pa && PROY[pa]) est.proyecto = pa; } catch { }
-try { const g = JSON.parse(localStorage.getItem('rc-estado') || 'null'); if (g) Object.assign(est, { decisiones: g.decisiones || {}, registro: g.registro || [], emitidas: g.emitidas || {}, borradores: g.borradores || {} }); } catch { }
-const guardar = () => { try { localStorage.setItem('rc-estado', JSON.stringify({ decisiones: est.decisiones, registro: est.registro, emitidas: est.emitidas, borradores: est.borradores })); } catch { } };
+try { const g = JSON.parse(localStorage.getItem('rc-estado') || 'null'); if (g) Object.assign(est, { decisiones: g.decisiones || {}, aprobaciones: g.aprobaciones || {}, registro: g.registro || [], emitidas: g.emitidas || {}, borradores: g.borradores || {} }); } catch { }
+try { const r = localStorage.getItem('rc-rol'); if (r) est.rol = r; } catch { }
+const guardar = () => { try { localStorage.setItem('rc-estado', JSON.stringify({ decisiones: est.decisiones, aprobaciones: est.aprobaciones, registro: est.registro, emitidas: est.emitidas, borradores: est.borradores })); } catch { } };
 const registrar = (quien, que, meta = {}) => { est.registro.unshift({ t: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }), quien, que, ...meta }); guardar(); AUD.anexar({ quien, que, tipo: meta.tipo, alerta: meta.alerta, fecha_sim: est.hoy }); };
 
+// ---------- roles y puntos de decisión (tomados de la v1; cambio de rol solo en demostración) ----------
+const ROLES = {
+  control: { n: 'Control documentario', ini: 'CD', hace: 'Registra las revisiones que llegan al CDE y lanza la comparación.' },
+  ot: { n: 'Oficina técnica', ini: 'OT', hace: 'Revisa cada cambio y decide: confirmar, corregir la partida o descartar (punto de decisión 1).' },
+  contractual: { n: 'Administración contractual', ini: 'AC', hace: 'Valida la cláusula, el plazo y los feriados de cada contrato (punto de decisión 2).' },
+  jefe: { n: 'Jefe/a de oficina técnica', ini: 'JO', hace: 'Aprueba que la variación se notifique y habilita la carta (punto de decisión 3).' },
+  gerente: { n: 'Gerente de proyecto', ini: 'GP', hace: 'Firma, emite y registra la emisión de la carta (punto de decisión 4).' },
+};
+const PERMISOS = { comparar: ['control', 'ot'], cde: ['control'], decidir: ['ot'], plazos: ['contractual'], aprobar: ['jefe'], redactar: ['ot', 'jefe', 'gerente'], emitir: ['gerente'] };
+const PD = { decidir: 'punto de decisión 1', plazos: 'punto de decisión 2', aprobar: 'punto de decisión 3', emitir: 'punto de decisión 4' };
+const puede = acc => PERMISOS[acc].includes(est.rol);
+const rolN = () => ROLES[est.rol].n;
+const quienPuede = acc => PERMISOS[acc].map(r => ROLES[r].n).join(' o ');
+const notaRol = (acc, que) => `<p class="nota-rol"><span aria-hidden="true">🔒</span> ${que} corresponde a <b>${esc(quienPuede(acc))}</b>${PD[acc] ? ` (${PD[acc]})` : ''}. Estás como ${esc(rolN())}. <button class="enlace" data-rol-a="${PERMISOS[acc][0]}">Cambiar a ${esc(ROLES[PERMISOS[acc][0]].n)}</button> <small>(demostración)</small></p>`;
+function fijarRol(r, motivo = '') { if (!ROLES[r] || r === est.rol) return; const ant = rolN(); est.rol = r; try { localStorage.setItem('rc-rol', r); } catch { } registrar(rolN(), `cambio de rol: de ${ant} a ${rolN()}${motivo ? ` (${motivo})` : ''} · demostración`, { tipo: 'registro' }); pintarRol(); render(); }
+document.addEventListener('click', e => { const b = e.target.closest('[data-rol-a]'); if (b) { e.preventDefault(); fijarRol(b.dataset.rolA); } });
+const estadoAprob = a => est.aprobaciones[a.id]?.estado; // 'aprobada' | 'archivada'
 const estadoDe = a => {
   if (est.decisiones[a.id]) return 'decidido';
   return N.semaforo(N.diasRestantes(a.limite, est.hoy));
@@ -155,7 +173,7 @@ function fraseDias(a) {
 }
 
 // ---------- router ----------
-const VISTAS = ['inicio', 'simulacion', 'bandeja', 'comparar', 'salidas', 'auditoria', 'calidad', 'plazos', 'resultados', 'ajustes'];
+const VISTAS = ['inicio', 'panorama', 'simulacion', 'bandeja', 'comparar', 'salidas', 'auditoria', 'calidad', 'plazos', 'resultados', 'ajustes'];
 function ruta() {
   let h = location.hash.slice(1) || 'inicio';
   if (h === 'probar') h = 'comparar'; if (h === 'tablero') h = 'bandeja'; if (h === 'resultados') h = 'calidad';
@@ -168,10 +186,10 @@ function render() {
   const r = ruta();
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'bandeja' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-  $('#ruta-proy').textContent = PROY[est.proyecto].nombre;
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
+  pintarProyecto();
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -191,48 +209,127 @@ let cdeConex = {};
 try { cdeConex = JSON.parse(localStorage.getItem('rc-cde') || '{}'); } catch { }
 const cdeDe = id => cdeConex[id] === null ? null : cdeConex[id] || (id === 'H3' ? null : PROY[id].cde);
 const abiertasDe = id => alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy && !est.decisiones[a.id]).sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
-const porEmitirDe = id => alertas.filter(a => a.proyecto === id && ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado) && !est.emitidas?.[a.id]);
+const porAprobarDe = id => alertas.filter(a => a.proyecto === id && ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado) && !estadoAprob(a));
+const porEmitirDe = id => alertas.filter(a => a.proyecto === id && estadoAprob(a) === 'aprobada' && !est.emitidas?.[a.id]);
 function saludoHora() { const h = new Date().getHours(); return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'; }
 const ICO_ACC = {
   comparar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M12 2v20"/></svg>',
   bandeja: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 13l2.5-7h11L20 13v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg>',
   salidas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/></svg>',
 };
+// Acción principal del Inicio según el rol activo.
+function accionPrincipal(id) {
+  const ab = abiertasDe(id), pa = porAprobarDe(id), pe = porEmitirDe(id);
+  if (est.rol === 'jefe') return pa.length ? { t: `Aprobar ${pa.length} variación${pa.length === 1 ? '' : 'es'}`, d: 'Oficina técnica ya confirmó estos cambios. Decide si se notifican a la propietaria.', h: `#alerta-${pa[0].id.toLowerCase()}`, b: 'Revisar y aprobar' } : { t: 'No hay variaciones por aprobar', d: 'Cuando oficina técnica confirme un cambio, aparecerá aquí para tu aprobación.', h: '#bandeja', b: 'Ver la bandeja' };
+  if (est.rol === 'gerente') return pe.length ? { t: `Emitir ${pe.length} carta${pe.length === 1 ? '' : 's'}`, d: 'Variaciones aprobadas con su borrador listo. Revisa, firma fuera del sistema y registra la emisión.', h: `#salidas-${pe[0].id.toLowerCase()}`, b: 'Revisar y emitir' } : { t: 'No hay cartas por emitir', d: 'Las cartas aparecen aquí cuando el jefe/a de oficina técnica aprueba una variación.', h: '#salidas', b: 'Ver documentos de salida' };
+  if (est.rol === 'contractual') return { t: 'Validar los plazos del contrato', d: `Cláusula ${paramsProy(id).clausula}: ${paramsProy(id).plazo} días ${paramsProy(id).tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}. Toda fecha límite se calcula con estos parámetros.`, h: '#plazos', b: 'Revisar parámetros' };
+  if (est.rol === 'ot' && ab.length) return { t: 'Comparar revisiones', d: `Detecta qué cambió entre dos revisiones. Tienes además ${ab.length} cambio${ab.length === 1 ? '' : 's'} por decidir: el primero vence el ${N.fmtFecha(ab[0].limite)}.`, h: '#comparar', b: 'Comparar revisiones' };
+  return { t: 'Comparar revisiones', d: 'Sube o elige dos revisiones de un documento: el asistente marca qué cambió, propone la partida y calcula el plazo.', h: '#comparar', b: 'Comparar revisiones' };
+}
 function vInicio() {
-  const id = est.proyecto, pr = PROY[id], pp = paramsProy(id), cde = cdeDe(id);
+  const id = est.proyecto, pr = PROY[id];
   const abiertas = abiertasDe(id);
-  const nuevos = abiertas.filter(a => N.difDias(est.hoy, a.fecha_recepcion) <= 1).length;
   const urg = abiertas.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
-  const emitir = porEmitirDe(id).length;
-  const frase = !abiertas.length ? 'No hay cambios abiertos en este proyecto.' : `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} con el plazo por vencer` : ''}. Lo más urgente vence el ${N.fmtFecha(abiertas[0].limite)}.`;
+  const acc = accionPrincipal(id);
   $('#v-inicio').innerHTML = `
-    <div class="saludo anim"><div><span class="sup-id">Asistente de trazabilidad documental y contractual</span><h1>${saludoHora()}. ¿En qué proyecto trabajamos hoy?</h1>
-      <p>${esc(frase)} Fecha simulada de la demostración: ${N.fmtFecha(est.hoy)}.</p></div></div>
-    ${guiaVista() ? '' : `<div class="invita" id="invita-guia"><p><b>¿Primera vez?</b> Recorrido guiado de 6 pasos con la lámina de ejemplo: de la revisión nueva a la carta. <small>Unos 2 minutos.</small></p><div class="fila-btn"><button class="btn prim peq" id="guia-ini">Empezar el recorrido</button><button class="btn peq" id="guia-saltar">Saltar</button></div></div>`}
-    <div class="proy-sel" role="group" aria-label="Proyecto">${PROYECTOS.map(p => { const pa = paramsProy(p.id), n = abiertasDe(p.id).length;
-      return `<button class="proy-op" data-proy="${p.id}" aria-pressed="${p.id === id}"><b>${esc(p.nombre)}</b><small>${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · ${n} abierto${n === 1 ? '' : 's'}</small>${p.demo ? '<span class="etq ambar" style="align-self:flex-start">Demostración</span>' : '<span class="etq" style="align-self:flex-start">Corpus de prueba sintético</span>'}</button>`; }).join('')}</div>
-    <div class="cde ${cde ? '' : 'off'}" id="cde"><span class="punto-cde" aria-hidden="true"></span>${cde ? `<span>Conectado a: <b>${esc(cde.tipo)}</b> · ${esc(cde.ruta)} <span class="etq ambar">demostración</span></span><button class="btn peq" id="cde-cambiar">Cambiar conexión</button>` : '<span><b>Sin conexión</b> con el entorno común de datos (CDE).</span><button class="btn peq prim" id="cde-cambiar">Conectar</button>'}
-      <div class="cde-ops" id="cde-ops" hidden><span class="pista-txt" style="width:100%">Elige el CDE del proyecto. En esta versión las conexiones son de demostración: no leen archivos reales. Para comparar archivos propios, usa «Comparar revisiones».</span>${CDE_OPS.map(c => `<button class="btn peq" data-cde="${esc(c)}">${esc(c)}</button>`).join('')}${cde ? '<button class="btn peq" data-cde="">Desconectar</button>' : ''}</div></div>
-    <div class="resumen-dia" role="group" aria-label="Resumen del proyecto">
-      <a class="kpi nuevo" href="#bandeja" data-ir="nuevos"><b class="num">${nuevos}</b>cambios nuevos (últimas 48 h)</a>
-      <a class="kpi urg" href="#bandeja" data-ir="urgentes"><b class="num">${urg}</b>urgentes: vencen en 3 días o menos</a>
-      <a class="kpi emitir" href="#salidas"><b class="num">${emitir}</b>decididos, por emitir</a></div>
-    <div class="accesos">
-      <a class="acceso" href="#comparar"><span class="ico">${ICO_ACC.comparar}</span><span>Comparar revisiones<small>Detecta qué cambió entre la A y la B</small></span></a>
-      <a class="acceso" href="#bandeja"><span class="ico">${ICO_ACC.bandeja}</span><span>Bandeja de cambios<small>Lo que hay que atender, por plazo</small></span></a>
-      <a class="acceso" href="#salidas"><span class="ico">${ICO_ACC.salidas}</span><span>Documentos de salida<small>Cartas listas para revisar y emitir</small></span></a></div>
-    <div class="inicio-grid">
-      <div class="panel"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${abiertas.slice(0, 4).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(a.doc_id)} · ${esc(a.elemento)}</h4><p>${esc(primeraFrase(a.cambio))}</p><p>${a.partida ? `Partida ${esc(a.partida)}` : 'Sin partida en el presupuesto'} · notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>${abiertas.length > 4 ? `<p class="pista-txt" style="margin-top:10px"><a href="#bandeja">Ver los ${abiertas.length} en la bandeja</a></p>` : ''}`
-        : `<p class="vacio">Sin cambios abiertos en ${esc(pr.nombre)}. Compara dos revisiones para empezar: los cambios que confirmes llegan aquí con su plazo.</p><a class="btn prim" href="#comparar">Comparar revisiones</a>`}</div>
-      <div class="panel"><h3>Plazo restante de los cambios abiertos</h3><p class="pista-txt" style="margin:2px 0 12px">Cláusula ${esc(pp.clausula)}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción. <a href="#plazos">Cambiar</a></p>${miniPlazos(abiertas)}</div>
+    <div class="saludo anim"><div><span class="sup-id">Asistente de trazabilidad documental y contractual</span><h1>${saludoHora()}, ${esc(rolN())}.</h1>
+      <p>${esc(pr.nombre)}${pr.demo ? ' (demostración)' : ''} · ${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
+      <p class="rol-hoy">${esc(ROLES[est.rol].hace)}</p></div></div>
+    <div class="inicio-hero">
+      <div class="accion-principal anim"><div><h2>${esc(acc.t)}</h2><p>${esc(acc.d)}</p></div><a class="btn prim grande" href="${acc.h}" id="accion-principal">${esc(acc.b)}</a></div>
+      <div class="panel" style="margin:0"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${abiertas.slice(0, 3).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(a.doc_id)} · ${esc(a.elemento)}</h4><p>Notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>` : `<p class="vacio">Sin cambios abiertos en este proyecto.</p>`}
+        <p class="pista-txt" style="margin-top:10px"><a href="#bandeja">Bandeja de cambios</a> · <a href="#panorama">Panorama del proyecto</a></p></div>
     </div>
-    ${id === 'R1' ? casosR1() : ''}`;
-  document.querySelectorAll('[data-proy]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.proy; guardarActivo(); est.bproy = est.proyecto; vInicio(); pintarFecha(); });
-  document.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => { est.filtro = b.dataset.ir; est.bproy = id; });
-  $('#cde-cambiar').onclick = () => { $('#cde-ops').hidden = !$('#cde-ops').hidden; };
-  document.querySelectorAll('[data-cde]').forEach(b => b.onclick = () => { const t = b.dataset.cde; cdeConex[id] = t ? { tipo: t, ruta: `/${id}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } registrar('Oficina técnica', `${pr.nombre} · ${t ? `CDE conectado: ${t} (demostración)` : 'CDE desconectado'}`, { tipo: 'parametro' }); vInicio(); });
+    ${guiaVista() ? '' : `<div class="invita" id="invita-guia"><p><b>¿Primera vez?</b> Recorrido guiado de 6 pasos con la lámina de ejemplo: de la revisión nueva a la carta emitida. <small>Unos 2 minutos.</small></p><div class="fila-btn"><button class="btn prim peq" id="guia-ini">Empezar el recorrido</button><button class="btn peq" id="guia-saltar">Saltar</button></div></div>`}`;
   const gi = $('#guia-ini'); if (gi) gi.onclick = () => iniciarGuia();
   const gs = $('#guia-saltar'); if (gs) gs.onclick = () => { marcarGuia(); $('#invita-guia').remove(); };
+}
+function vPanorama() {
+  const id = est.proyecto, pr = PROY[id], pp = paramsProy(id), abiertas = abiertasDe(id);
+  const nuevos = abiertas.filter(a => N.difDias(est.hoy, a.fecha_recepcion) <= 1).length, urg = abiertas.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
+  const proximos = alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy && !est.emitidas[a.id] && est.decisiones[a.id]?.estado !== 'descartada' && estadoAprob(a) !== 'archivada' && N.diasRestantes(a.limite, est.hoy) >= -3).sort((x, y) => x.limite.localeCompare(y.limite));
+  const porFecha = [...new Set(proximos.map(a => a.limite))].slice(0, 8);
+  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  $('#v-panorama').innerHTML = `
+    <div class="tab-cab"><div><h2>Panorama · ${esc(pr.nombre)}</h2><p class="sub2">Las cifras, los plazos y la agenda de vencimientos del proyecto. Cláusula ${esc(pp.clausula)}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción.</p></div></div>
+    <div class="resumen-dia cuatro" role="group" aria-label="Resumen del proyecto">
+      <a class="kpi nuevo" href="#bandeja" data-ir="nuevos"><b class="num">${nuevos}</b>cambios nuevos (48 h)</a>
+      <a class="kpi urg" href="#bandeja" data-ir="urgentes"><b class="num">${urg}</b>urgentes: vencen en 3 días o menos</a>
+      <a class="kpi" href="#bandeja" data-ir="decididas"><b class="num">${porAprobarDe(id).length}</b>confirmados, por aprobar</a>
+      <a class="kpi emitir" href="#salidas"><b class="num">${porEmitirDe(id).length}</b>aprobados, por emitir</a></div>
+    <div class="panorama-grid">
+      <div class="panel"><h3>Plazo restante de los cambios abiertos</h3><p class="pista-txt" style="margin:2px 0 12px">Cada barra es la fracción del plazo que queda. <a href="#plazos">Parámetros</a></p>${miniPlazos(abiertas)}</div>
+      <div class="panel"><h3>Agenda de vencimientos</h3>${porFecha.length ? `<ul class="agenda">${porFecha.map(f => { const d = N.difDias(f, est.hoy); return `<li><time datetime="${f}">${fCorta(f)}<small>${DIAS[N.isoAFecha(f).getUTCDay()]} · ${d < 0 ? `hace ${-d} d` : d === 0 ? 'hoy' : `en ${d} d`}</small></time><ul>${proximos.filter(a => a.limite === f).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${esc(a.doc_id)} · ${esc(a.elemento)}</a> <small class="pista-txt">${est.decisiones[a.id] ? (estadoAprob(a) ? 'por emitir' : 'por aprobar') : 'por decidir'}</small></li>`).join('')}</ul></li>`; }).join('')}</ul>` : '<p class="vacio">Sin vencimientos próximos.</p>'}</div>
+    </div>
+    ${id === 'R1' ? casosR1() : ''}`;
+  document.querySelectorAll('#v-panorama [data-ir]').forEach(b => b.onclick = () => { est.filtro = b.dataset.ir; est.bproy = id; });
+}
+// ---------- barra superior: proyecto, CDE y rol ----------
+function abrirPop(btn, pop, pintar) {
+  const abierto = !pop.hidden;
+  document.querySelectorAll('.pop').forEach(x => { x.hidden = true; }); document.querySelectorAll('[aria-controls^="pop-"]').forEach(x => x.setAttribute('aria-expanded', 'false'));
+  if (abierto) return;
+  pintar(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); pop.querySelector('button, a')?.focus();
+}
+document.addEventListener('click', e => { if (!e.target.closest('.pop-ancla')) { document.querySelectorAll('.pop').forEach(x => { x.hidden = true; }); document.querySelectorAll('.pop-ancla > [aria-expanded]').forEach(x => x.setAttribute('aria-expanded', 'false')); } });
+addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.pop').forEach(x => { if (!x.hidden) { x.hidden = true; x.previousElementSibling?.focus(); } }); });
+function pintarProyecto() {
+  $('#ruta-proy').textContent = PROY[est.proyecto].nombre;
+  const c = cdeDe(est.proyecto); $('#cde-btn').classList.toggle('off', !c);
+  $('#cde-txt').textContent = c ? ({ 'Autodesk Construction Cloud': 'ACC', 'Google Drive': 'Drive' }[c.tipo] || c.tipo) : 'Sin CDE';
+  $('#cde-btn').title = c ? `Conectado a ${c.tipo} · ${c.ruta} (demostración)` : 'Sin conexión al entorno común de datos';
+}
+function pintarRol() { const b = $('#rol-btn'); b.textContent = ROLES[est.rol].ini; b.title = `Rol activo: ${rolN()}. Cambiar de rol`; b.setAttribute('aria-label', `Rol activo: ${rolN()}. Cambiar de rol`); }
+$('#proy-btn').onclick = () => abrirPop($('#proy-btn'), $('#pop-proy'), () => {
+  $('#pop-proy').innerHTML = `<h4>Proyecto</h4>${PROYECTOS.map(p => { const pa = paramsProy(p.id); return `<button class="pop-op" role="menuitemradio" aria-checked="${p.id === est.proyecto}" data-p="${p.id}"><b>${esc(p.nombre)}${p.demo ? ' · demostración' : ''}</b><small>${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · ${abiertasDe(p.id).length} abiertos</small></button>`; }).join('')}`;
+  $('#pop-proy').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.p; est.bproy = est.proyecto; guardarActivo(); $('#pop-proy').hidden = true; pintarProyecto(); render(); pintarFecha(); });
+});
+$('#cde-btn').onclick = () => abrirPop($('#cde-btn'), $('#pop-cde'), () => {
+  const c = cdeDe(est.proyecto);
+  $('#pop-cde').innerHTML = `<h4>Entorno común de datos · ${esc(PROY[est.proyecto].nombre)}</h4><p style="margin-top:0">${c ? `Conectado a <b>${esc(c.tipo)}</b> · ${esc(c.ruta)}.` : 'Sin conexión.'} Las conexiones de esta versión son de demostración: no leen archivos reales. Para comparar archivos propios usa «Comparar revisiones».</p>
+    ${puede('cde') ? CDE_OPS.map(t => `<button class="pop-op" data-cde="${esc(t)}" aria-checked="${c?.tipo === t}"><b>${esc(t)}</b><small>Conexión de demostración</small></button>`).join('') + (c ? '<button class="pop-op" data-cde=""><b>Desconectar</b></button>' : '') : notaRol('cde', 'Cambiar la conexión del CDE')}`;
+  $('#pop-cde').querySelectorAll('[data-cde]').forEach(b => b.onclick = () => { const t = b.dataset.cde; cdeConex[est.proyecto] = t ? { tipo: t, ruta: `/${est.proyecto}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } registrar(rolN(), `${PROY[est.proyecto].nombre} · ${t ? `CDE conectado: ${t} (demostración)` : 'CDE desconectado'}`, { tipo: 'parametro' }); $('#pop-cde').hidden = true; pintarProyecto(); });
+});
+$('#rol-btn').onclick = () => abrirPop($('#rol-btn'), $('#pop-rol'), () => {
+  $('#pop-rol').innerHTML = `<h4>Rol activo · demostración</h4>${Object.entries(ROLES).map(([k, r]) => `<button class="pop-op" role="menuitemradio" aria-checked="${k === est.rol}" data-r="${k}"><b>${esc(r.n)}</b><small>${esc(r.hace)}</small></button>`).join('')}<p>En la versión real, cada persona entra con su usuario y su rol. Aquí puedes cambiarlo para recorrer el flujo completo.</p><button class="pop-op" id="ver-bienvenida"><b>Volver a la bienvenida</b></button>`;
+  $('#pop-rol').querySelectorAll('[data-r]').forEach(b => b.onclick = () => { $('#pop-rol').hidden = true; fijarRol(b.dataset.r); });
+  $('#ver-bienvenida').onclick = () => { $('#pop-rol').hidden = true; abrirBienvenida(); };
+});
+// ---------- bienvenida (3 pasos, se puede saltar y se recuerda) ----------
+const BV = { paso: 0, rol: null, proyecto: null, cde: undefined };
+function abrirBienvenida() { Object.assign(BV, { paso: 0, rol: est.rol, proyecto: est.proyecto, cde: undefined }); $('#bienvenida').hidden = false; pintarBienvenida(); }
+function cerrarBienvenida(aplicar) {
+  if (aplicar) {
+    est.proyecto = BV.proyecto; guardarActivo();
+    if (BV.cde !== undefined) { cdeConex[BV.proyecto] = BV.cde ? { tipo: BV.cde, ruta: `/${BV.proyecto}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } }
+    if (BV.rol !== est.rol) fijarRol(BV.rol, 'bienvenida');
+  }
+  try { localStorage.setItem('rc-bienvenida', 'vista'); } catch { }
+  $('#bienvenida').hidden = true; pintarProyecto(); pintarRol();
+  if (location.hash !== '#inicio') location.hash = '#inicio'; else render();
+  $('#accion-principal')?.focus();
+}
+function pintarBienvenida() {
+  const pasos = [
+    { h: '¿Quién eres?', p: 'Cada rol ve sus decisiones. Puedes cambiarlo después desde el avatar (en la versión real, cada persona entra con su usuario).',
+      ops: Object.entries(ROLES).map(([k, r]) => [k, r.n, r.hace, '']), sel: BV.rol, set: v => BV.rol = v },
+    { h: '¿En qué proyecto trabajamos?', p: 'Cada contrato tiene su propio plazo para notificar variaciones.',
+      ops: PROYECTOS.map(p => { const pa = paramsProy(p.id); return [p.id, p.nombre, `${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · ${p.desc}`, p.demo ? 'Demostración' : 'Corpus de prueba sintético']; }), sel: BV.proyecto, set: v => BV.proyecto = v },
+    { h: '¿Dónde están tus documentos?', p: 'El entorno común de datos (CDE) es de donde llegan las revisiones. En esta versión las conexiones son de demostración; para usar archivos propios, súbelos en «Comparar revisiones».',
+      ops: [...CDE_OPS.map(t => [t, t, 'Conexión de demostración: no lee archivos reales.', 'Demostración']), ['', 'Solo quiero probar con el ejemplo', 'Sin conexión. Usa la lámina de ejemplo E-301 y los documentos del proyecto R1.', '']], sel: BV.cde === undefined ? (cdeDe(BV.proyecto)?.tipo ?? '') : BV.cde, set: v => BV.cde = v },
+  ];
+  const q = pasos[BV.paso];
+  $('#bienvenida').innerHTML = `<div class="bv-caja">
+    <div class="bv-marca"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12.5" fill="none" stroke="#8FB0FF" stroke-width="3"/><path d="M16 3.5a12.5 12.5 0 0 1 10.8 6.25" fill="none" stroke="#FF8A4C" stroke-width="3" stroke-linecap="round"/><path d="M16 9v7l4.5 3" fill="none" stroke="#8FB0FF" stroke-width="3" stroke-linecap="round"/></svg><div>Reloj Contractual<small>Asistente de trazabilidad documental y contractual · versión beta con datos de demostración</small></div></div>
+    <div class="bv-pasos" aria-hidden="true">${pasos.map((_, k) => `<span class="${k <= BV.paso ? 'on' : ''}"></span>`).join('')}</div>
+    <small class="pista-txt">Paso ${BV.paso + 1} de 3</small><h1 id="bv-titulo">${q.h}</h1><p>${q.p}</p>
+    <div class="bv-ops" role="radiogroup" aria-labelledby="bv-titulo">${q.ops.map(([v, t, d, e]) => `<button class="bv-op" role="radio" aria-checked="${v === q.sel}" data-v="${esc(v)}"><b>${esc(t)}</b><small>${esc(d)}</small>${e ? `<span class="etq ${e === 'Demostración' ? 'ambar' : ''}">${esc(e)}</span>` : ''}</button>`).join('')}</div>
+    <div class="bv-pie"><button class="btn" id="bv-saltar">Saltar y entrar como ${esc(ROLES.ot.n)}</button><div class="fila-btn">${BV.paso ? '<button class="btn" id="bv-atras">Atrás</button>' : ''}<button class="btn prim" id="bv-sig">${BV.paso === 2 ? 'Entrar' : 'Siguiente'}</button></div></div></div>`;
+  $('#bienvenida').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { q.set(b.dataset.v); pintarBienvenida(); $('#bv-sig').focus(); });
+  $('#bv-saltar').onclick = () => { BV.rol = 'ot'; cerrarBienvenida(true); };
+  const at = $('#bv-atras'); if (at) at.onclick = () => { BV.paso--; pintarBienvenida(); };
+  $('#bv-sig').onclick = () => { if (BV.paso === 2) { if (BV.cde === undefined) BV.cde = q.sel; cerrarBienvenida(true); } else { BV.paso++; pintarBienvenida(); } };
+  ($('#bienvenida [aria-checked="true"]') || $('#bv-sig')).focus();
 }
 function casosR1() {
   const casos = [['ALR-0002', 'E-204', 'Cambio dentro de una nota de lámina'], [alertas.find(a => a.doc_id === 'CT-024')?.id, 'CT-024', 'Instrucción en el cuarto párrafo de una carta'], [alertas.find(a => a.doc_id === 'RFI-155')?.id, 'RFI-155', 'Absolución de RFI sin partida en el presupuesto']];
@@ -322,7 +419,7 @@ function vSim() {
   if (p === 5) {
     const fin = (estado, partida) => {
       est.simDecision = estado === 'corregida' ? `partida corregida a ${partida} (se conserva ${a.partida} como propuesta del modelo)` : estado;
-      registrar('Oficina técnica', `E-204 · alerta ${estado}${estado === 'corregida' ? ` a ${partida}` : ''} (simulación)`);
+      registrar(rolN(), `E-204 · alerta ${estado}${estado === 'corregida' ? ` a ${partida}` : ''} (simulación)`);
       $('#s-dec-r').innerHTML = `<div class="aviso ok">Decisión registrada: ${esc(est.simDecision)}. Sigue al último paso.</div>`;
     };
     E.querySelectorAll('[data-dec]').forEach(b => b.onclick = () => { if (b.dataset.dec === 'corregida') { $('#s-corr').hidden = false; return; } fin(b.dataset.dec); });
@@ -413,6 +510,26 @@ function vBandeja() {
 }
 
 // ---------- DETALLE ----------
+// Panel de decisiones del cambio: cada rol ve solo los botones de su punto de decisión.
+function panelDecision(a) {
+  const dec = est.decisiones[a.id], ap = est.aprobaciones[a.id], emi = est.emitidas[a.id];
+  const pasos = [
+    ['Decidir el cambio', 'Oficina técnica', dec ? `${{ confirmada: 'Confirmado', corregida: 'Partida corregida', descartada: 'Descartado' }[dec.estado]}${dec.partida && dec.partida !== a.partida ? ` a ${dec.partida}` : ''}` : null],
+    ['Aprobar la variación', 'Jefe/a de OT', ap ? (ap.estado === 'aprobada' ? 'Aprobada' : 'Archivada sin notificar') : dec?.estado === 'descartada' ? 'No aplica' : null],
+    ['Emitir la carta', 'Gerente', emi ? `Emitida el ${N.fmtFecha(emi.fecha)}` : ap?.estado === 'archivada' || dec?.estado === 'descartada' ? 'No aplica' : null],
+  ];
+  const actual = pasos.findIndex(p => !p[2]);
+  let accion = '';
+  if (!dec) accion = puede('decidir') ? `<div class="acciones"><button class="btn prim" data-d="confirmada">Confirmar</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar</button></div>
+      <div id="d-corr" hidden style="margin-top:10px"><label class="tit" for="d-sel">Partida correcta</label><select id="d-sel" style="max-width:100%">${proyecto.partidas.map(x => `<option value="${x.codigo}" ${x.codigo === a.partida ? 'selected' : ''}>${x.codigo} ${esc(x.desc)}</option>`).join('')}</select> <button class="btn peq prim" id="d-corr-ok">Guardar corrección</button></div>` : notaRol('decidir', 'Decidir este cambio');
+  else if (dec.estado !== 'descartada' && !ap) accion = puede('aprobar') ? `<div class="acciones"><button class="btn prim" id="d-aprobar">Aprobar y habilitar la carta</button><button class="btn" id="d-archivar">Archivar sin notificar</button></div>` : notaRol('aprobar', 'Aprobar la variación');
+  else if (ap?.estado === 'aprobada' && !emi) accion = puede('redactar') ? `<div class="acciones"><a class="btn prim" id="d-carta" href="#salidas-${a.id.toLowerCase()}">${puede('emitir') ? 'Revisar y registrar la emisión' : 'Redactar carta, acta o informe'}</a></div>` : notaRol('redactar', 'Redactar el documento');
+  else if (emi) accion = `<div class="acciones"><a class="btn" href="#salidas-${a.id.toLowerCase()}">Ver el documento emitido</a></div>`;
+  const deshacer = dec && !ap && !emi && puede('decidir') ? '<button class="btn peq" id="d-deshacer">Deshacer la decisión</button>' : '';
+  return `<div class="panel" id="panel-decision"><h3>Decisiones</h3>
+    <ol class="pasos-dec">${pasos.map(([t, q, r], k) => `<li class="${r ? 'hecho' : k === actual ? 'actual' : ''}"><b>${t}</b><small>${q}${r ? ` · ${esc(r)}` : k === actual ? ' · le toca ahora' : ''}</small></li>`).join('')}</ol>
+    ${accion}${deshacer ? `<div class="fila-btn" style="margin-top:8px">${deshacer}</div>` : ''}</div>`;
+}
 function vAlerta(id) {
   const a = alertaPorId[id];
   if (!a) { $('#v-alerta').innerHTML = `<p class="vacio">No existe el cambio ${esc(id)}. <a href="#bandeja">Volver a la bandeja</a></p>`; return; }
@@ -433,12 +550,7 @@ function vAlerta(id) {
         <div class="panel"><h3>Registro de esta alerta</h3><ul class="registro">${est.registro.filter(r => r.que.includes(a.doc_id)).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || `<li><time>${N.fmtFecha(d.fecha_recepcion)}</time><span><b>Sistema:</b> alerta generada por la IA (detección y vínculo a partida) con cita verificada.</span></li>`}</ul></div>
       </div>
       <div>
-        <div class="panel"><h3>${dec ? 'Decisión tomada' : 'Tu decisión'}</h3>
-          ${dec ? `<div class="aviso ok">Alerta ${esc(dec.estado)}${dec.partida && dec.partida !== a.partida ? `: partida ${esc(dec.partida)} (la IA propuso ${esc(a.partida)})` : ''}.</div><div class="acciones">${dec.estado !== 'descartada' ? `<a class="btn prim" id="d-carta" href="#salidas-${a.id.toLowerCase()}">Redactar carta, acta o informe</a>` : ''}<button class="btn" id="d-deshacer">Deshacer</button></div>`
-          : `<div class="acciones"><button class="btn prim" data-d="confirmada">Confirmar</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar</button></div>
-            <div id="d-corr" hidden style="margin-top:10px"><label class="tit" for="d-sel">Partida correcta</label><select id="d-sel" style="max-width:100%">${proyecto.partidas.map(x => `<option value="${x.codigo}" ${x.codigo === a.partida ? 'selected' : ''}>${x.codigo} ${esc(x.desc)}</option>`).join('')}</select> <button class="btn peq prim" id="d-corr-ok">Guardar corrección</button></div>`}
-          <div id="d-carta-box"></div>
-        </div>
+        ${panelDecision(a)}
         <div class="panel"><h3>Lo que propone la IA ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
         <div class="panel"><h3>Partida del presupuesto</h3>
           <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto contractual</b>'} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
@@ -448,11 +560,13 @@ function vAlerta(id) {
         </div>
       </div>
     </div>`;
-  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar('Oficina técnica', `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
+  const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar(rolN(), `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
-  const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar('Oficina técnica', `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
-  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar('Oficina técnica', `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
+  const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { est.aprobaciones[a.id] = { estado: 'aprobada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
+  const arc = $('#d-archivar'); if (arc) arc.onclick = () => { est.aprobaciones[a.id] = { estado: 'archivada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
+  const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
+  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar(rolN(), `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
   $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
   const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
 }
@@ -568,7 +682,7 @@ function vPlazos() {
           <fieldset class="tipo-dias"><legend class="tit">Tipo de días</legend><label><input type="radio" name="pz-t" value="calendario" ${pp.tipo_dias !== 'habiles' ? 'checked' : ''}> Calendario</label><label><input type="radio" name="pz-t" value="habiles" ${pp.tipo_dias === 'habiles' ? 'checked' : ''}> Hábiles (sin sábados, domingos ni feriados)</label></fieldset>
           <div><span class="tit">El plazo empieza</span><p style="margin:4px 0 0">Desde la recepción del documento en el CDE. Si el contrato dice «desde el conocimiento», se usa igual la recepción (regla conservadora).</p></div>
         </div>
-        <div class="fila-btn" style="margin-top:14px"><button class="btn prim" id="pz-ok">Guardar y recalcular</button>${mod ? '<button class="btn" id="pz-reset">Restablecer valores del contrato</button>' : ''}</div>
+        ${puede('plazos') ? `<div class="fila-btn" style="margin-top:14px"><button class="btn prim" id="pz-ok">Validar y recalcular</button>${mod ? '<button class="btn" id="pz-reset">Restablecer valores del contrato</button>' : ''}</div>` : notaRol('plazos', 'Validar los parámetros del contrato')}
         <div id="pz-msg" aria-live="polite"></div>
       </form>
       <div class="panel"><h3>Vista previa</h3><p>Un documento recibido hoy (${N.fmtFecha(est.hoy)}) vence el <b style="color:var(--naranja)">${N.fmtFecha(ej)}</b>.</p>
@@ -577,17 +691,20 @@ function vPlazos() {
         ${id === 'R1' ? `<details class="tec"><summary>Texto de la cláusula ${esc(clausula143.clausula)}</summary><blockquote class="aviso info" style="margin:8px 0 0">«${esc(clausula143.texto_literal)}»</blockquote></details>` : ''}</div>
       <div class="panel"><h3>Feriados</h3><p class="pista-txt">Se descuentan solo cuando el plazo es en días hábiles.</p>
         <ul class="feriados">${fer.map(f => `<li><span class="num">${N.fmtFecha(f)}</span><button class="btn peq" data-quita="${f}" aria-label="Quitar feriado ${N.fmtFecha(f)}">Quitar</button></li>`).join('')}</ul>
-        <div class="fila-btn"><label class="sr" for="pz-f">Nuevo feriado</label><input type="date" id="pz-f"><button class="btn peq" id="pz-fadd">Agregar feriado</button></div></div>
+        ${puede('plazos') ? '<div class="fila-btn"><label class="sr" for="pz-f">Nuevo feriado</label><input type="date" id="pz-f"><button class="btn peq" id="pz-fadd">Agregar feriado</button></div>' : ''}</div>
     </div>`;
   document.querySelectorAll('[data-proy]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.proy; guardarActivo(); vPlazos(); });
+  if (puede('plazos')) document.querySelectorAll('#f-plazo input').forEach(i => i.disabled = false); else document.querySelectorAll('#f-plazo input').forEach(i => i.disabled = true);
+  if (!puede('plazos')) { document.querySelectorAll('[data-proy]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.proy; guardarActivo(); vPlazos(); pintarProyecto(); }); return; }
   $('#pz-ok').onclick = () => {
     const n = Number($('#pz-n').value), t = document.querySelector('[name="pz-t"]:checked').value, cl = $('#pz-cl').value.trim() || pp.clausula;
     if (!Number.isInteger(n) || n < 1 || n > 120) { $('#pz-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">El plazo debe ser un número entero entre 1 y 120 días.</p>'; return; }
     guardarProy(id, { params: { ...pp, plazo: n, tipo_dias: t, clausula: cl } });
-    registrar('Administración contractual', `${pr.nombre} · plazo fijado en ${n} días ${t === 'habiles' ? 'hábiles' : 'calendario'} (cláusula ${cl})`, { tipo: 'parametro' });
+    registrar(rolN(), `${pr.nombre} · plazo fijado en ${n} días ${t === 'habiles' ? 'hábiles' : 'calendario'} (cláusula ${cl})`, { tipo: 'parametro' });
     vPlazos(); pintarFecha(); $('#pz-msg').innerHTML = '<p class="aviso ok" style="margin-top:8px">Parámetros guardados. Todas las fechas límite y semáforos se recalcularon.</p>';
   };
-  const rs = $('#pz-reset'); if (rs) rs.onclick = () => { delete ajustesProy[id]; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); registrar('Administración contractual', `${pr.nombre} · parámetros restablecidos a los del contrato`, { tipo: 'parametro' }); vPlazos(); pintarFecha(); };
+  const rs = $('#pz-reset'); if (rs) rs.onclick = () => { delete ajustesProy[id]; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); registrar(rolN(), `${pr.nombre} · parámetros restablecidos a los del contrato`, { tipo: 'parametro' }); vPlazos(); pintarFecha(); };
+  document.querySelectorAll('[data-quita]').forEach(b => !puede('plazos') ? b.remove() : null);
   document.querySelectorAll('[data-quita]').forEach(b => b.onclick = () => { guardarProy(id, { feriados: fer.filter(f => f !== b.dataset.quita) }); vPlazos(); pintarFecha(); });
   $('#pz-fadd').onclick = () => { const v = $('#pz-f').value; if (!v || fer.includes(v)) return; guardarProy(id, { feriados: [...fer, v].sort() }); vPlazos(); pintarFecha(); };
 }
@@ -597,27 +714,37 @@ function guardarActivo() { try { localStorage.setItem('rc-proyecto-activo', est.
 const guiaVista = () => { try { return localStorage.getItem('rc-guia') === 'vista'; } catch { return false; } };
 const marcarGuia = () => { try { localStorage.setItem('rc-guia', 'vista'); } catch { } };
 const GUIA = [
-  { t: 'Conectar', h: 'El proyecto y su entorno de datos', p: 'Elige el proyecto y su CDE (en esta demostración, las conexiones son simuladas). Cada documento nuevo que llega al CDE arranca un plazo contractual.', ir: '#inicio', foco: '#cde' },
-  { t: 'Detectar', h: 'Compara la revisión A con la B', p: 'Con la lámina de ejemplo E-301 cargada, pulsa «Detectar cambios». El comparador marca cada zona que cambió sin usar IA.', ir: '#comparar', foco: '#cmp-ir' },
+  { t: 'Conectar', h: 'El proyecto y su entorno de datos', p: 'Arriba eliges el proyecto y ves su conexión al CDE (en esta demostración, simulada). Cada documento nuevo que llega al CDE arranca un plazo contractual.', ir: '#inicio', foco: '#cde-btn', rol: 'control' },
+  { t: 'Detectar', h: 'Compara la revisión A con la B', p: 'Con la lámina de ejemplo E-301 cargada, pulsa «Detectar cambios». El comparador marca cada zona que cambió sin usar IA.', ir: '#comparar', foco: '#cmp-ir', rol: 'control' },
   { t: 'Entender', h: 'Qué cambió, dónde y con qué prueba', p: 'La IA indica qué diferencias tienen impacto y propone la partida. Cada tarjeta trae la cita literal, verificada contra el texto de la revisión B.', ir: '#comparar', foco: '#cmp-tarjetas', antes: async () => { if (!document.querySelector('#cmp-alerta')) { $('#cmp-ir')?.click(); await esperarSel('#cmp-alerta', 15000); } } },
-  { t: 'Decidir', h: 'La persona decide', p: 'El cambio ya está en la bandeja con su plazo. Revisa la evidencia y pulsa «Confirmar» (o corrige la partida). Nada se emite sin esta decisión: el recorrido sigue cuando la tomes.', ir: null, foco: '.acciones',
+  { t: 'Decidir', h: 'Oficina técnica decide', p: 'El cambio ya está en la bandeja con su plazo. Como oficina técnica, revisa la evidencia y pulsa «Confirmar» (o corrige la partida). Nada se emite sin esta decisión: el recorrido sigue cuando la tomes.', ir: null, foco: '#panel-decision .acciones', rol: 'ot',
     antes: async () => { if (location.hash.startsWith('#comparar')) { if (!document.querySelector('#cmp-alerta')) { $('#cmp-ir')?.click(); await esperarSel('#cmp-alerta', 15000); } $('#cmp-alerta')?.click(); await new Promise(r => setTimeout(r, 350)); } },
     espera: () => { const r = ruta(); return r.vista === 'alerta' && !!est.decisiones[r.id]; } },
-  { t: 'Emitir', h: 'El borrador, listo para firmar', p: 'La carta usa solo datos confirmados: cita, partida y fecha límite, resaltados. Edítala, revisa los avisos, descárgala en DOCX, PDF o MD y registra la emisión cuando se firme.', ir: null, foco: '.sal-acciones',
-    antes: async () => { const r = ruta(); if (r.vista === 'alerta') { location.hash = `#salidas-${r.id.toLowerCase()}`; await new Promise(x => setTimeout(x, 300)); } } },
+  { t: 'Emitir', h: 'Aprobar y emitir', p: 'Ahora como jefe/a de oficina técnica: pulsa «Aprobar y habilitar la carta». Luego, como gerente, verás la carta con la cita, la partida y la fecha límite resaltadas, lista para exportar y registrar su emisión.', ir: null, foco: '#panel-decision .acciones', rol: 'jefe',
+    espera: () => { const r = ruta(); return (r.vista === 'alerta' && !!est.aprobaciones[r.id]) || r.vista === 'salidas'; },
+    alListo: async () => { const r = ruta(); if (r.vista === 'alerta') { fijarRol('gerente', 'recorrido guiado'); location.hash = `#salidas-${r.id.toLowerCase()}`; await new Promise(x => setTimeout(x, 300)); } const f = document.querySelector('.sal-emitir'); if (f) { f.classList.add('foco-guia'); f.scrollIntoView({ block: 'center' }); reubicarGuia(f); }
+      const caja = $('#guia'); if (caja) { caja.querySelector('h3').textContent = 'El gerente emite'; caja.querySelector('p').textContent = 'Variación aprobada. Como gerente: la carta trae la cita, la partida y la fecha límite resaltadas. Expórtala en DOCX, PDF o MD y pulsa «Registrar emisión» cuando se firme.'; } } },
   { t: 'Auditar', h: 'Quién decidió qué y cuándo', p: 'Cada paso quedó en una línea de tiempo sellada: detección, decisión y emisión, cada uno con el hash del anterior. Pulsa «Verificar integridad»: si alguien altera un evento, la cadena se rompe.', ir: '#auditoria', foco: '#aud-verificar' },
 ];
 let guiaPaso = -1;
 const esperarSel = (sel, ms = 8000) => new Promise(ok => { const t0 = Date.now(); const f = () => { if (document.querySelector(sel) || Date.now() - t0 > ms) ok(); else setTimeout(f, 150); }; f(); });
+// Si la tarjeta del recorrido tapa el elemento resaltado, se mueve arriba.
+function reubicarGuia(el) {
+  const g = $('#guia'); if (!g || !el) return;
+  g.classList.remove('arriba');
+  const a = g.getBoundingClientRect(), b = el.getBoundingClientRect();
+  if (!(b.right < a.left || b.left > a.right || b.bottom < a.top || b.top > a.bottom)) g.classList.add('arriba');
+}
 function iniciarGuia() { marcarGuia(); $('#invita-guia')?.remove(); guiaPaso = 0; pasoGuia(); }
 function cerrarGuia() { guiaPaso = -1; $('#guia')?.remove(); document.querySelectorAll('.foco-guia').forEach(e => e.classList.remove('foco-guia')); $('#guia-abrir').focus(); }
 async function pasoGuia() {
   const g = GUIA[guiaPaso];
   document.querySelectorAll('.foco-guia').forEach(e => e.classList.remove('foco-guia'));
+  if (g.rol && est.rol !== g.rol) fijarRol(g.rol, 'recorrido guiado');
   if (g.ir && location.hash !== g.ir) { location.hash = g.ir; await new Promise(r => setTimeout(r, 250)); }
   let caja = $('#guia');
   if (!caja) { caja = document.createElement('aside'); caja.id = 'guia'; caja.className = 'guia'; caja.setAttribute('aria-label', 'Recorrido guiado'); caja.setAttribute('aria-live', 'polite'); document.body.append(caja); }
-  caja.innerHTML = `<div class="pasos-g" aria-hidden="true">${GUIA.map((_, k) => `<span class="${k <= guiaPaso ? 'on' : ''}"></span>`).join('')}</div><small>Paso ${guiaPaso + 1} de 6 · ${g.t}</small><h3>${g.h}</h3><p>${g.p}</p>
+  caja.innerHTML = `<div class="pasos-g" aria-hidden="true">${GUIA.map((_, k) => `<span class="${k <= guiaPaso ? 'on' : ''}"></span>`).join('')}</div><small>Paso ${guiaPaso + 1} de 6 · ${g.t} · rol: ${esc(rolN())}</small><h3>${g.h}</h3><p>${g.p}</p>${g.rol ? '<p class="pista-txt" style="margin-top:-6px">Durante el recorrido, el rol cambia solo (demostración).</p>' : ''}
     <div class="fila-btn"><button class="btn peq" id="g-saltar">Salir del recorrido</button><span style="display:flex;gap:8px">${guiaPaso ? '<button class="btn peq" id="g-ant">Anterior</button>' : ''}<button class="btn peq prim" id="g-sig">${guiaPaso === 5 ? 'Terminar' : 'Siguiente'}</button></span></div>`;
   $('#g-saltar').onclick = cerrarGuia;
   const ant = $('#g-ant'); if (ant) ant.onclick = () => { guiaPaso--; pasoGuia(); };
@@ -628,10 +755,10 @@ async function pasoGuia() {
   if (g.antes) { $('#g-sig').disabled = true; await g.antes(); $('#g-sig').disabled = false; }
   if (g.espera && !g.espera()) {
     const b = $('#g-sig'); b.disabled = true; b.title = 'Toma la decisión para seguir';
-    const t = setInterval(() => { if (guiaPaso < 0 || !document.body.contains(b)) return clearInterval(t); if (g.espera()) { clearInterval(t); b.disabled = false; b.title = ''; document.querySelectorAll('.foco-guia').forEach(e => e.classList.remove('foco-guia')); const f2 = document.querySelector('#d-carta'); if (f2) f2.classList.add('foco-guia'); b.focus({ preventScroll: true }); } }, 300);
+    const t = setInterval(() => { if (guiaPaso < 0 || !document.body.contains(b)) return clearInterval(t); if (g.espera()) { clearInterval(t); document.querySelectorAll('.foco-guia').forEach(e => e.classList.remove('foco-guia')); const fin = () => { b.disabled = false; b.title = ''; const p = document.querySelector('#guia small'); if (p) p.textContent = `Paso ${guiaPaso + 1} de 6 · ${g.t} · rol: ${rolN()}`; b.focus({ preventScroll: true }); }; if (g.alListo) g.alListo().then(fin); else { const f2 = document.querySelector('#panel-decision'); if (f2) f2.classList.add('foco-guia'); fin(); } } }, 300);
   }
   const f = document.querySelector(g.foco);
-  if (f) { f.classList.add('foco-guia'); f.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: innerWidth < 700 ? 'start' : 'center' }); }
+  if (f) { f.classList.add('foco-guia'); f.scrollIntoView({ behavior: 'auto', block: innerWidth < 700 ? 'start' : 'center' }); reubicarGuia(f); }
   if (!$('#g-sig').disabled) $('#g-sig').focus({ preventScroll: true });
 }
 $('#guia-abrir').onclick = () => { if (guiaPaso >= 0) cerrarGuia(); else iniciarGuia(); };
@@ -787,7 +914,9 @@ function pintarFecha() {
   $('#campana').querySelector('.badge')?.remove(); if (urg) $('#campana').insertAdjacentHTML('beforeend', `<span class="badge">${urg}</span>`);
 }
 $('#chip-fecha').onclick = () => { const p = $('#pop-fecha'); p.hidden = !p.hidden; $('#chip-fecha').setAttribute('aria-expanded', String(!p.hidden)); };
-$('#pop-r').oninput = e => { est.hoy = N.sumarDias(PRIMERA, Number(e.target.value)); const v = ruta().vista; if (v === 'inicio') { vInicio(); } else if (v === 'bandeja') vBandeja(); pintarFecha(); };
+$('#pop-r').oninput = e => { est.hoy = N.sumarDias(PRIMERA, Number(e.target.value)); const v = ruta().vista; if (v === 'inicio') { vInicio(); } else if (v === 'bandeja') vBandeja(); else if (v === 'panorama') vPanorama(); pintarFecha(); };
 document.addEventListener('click', e => { if (!e.target.closest('#pop-fecha, #chip-fecha')) { $('#pop-fecha').hidden = true; $('#chip-fecha').setAttribute('aria-expanded', 'false'); } });
+pintarRol();
 render();
+try { if (!localStorage.getItem('rc-bienvenida')) abrirBienvenida(); } catch { }
 IA.iniciarModo().then(() => { pintarModoIA(); if (!$('#asist').hidden) pintarChat(); if (['comparar', 'ajustes', 'salidas'].includes(ruta().vista)) render(); });
