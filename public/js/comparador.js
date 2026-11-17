@@ -96,7 +96,12 @@ async function compararImagenes(srcA, srcB, maxW = 1400) {
   const W = Math.round((ib.naturalWidth || WD) * k), H = Math.round((ib.naturalHeight || HD) * k);
   if (!W || !H) throw new Error('La imagen está vacía.');
   const cA = lienzo(ia, W, H), cB = lienzo(ib, W, H);
-  const d = difPixeles(cA.getContext('2d').getImageData(0, 0, W, H).data, cB.getContext('2d').getImageData(0, 0, W, H).data, W, H);
+  // El diff se hace sobre copias suavizadas: tolera el remuestreo y la compresión (misma lámina en otra resolución o JPEG).
+  const suave = img => { const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.filter = 'blur(1.5px)'; g.drawImage(img, 0, 0, W, H); return g.getImageData(0, 0, W, H).data; };
+  const reescalado = ia.naturalWidth !== ib.naturalWidth || ia.naturalHeight !== ib.naturalHeight;
+  const d = reescalado ? difPixeles(suave(ia), suave(ib), W, H, { umbral: 55 }) : difPixeles(cA.getContext('2d').getImageData(0, 0, W, H).data, cB.getContext('2d').getImageData(0, 0, W, H).data, W, H);
+  // Con resoluciones distintas, las zonas de ruido (pocos píxeles y dispersos) se descartan.
+  if (reescalado) d.regiones = d.regiones.filter(g => g.px >= Math.max(12, W * H * 0.00002) && g.px / (g.w * g.h) >= 0.01);
   return { ...d, W, H, cA, cB };
 }
 
@@ -312,6 +317,11 @@ async function detectar(ctx) {
       }
     }
     r.ops = r.lineasB ? diffLineas(r.lineasA, r.lineasB) : [];
+    r.identicos = r.huellaA && r.huellaA === r.huellaB;
+    if (r.identicos) { r.regiones = []; r.ops = []; }
+    const huella = async f => f ? Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await f.arrayBuffer()))).join(',') : null;
+    if (S.modo === 'pdf') [r.huellaA, r.huellaB] = await Promise.all([huella(S.pdfA), huella(S.pdfB)]);
+    else if (S.modo === 'imagen') [r.huellaA, r.huellaB] = await Promise.all([huella(S.imgA), huella(S.imgB)]);
     r.fase = 'diff'; S.res = r; S.vista = 'B';
     await pintarResultado(ctx, true);
     await procesarIA(ctx, r);
@@ -322,6 +332,8 @@ async function detectar(ctx) {
 
 // Llama a la IA (según el modo) y valida con los parseadores del núcleo.
 async function procesarIA(ctx, r) {
+  // Sin diferencias no se consulta a la IA: no hay nada que interpretar.
+  if (r.identicos || (!(r.regiones || []).length && !r.ops.length)) { r.fase = 'sin-cambios'; pintarTarjetas(ctx); return; }
   if (!r.doc) { r.fase = 'sin-texto'; pintarTarjetas(ctx); return; }
   r.fase = 'ia'; pintarTarjetas(ctx);
   await espera(600);
@@ -416,6 +428,7 @@ function pintarTarjetas(ctx) {
   const r = S.res, T = $('#cmp-tarjetas'), R = $('#cmp-resumen');
   if (!T) return;
   if (r.fase === 'ia') { R.innerHTML = `<p class="estado-ia"><span class="spin" aria-hidden="true"></span>La IA revisa qué diferencias tienen impacto (${esc(IA.etiquetaModo())})…</p>`; T.innerHTML = ''; return; }
+  if (r.fase === 'sin-cambios') { R.innerHTML = `<div class="resumen-ia neutro"><b class="num">0</b><span>cambios</span></div><p class="aviso ok">${r.identicos ? 'Los dos archivos son idénticos.' : 'No hay diferencias de texto ni zonas modificadas entre la revisión A y la B (se toleran diferencias de resolución y compresión).'} No se generan alertas ni se consulta a la IA.</p>`; T.innerHTML = ''; return; }
   if (r.fase === 'sin-texto') {
     R.innerHTML = `<p class="aviso info">${r.ocrError ? `No se pudo leer el texto con OCR (${esc(r.ocrError)}).` : 'El OCR no encontró texto legible en la imagen.'} Sin texto no hay cita literal que verificar ni partida que proponer; las zonas sirven para ubicar el cambio en la lámina.</p>`;
     T.innerHTML = `<h3 class="cmp-h">Zonas detectadas</h3><div class="tarjetas-cmp">${r.regiones.map((g, k) => `<article class="tarj-cmp" data-tz="${k}"><header><span class="n">${k + 1}</span><div><h4>Zona ${k + 1}</h4><small>${zonaDe(g, r.W, r.H)} · ${(g.frac * 100).toFixed(2).replace('.', ',')} % del área</small></div>${g.frac < UMBRAL_EVIDENTE ? '<span class="etq ambar">No evidente a simple vista</span>' : ''}</header>
