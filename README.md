@@ -26,7 +26,7 @@ Requisitos: Node 20 o superior y Python 3 (solo para el servidor estático).
 ```bash
 git clone https://github.com/alejoenzobz-beep/reloj-contractual-rc.git
 cd reloj-contractual-rc
-npm test            # 26 pruebas: núcleo (CP-01 a CP-12), comparador, salidas y funciones del servidor
+npm test            # 27 pruebas: núcleo (CP-01 a CP-12), comparador, salidas, funciones del servidor e instrucción maliciosa
 npm start           # sirve public/ en http://localhost:8765 (sin funciones de servidor)
 npx netlify dev     # app + funciones (IA registrada, Telegram, Drive), lee variables de .env
 ```
