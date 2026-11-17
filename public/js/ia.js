@@ -150,7 +150,14 @@ const docEnvio = d => ({ doc_id: d.doc_id, tipo: d.tipo, titulo: d.titulo, espec
 const hechosEnvio = hs => hs.map(h => ({ id: h.id, cambio: h.cambio, ubicacion: h.ubicacion, especialidad: h.especialidad, elemento: h.elemento }));
 
 // Paso I1 (detección) para un documento. Devuelve { texto, origen } o { manual: true, prompt }.
+// Si aún no termina la prueba de conexión del arranque y nadie eligió modo, se intenta la IA en vivo;
+// el respaldo registrado solo se usa si la llamada falla, y queda rotulado.
+const arranquePendiente = () => !elegido && estadoInicial === null;
 export async function detectar(doc) {
+  if (modo === 'demo' && arranquePendiente()) {
+    try { return await llamarServidor({ paso: 'I1', doc: docEnvio(doc) }); }
+    catch (e) { const d = demoPara(doc); if (d) return { texto: d.i1, origen: `Respaldo: la IA en vivo no respondió (${e.codigo === 'tiempo' ? 'tardó demasiado' : 'sin respuesta del servidor'}); se usó la respuesta registrada. ${d.nota}`, demo: d, respaldo: true }; throw e; }
+  }
   if (modo === 'demo') {
     const d = demoPara(doc);
     if (!d) throw new SinRespuesta('No hay respuesta registrada para este texto. Para analizar documentos propios, elige «IA registrada», «Mi propia clave API» o «Manual» en Ajustes.', 'sin_registro');
@@ -163,6 +170,10 @@ export async function detectar(doc) {
 
 // Paso I2 (vínculo a partida). Devuelve { texto, origen }, { manual: true, prompt } o null.
 export async function vincular(doc, hechos, partidas, demo) {
+  if (modo === 'demo' && arranquePendiente() && !demo) {
+    const ps = partidas.map(p => ({ codigo: p.codigo, desc: p.desc, und: p.und, esp: p.esp }));
+    return llamarServidor({ paso: 'I2', hechos: hechosEnvio(hechos), partidas: ps });
+  }
   if (modo === 'demo') return demo?.i2 ? { texto: demo.i2, origen: demo.nota } : null;
   const ps = partidas.map(p => ({ codigo: p.codigo, desc: p.desc, und: p.und, esp: p.esp }));
   if (modo === 'manual') return { manual: true, prompt: promptI2(hechosEnvio(hechos), ps) };

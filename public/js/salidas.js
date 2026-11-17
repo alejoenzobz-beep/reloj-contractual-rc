@@ -10,8 +10,8 @@ const TIPOS = { carta: 'Carta de notificación', acta: 'Acta de reunión', infor
 
 // ---------- datos confirmados y plantillas ----------
 // Campos de una alerta: todos los cambios confirmados del mismo documento y revisión (ctx.grupo), cada uno con su
-// cita y su partida. Un cambio sin partida se notifica igual, como «partida por definir (posible precio nuevo)».
-export const SIN_PARTIDA = 'partida por definir (posible precio nuevo)';
+// cita y su partida. Un cambio sin partida se notifica igual, con el texto de SIN_PARTIDA.
+export const SIN_PARTIDA = 'Sin partida equivalente: puede requerir precio nuevo o modificar el precio unitario de una partida existente; revisar';
 export function camposGrupo({ items, params, proyecto, hoy, partidaPorCod }) {
   const a = items[0].a;
   const cambios = items.map(({ a: x, dec = {} }, i) => {

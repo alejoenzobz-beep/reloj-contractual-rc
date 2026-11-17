@@ -26,7 +26,7 @@ Requisitos: Node 20 o superior y Python 3 (solo para el servidor estático).
 ```bash
 git clone https://github.com/alejoenzobz-beep/reloj-contractual-rc.git
 cd reloj-contractual-rc
-npm test            # 22 pruebas: núcleo (CP-01 a CP-12), comparador y funciones del servidor
+npm test            # 27 pruebas: núcleo (CP-01 a CP-12), comparador, salidas, funciones del servidor e instrucción maliciosa
 npm start           # sirve public/ en http://localhost:8765 (sin funciones de servidor)
 npx netlify dev     # app + funciones (IA registrada, Telegram, Drive), lee variables de .env
 ```
@@ -38,7 +38,7 @@ Sin funciones de servidor la app funciona igual con «Respuestas de demostració
 | Variable | Para qué | Obligatoria |
 |---|---|---|
 | `GEMINI_API_KEY` | IA registrada de la app (Google AI Studio, gratis y sin tarjeta) | No: sin ella la app ofrece los otros modos |
-| `GEMINI_MODEL` | Modelo a usar (por defecto `gemini-2.5-flash`). Si da 404, la función elige uno disponible con ListModels | No |
+| `GEMINI_MODEL` | Modelo a usar (por defecto `gemini-3.1-flash-lite`). Si da 404, la función elige uno disponible con ListModels | No |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Aviso al celular con el cambio y su fecha límite | No (desactivado si faltan) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_API_KEY` | Elegir revisiones en Google Drive y guardar la carta | No (desactivado si faltan) |
 
@@ -74,7 +74,7 @@ docs/                   backlog, plan de mejoras y rúbrica
 
 ## Límites conocidos
 
-- Las cifras de precisión de la IA se midieron con un modelo de Claude y con instrucciones fijas; la IA registrada en vivo (Gemini) no se ha medido.
+- La IA registrada en vivo (`gemini-3.1-flash-lite`, por defecto) ya se midió contra la función publicada (17/11/2026): en la prueba ciega con 10 documentos nuevos detectó 8 de 8 cambios, con 2 falsas alarmas y 8 de 8 partidas correctas (`public/data/cifras.json`). Las cifras del corpus base se midieron antes con un modelo de Claude y las mismas instrucciones fijas.
 - El corpus es sintético y lo armó el equipo; la línea base de tiempos viene de una consulta breve, no de una estadística del sector.
 - Datos, decisiones, cronómetro y opiniones se guardan en el navegador (localStorage); no hay usuarios reales ni servidor de base de datos.
 - El límite de consultas por IP vive en la memoria de la función y se reinicia con cada instancia.

@@ -4,7 +4,7 @@ import * as N from './nucleo.js';
 import * as IA from './ia.js';
 import { SISTEMA_CHAT } from './asistente_ia.js';
 import { vComparar } from './comparador.js';
-import { vSalidas, zip } from './salidas.js';
+import { vSalidas, zip, SIN_PARTIDA } from './salidas.js';
 import { laminaSVG } from './lamina_demo.js';
 import * as AUD from './auditoria.js';
 import * as CAL from './calendario.js';
@@ -48,6 +48,9 @@ const PARAMS_R1 = () => paramsProy('R1');
 function guardarProy(id, cambios) { ajustesProy[id] = { ...(ajustesProy[id] || {}), ...cambios }; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); }
 let recepcionCorr = {};
 try { recepcionCorr = JSON.parse(localStorage.getItem('rc-recepcion') || '{}'); } catch { }
+// Procedencia de la fecha de recepción: quién la confirmó a mano (solo rótulo).
+let recepcionRol = {};
+try { recepcionRol = JSON.parse(localStorage.getItem('rc-recepcion-rol') || '{}'); } catch { }
 // Referencia «sin asistente»: rango de días para entender un cambio en la consulta (n = 15); si falta, los 2 casos iniciales.
 const REF = consulta?.respuestas?.length ? { min: Math.min(...consulta.respuestas.map(r => r.entender_dias)), max: Math.max(...consulta.respuestas.map(r => r.entender_dias)), n: consulta.respuestas.length } : { ...cifras.casos_referencia.entender_sin_asistente_dias, n: cifras.casos_referencia.casos.length };
 const LAT_MIN = cifras.corpus_base.v1_1.latencia_mediana_min;   // minutos de detección medidos
@@ -154,7 +157,7 @@ function barraPlazo(a, compacta = false) {
   const pp = P(a), lim = `Límite ${fCorta(a.limite)}`;
   const margenCon = tot, margenSinMin = tot - REF.max, margenSinMax = tot - REF.min;
   const hoyM = hoy >= 0 && hoy <= tot + 0 ? `<span class="pb-hoy" style="left:${x(hoy)}%"><b>Hoy</b></span>` : '';
-  const aria = `Recibido el ${N.fmtFecha(a.fecha_recepcion)}; vence el ${N.fmtFecha(a.limite)} (${tot} días en el calendario). Sin asistente, entender el cambio toma ${REF.min} a ${REF.max} días según los casos de referencia.`;
+  const aria = `Recibido el ${N.fmtFecha(a.fecha_recepcion)}; vence el ${N.fmtFecha(a.limite)} (${tot} días en el calendario). Sin asistente, entender el cambio toma ${REF.min} a ${REF.max} días según la consulta, n = 15.`;
   if (compacta) return `<div class="pb pb-c" role="img" aria-label="${esc(aria)}"><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-fin"></span>${hoyM}</div>
     <div class="pb-escala"><span>Recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim}</span></div></div>`;
   const frase = margenSinMin >= 0 ? `sin asistente quedarían entre ${margenSinMin} y ${margenSinMax} días` : margenSinMax < 0 ? 'sin asistente, el plazo vencería antes de entender el cambio' : `sin asistente quedarían entre 0 y ${margenSinMax} días (o vencería antes)`;
@@ -219,7 +222,6 @@ const cdeDe = id => cdeConex[id] === null ? null : cdeConex[id] || (id === 'H3' 
 const abiertasDe = id => alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy && !est.decisiones[a.id]).sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
 const porAprobarDe = id => alertas.filter(a => a.proyecto === id && ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado) && !estadoAprob(a));
 const porEmitirDe = id => alertas.filter(a => a.proyecto === id && estadoAprob(a) === 'aprobada' && !est.emitidas?.[a.id]);
-function saludoHora() { const h = new Date().getHours(); return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'; }
 const ICO_ACC = {
   comparar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M12 2v20"/></svg>',
   bandeja: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 13l2.5-7h11L20 13v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg>',
@@ -274,8 +276,9 @@ function vInicio() {
   const urg = abiertas.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
   const acc = accionPrincipal(id);
   $('#v-inicio').innerHTML = `
-    <div class="saludo anim"><div><h1>${saludoHora()}<span class="chip-rol">${esc(rolN())}</span></h1>
-      <p>${esc(pr.nombre)}${pr.demo ? ' (demostración)' : ''} · ${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
+    <div class="saludo anim"><div><h1>${esc(pr.nombre)} ${ETQ_PROY(pr)}<span class="chip-rol">${esc(rolN())}</span></h1>
+      <p class="cab-proy">Cláusula ${esc(String(paramsProy(id).clausula))} · ${paramsProy(id).plazo} días ${paramsProy(id).tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · Documentos: ${cdeDe(id) ? `${esc(cdeDe(id).tipo)} · ${esc(cdeDe(id).ruta || '')}${cdeDe(id).demo ? ' (demostración)' : ''}` : 'sin origen conectado'}</p>
+      <p>${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
       <p class="rol-hoy">${esc(ROLES[est.rol].hace)}</p></div></div>
     <div class="inicio-hero">
       <div class="accion-principal anim"><div><h2>${esc(acc.t)}</h2><p>${esc(acc.d)}</p></div><a class="btn prim grande" href="${acc.h}" id="accion-principal">${esc(acc.b)}</a></div>
@@ -304,7 +307,7 @@ function vPanorama() {
       <a class="kpi emitir" href="#salidas"><b class="num">${porEmitirDe(id).length}</b>aprobados, por emitir</a></div>
     <div class="panorama-grid">
       <div class="panel"><h3>Plazo restante de los cambios abiertos</h3><p class="pista-txt" style="margin:2px 0 12px">Cada barra es la fracción del plazo que queda. <a href="#plazos">Parámetros</a></p>${miniPlazos(abiertas)}</div>
-      <div class="panel"><h3>Agenda de vencimientos</h3>${porFecha.length ? `<ul class="agenda">${porFecha.map(f => { const d = N.difDias(f, est.hoy); return `<li><time datetime="${f}">${fCorta(f)}<small>${DIAS[N.isoAFecha(f).getUTCDay()]} · ${d < 0 ? `hace ${-d} d` : d === 0 ? 'hoy' : `en ${d} d`}</small></time><ul>${proximos.filter(a => a.limite === f).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${esc(a.doc_id)} · ${esc(a.elemento)}</a> <small class="pista-txt">${est.decisiones[a.id] ? (estadoAprob(a) ? 'por emitir' : 'por aprobar') : 'por decidir'}</small></li>`).join('')}</ul></li>`; }).join('')}</ul>` : '<p class="vacio">Sin vencimientos próximos.</p>'}</div>
+      <div class="panel"><h3>Agenda de vencimientos</h3>${porFecha.length ? `<ul class="agenda">${porFecha.map(f => { const d = N.difDias(f, est.hoy); return `<li><time datetime="${f}">${fCorta(f)}<small>${DIAS[N.isoAFecha(f).getUTCDay()]} · ${d < 0 ? `hace ${-d} d` : d === 0 ? 'hoy' : `en ${d} d`}</small></time><ul>${unaPorAlerta(proximos.filter(a => a.limite === f)).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${esc(tituloAlerta(a))}</a> <small class="pista-txt">${est.decisiones[a.id] ? (estadoAprob(a) ? 'por emitir' : 'por aprobar') : 'por decidir'}</small></li>`).join('')}</ul></li>`; }).join('')}</ul>` : '<p class="vacio">Sin vencimientos próximos.</p>'}</div>
     </div>
     ${id === 'R1' ? casosR1() : ''}`;
   document.querySelectorAll('#v-panorama [data-ir]').forEach(b => b.onclick = () => { est.filtro = b.dataset.ir; est.bproy = id; });
@@ -370,11 +373,25 @@ function casosR1() {
       return `<a class="vidrio caso3" href="#alerta-${cid.toLowerCase()}"><span class="q">${esc(q)}</span><div class="frag">${conCita(d.texto.split('\n').find(l => l.includes(a.cita.slice(0, 18))) || d.texto.slice(0, 160), a.cita).replace('mark class="cita"', 'mark')}</div><span class="etq">${esc(dId)} · ${a.partida ? esc(a.partida) : 'sin partida'}</span></a>`; }).join('')}</div></section>`;
 }
 // Mini gráfico: un renglón por cambio abierto, ordenado por días restantes; la barra es la fracción del plazo que queda.
+// Bloque «Verificación»: cada check sale de una validación que ya existe (cita literal, criterios de la partida, fórmula del plazo, decisiones).
+function panelVerificacion(a, d) {
+  const cita = !!a.cita && a.cita.length >= 8 && N.normalizar(d.texto).includes(N.normalizar(a.cita));
+  const enRango = !!a.partida && !!a.criterios?.[3];
+  const pp = P(a), formula = N.fechaLimite(a.fecha_recepcion, pp, FER(a)) === a.limite;
+  const dec = est.decisiones[a.id], apr = estadoAprob(a);
+  const fila = (ok, t, x) => `<div class="check"><span class="ico ${ok ? 'si' : 'no'}">${ok ? '✓' : '•'}</span><div><b>${t}</b>${x ? ` <small class="pista-txt">${x}</small>` : ''}</div></div>`;
+  return `<div class="panel"><h3>Verificación</h3>
+    ${fila(cita, cita ? 'Cita encontrada literalmente en el documento' : 'Cita no encontrada en el documento', `${esc(a.doc_id)} rev. ${esc(d.revision)}`)}
+    ${fila(enRango, a.partida ? (enRango ? 'Partida en rango' : 'Partida pendiente de revisar: no cumple el criterio de rango o unidad') : 'Partida pendiente: sin partida equivalente', a.partida ? `<code>${esc(a.partida)}</code>` : '')}
+    ${fila(formula, formula ? 'Plazo calculado por fórmula' : 'Plazo no coincide con la fórmula', `cláusula ${esc(String(pp.clausula))} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción · vence el ${N.fmtFecha(a.limite)}`)}
+    ${fila(!!dec, dec ? 'Decisión registrada en Auditoría' : 'Sin decisión registrada todavía', dec ? `${esc(dec.estado)}${apr ? ` · ${esc(apr)}` : ''}` : 'oficina técnica debe confirmar, corregir o descartar')}
+  </div>`;
+}
 function miniPlazos(lista) {
   if (!lista.length) return '<p class="vacio">Sin cambios abiertos a esta fecha.</p>';
   const col = { verde: 'var(--verde)', ambar: 'var(--ambar)', rojo: 'var(--naranja)', vencido: 'var(--naranja)' };
-  return `<ul class="mini-plazos">${lista.slice(0, 8).map(a => { const tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), d = N.diasRestantes(a.limite, est.hoy), e = estadoDe(a);
-    return `<li><a href="#alerta-${a.id.toLowerCase()}"><span class="mp-n">${esc(a.doc_id)} · ${esc(a.elemento)}</span><span class="mp-b"><span style="width:${Math.max(2, Math.min(100, d / tot * 100))}%;background:${col[e] || 'var(--azul-2)'}"></span></span><span class="mp-d num" style="color:${col[e]}">${d < 0 ? `vencido ${-d} d` : `${d} d`}</span></a></li>`; }).join('')}</ul>
+  return `<ul class="mini-plazos">${unaPorAlerta(lista).slice(0, 8).map(a => { const tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), d = N.diasRestantes(a.limite, est.hoy), e = estadoDe(a);
+    return `<li><a href="#alerta-${a.id.toLowerCase()}"><span class="mp-n">${esc(tituloAlerta(a))}</span><span class="mp-b"><span style="width:${Math.max(2, Math.min(100, d / tot * 100))}%;background:${col[e] || 'var(--azul-2)'}"></span></span><span class="mp-d num" style="color:${col[e]}">${d < 0 ? `vencido ${-d} d` : `${d} d`}</span></a></li>`; }).join('')}</ul>
     ${lista.length > 8 ? `<p class="pista-txt" style="margin-top:6px">y ${lista.length - 8} más en la <a href="#bandeja">bandeja</a>.</p>` : ''}`;
 }
 // ---------- SIMULACIÓN ----------
@@ -527,7 +544,7 @@ function vBandeja() {
     <div class="segmento peq" role="tablist" aria-label="Vista de la bandeja" style="margin:0 0 12px">${[['lista', 'Lista'], ['calendario', 'Calendario']].map(([k, t]) => `<button role="tab" aria-selected="${(est.bvista || 'lista') === k}" data-bv="${k}">${t}</button>`).join('')}</div>
     ${est.bvista === 'calendario' ? (() => { const mes = est.bmes || est.hoy.slice(0, 8) + '01'; const items = lista.map(a => ({ fecha: a.limite, href: `#alerta-${a.id.toLowerCase()}`, texto: `${a.doc_id} · ${a.elemento}`, titulo: `${a.doc_id} · ${a.elemento}: vence el ${N.fmtFecha(a.limite)}`, estado: estadoDe(a) })); const fuera = items.filter(i => i.fecha.slice(0, 7) !== mes.slice(0, 7)).length;
       return `<div class="panel cal-bandeja"><div class="plazo-cab"><div class="fila-btn"><button class="btn peq" id="bm-ant" aria-label="Mes anterior">←</button><button class="btn peq" id="bm-sig" aria-label="Mes siguiente">→</button></div><span class="pista-txt">Vencimientos de los cambios filtrados. ${fuera ? `${fuera} vence${fuera === 1 ? '' : 'n'} en otros meses.` : ''}</span></div>${CAL.calendarioVencimientos({ mes, hoy: est.hoy, items, feriados: proyF === 'todos' ? FER() : feriadosProy(proyF) })}<div class="cm-ley"><span><i class="l-verde"></i>En plazo</span><span><i class="l-ambar"></i>Vence pronto</span><span><i class="l-lim"></i>Vencido o último día</span><span><i class="l-ok"></i>Decidido</span></div></div>`; })() : ''}
-    <p class="pista-txt" style="margin:-4px 0 12px">Cada barra va de la recepción al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, casos de referencia).</p>
+    <p class="pista-txt" style="margin:-4px 0 12px">Cada barra va de la recepción al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, consulta, n = 15).</p>
     <div class="lista" ${est.bvista === 'calendario' ? 'hidden' : ''}>${lista.length ? unaPorAlerta(lista).map(a => `<a class="alerta-fila" href="#alerta-${a.id.toLowerCase()}">
         ${diasBadge(a)}
         <div><div class="doc-id">${esc(a.doc_id)} <span>· ${esc(a.doc.titulo)}${proyF === 'todos' ? ` · ${esc(PROY[a.proyecto].nombre)}` : ''}</span></div><div class="resumen-cambio">${grupoDe(a).length > 1 ? `<b>${esc(tituloAlerta(a))}:</b> ${grupoDe(a).map(x => esc(x.elemento)).join(' · ')}` : esc(a.cambio)}</div></div>
@@ -592,7 +609,7 @@ function panelDecision(a) {
     ['Emitir la carta', 'Gerente', emi ? `Emitida el ${N.fmtFecha(emi.fecha)}` : ap?.estado === 'archivada' || (!pend.length && !dec.length) ? 'No aplica' : null],
   ];
   const actual = pasos.findIndex(p => !p[2]);
-  const opciones = x => `${proyecto.partidas.map(p => `<option value="${p.codigo}" ${p.codigo === x.partida ? 'selected' : ''}>${p.codigo} ${esc(p.desc)}</option>`).join('')}<option value="" ${x.partida ? '' : 'selected'}>Sin partida: por definir (posible precio nuevo)</option><option value="__desc">Descartar este cambio</option>`;
+  const opciones = x => `${proyecto.partidas.map(p => `<option value="${p.codigo}" ${p.codigo === x.partida ? 'selected' : ''}>${p.codigo} ${esc(p.desc)}</option>`).join('')}<option value="" ${x.partida ? '' : 'selected'}>Sin partida equivalente (precio nuevo o modificar precio unitario; revisar)</option><option value="__desc">Descartar este cambio</option>`;
   let accion = '';
   if (pend.length) accion = puede('decidir') ? `<div class="acciones"><button class="btn prim" data-d="confirmada">${pend.length === 1 ? 'Confirmar' : `Confirmar los ${pend.length} cambios`}</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar${pend.length === 1 ? '' : ' todos'}</button></div>
       <div id="d-corr" hidden style="margin-top:10px">${pend.map(x => `<label class="tit" for="d-sel-${x.id}">${esc(x.elemento)}</label><select id="d-sel-${x.id}" data-sel="${x.id}" style="max-width:100%;width:100%">${opciones(x)}</select>`).join('')} <button class="btn peq prim" id="d-corr-ok" style="margin-top:8px">Guardar decisión</button></div>` : notaRol('decidir', 'Decidir estos cambios');
@@ -615,7 +632,7 @@ function vAlerta(id) {
     <div class="panel plazo-panel"><div class="plazo-cab"><h3>Plazo contractual</h3><span class="pista-txt">${esc(PROY[a.proyecto].nombre)} · <a href="#plazos">parámetros</a></span></div>${barraPlazo(a)}
       <details class="tec cal-det" open><summary>Ver el plazo en el calendario</summary>${CAL.calendarioPlazo({ inicio: a.fecha_recepcion, limite: a.limite, feriados: FER(a), tipo: P(a).tipo_dias, hoy: est.hoy, refMax: REF.max, titulo: `${a.doc_id} · ${a.elemento}` })}</details>
       <div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="d-ics">Agregar al calendario (.ics)</button>${TG.activo ? '<button class="btn peq" id="d-tg">Enviar aviso por Telegram</button>' : ''}<span class="pista-txt" style="align-self:center">Evento el ${N.fmtFecha(a.limite)} con aviso dos días antes. Sirve con Google Calendar, Outlook y Apple.</span></div><div id="d-tg-msg" aria-live="polite"></div>
-      <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE</label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
+      <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE <span class="etq ${recepcionCorr[a.id] ? '' : 'ambar'}">${recepcionCorr[a.id] ? `confirmada manualmente por ${esc(recepcionRol[a.id] || 'usuario')}` : 'demostración'}</span></label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
     <div class="det-cuerpo">
       <div>
         <div class="panel"><h3>${d.tipo === 'Lámina' ? 'Qué cambió entre revisiones' : 'Qué dice el documento'}</h3>
@@ -630,11 +647,12 @@ function vAlerta(id) {
         ${grupoDe(a).length > 1 ? `<div class="panel"><h3>Cambios de esta alerta</h3><ul class="cambios-alerta">${grupoDe(a).map(x => `<li class="${x.id === a.id ? 'actual' : ''}">${x.id === a.id ? `<b>${esc(x.elemento)}</b>` : `<a href="#alerta-${x.id.toLowerCase()}">${esc(x.elemento)}</a>`}<small>${esc(primeraFrase(x.cambio))} · ${x.partida ? `partida ${esc(x.partida)}` : 'sin partida'}${est.decisiones[x.id] ? ` · ${esc(est.decisiones[x.id].estado)}` : ''}</small></li>`).join('')}</ul></div>` : ''}
         <div class="panel"><h3>Lo que propone la IA${grupoDe(a).length > 1 ? ` · ${esc(a.elemento)}` : ''} ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
         <div class="panel"><h3>Partida del presupuesto</h3>
-          <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto contractual</b>'} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
+          <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : `<b>${esc(SIN_PARTIDA)}</b>`} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
           ${a.criterios ? `<div class="criterios">${['Mismo elemento', 'Misma especialidad', 'Ubicación compatible', 'Rango o unidad'].map((t, i) => `<div class="check"><span class="ico ${a.criterios[i] ? 'si' : 'no'}">${a.criterios[i] ? '✓' : '✗'}</span>${t}</div>`).join('')}</div>` : ''}
           ${a.alternativa ? `<p style="font-size:.88rem">Alternativa: <code>${esc(a.alternativa)}</code> ${esc(a.alternativa_desc)}</p>` : ''}
           <details class="tec"><summary>Por qué esta partida</summary><p>${esc(a.sustento)}</p></details>
         </div>
+        ${panelVerificacion(a, d)}
       </div>
     </div>`;
   const G = grupoDe(a);
@@ -657,7 +675,7 @@ function vAlerta(id) {
   const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { estadoGrupo(a).dec.forEach(x => { est.aprobaciones[x.id] = { estado: 'aprobada', fecha: est.hoy }; }); registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const arc = $('#d-archivar'); if (arc) arc.onclick = () => { estadoGrupo(a).dec.forEach(x => { est.aprobaciones[x.id] = { estado: 'archivada', fecha: est.hoy }; }); registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const des = $('#d-deshacer'); if (des) des.onclick = () => { G.forEach(x => delete est.decisiones[x.id]); registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
-  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar(rolN(), `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
+  const fijarRec = v => { if (v) { recepcionCorr[a.id] = v; recepcionRol[a.id] = rolN(); } else { delete recepcionCorr[a.id]; delete recepcionRol[a.id]; } try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); localStorage.setItem('rc-recepcion-rol', JSON.stringify(recepcionRol)); } catch { } recalcular1(a); registrar(rolN(), `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}, confirmada manualmente por ${rolN()}` : 'restablecida al dato de demostración'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
   $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
   const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
 }
@@ -734,10 +752,11 @@ async function vAuditoria(estados = null) {
     <div class="aud-barra"><button class="btn prim" id="aud-verificar" ${ev.length ? '' : 'disabled'}>Verificar integridad</button>
       ${ev.length ? (alt ? '<button class="btn" id="aud-restaurar">Restaurar el evento alterado</button>' : '<button class="btn" id="aud-alterar">Alterar un evento (demostración)</button>') : ''}
       <span id="aud-res" aria-live="polite">${estados ? (roto ? `<span class="aud-mal">✗ Cadena rota en el evento ${estados.findIndex(x => x !== 'ok') + 1}: su contenido ya no coincide con el sello.</span>` : `<span class="aud-ok">✓ Cadena íntegra: ${ev.length} evento${ev.length === 1 ? '' : 's'} verificado${ev.length === 1 ? '' : 's'}.</span>`) : ''}</span></div>
+    <p class="pista-txt">Cada evento muestra dos fechas: la <b>fecha del evento</b> («fecha simulada») es la del calendario de demostración en que ocurre la decisión; la <b>fecha de registro</b> (hora) es el momento real en que se selló en este navegador.</p>
     <p class="pista-txt">Datos locales de este navegador. «Alterar» cambia el texto de un evento solo en memoria, para mostrar que la verificación lo detecta.</p>
     ${ev.length ? `<ol class="linea-tiempo">${ev.map(e => { const st = estados?.[e.i], T = AUD.TIPOS[e.tipo];
       return `<li class="ev ${st && st !== 'ok' ? 'roto' : st === 'ok' ? 'sellado' : ''}"><span class="ev-punto t-${T.c}" aria-hidden="true"></span>
-        <div class="ev-cuerpo"><div class="ev-cab"><span class="etq t-${T.c}">${T.t}</span><b>${esc(e.quien)}</b><time datetime="${e.ts}">${fHora(e.ts)}</time>${e.fecha_sim ? `<span class="pista-txt">fecha simulada ${N.fmtFecha(e.fecha_sim)}</span>` : ''}</div>
+        <div class="ev-cuerpo"><div class="ev-cab"><span class="etq t-${T.c}">${T.t}</span><b>${esc(e.quien)}</b><time datetime="${e.ts}">${fHora(e.ts)}</time>${e.fecha_sim ? `<span class="pista-txt">fecha del evento (simulada) ${N.fmtFecha(e.fecha_sim)}</span>` : ''}</div>
         <p>${esc(e.que)}${e.alerta && alertaPorId[e.alerta] ? ` · <a href="#alerta-${e.alerta.toLowerCase()}">ver cambio</a>` : ''}</p>
         <code class="hash" title="Sello: ${e.hash}">#${e.n} · sello ${e.hash.slice(0, 10)}… ← ${e.prev.slice(0, 10)}…</code>${st && st !== 'ok' ? `<span class="aud-mal">${st === 'contenido' ? '✗ Contenido alterado' : st === 'enlace' ? '✗ Enlace roto' : '✗ Arrastra la ruptura anterior'}</span>` : st === 'ok' ? '<span class="aud-ok">✓</span>' : ''}</div></li>`; }).join('')}</ol>`
       : `<div class="vacio">Todavía no hay eventos. Haz el recorrido guiado o compara dos revisiones y decide un cambio: cada paso queda aquí.<div class="fila-btn" style="justify-content:center;margin-top:10px"><button class="btn prim" id="aud-guia">Hacer el recorrido guiado</button></div></div>`}`;
