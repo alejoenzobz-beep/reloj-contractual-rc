@@ -156,7 +156,7 @@ export function vSalidas(ctx, idSel) {
         <p class="pista-txt">Texto editable. Resaltado: datos confirmados que la app verifica (cita, partida, fechas, cláusula). <button class="enlace" id="sal-reset" ${est.borradores[clave] != null ? '' : 'hidden'}>Volver a la plantilla</button></p>
         <div id="sal-avisos" aria-live="polite"></div>
         <div class="sal-acciones">
-          <div class="fila-btn"><span class="tit2">Exportar</span><button class="btn peq" data-exp="docx">Descargar DOCX</button><button class="btn peq" data-exp="pdf">Imprimir o guardar PDF</button><button class="btn peq" data-exp="md">Descargar MD</button></div>
+          <div class="fila-btn"><span class="tit2">Exportar</span><button class="btn peq" data-exp="docx">Descargar DOCX</button><button class="btn peq" data-exp="pdf">Imprimir o guardar PDF</button><button class="btn peq" data-exp="md">Descargar MD</button><button class="btn peq" data-exp="ics">Agregar fecha límite al calendario</button></div>
           <div class="fila-btn"><span class="tit2">Herramientas · ${esc(IA.ETIQUETA[IA.modoIA()])}</span>${Object.entries(HERRAMIENTAS).map(([k, h]) => `<button class="btn peq" data-her="${k}">${h.titulo}</button>`).join('')}</div>
         </div>
         <div id="sal-her" aria-live="polite"></div>
@@ -180,6 +180,7 @@ export function vSalidas(ctx, idSel) {
   const nombre = `${S.tipo}_${a.doc_id}_${a.id}`.replace(/[^\w.-]+/g, '_');
   raiz.querySelectorAll('[data-exp]').forEach(b => b.onclick = () => {
     const t = leerEditor(ed);
+    if (b.dataset.exp === 'ics') { const u = URL.createObjectURL(new Blob([ctx.icsDe(a)], { type: 'text/calendar;charset=utf-8' })); const l = document.createElement('a'); l.href = u; l.download = `plazo_${a.doc_id}_${a.id}.ics`.replace(/[^\w.-]+/g, '_'); document.body.append(l); l.click(); l.remove(); ctx.registrar(ctx.rolN(), `${a.doc_id} · fecha límite agregada al calendario (.ics)`); return; }
     if (b.dataset.exp === 'docx') descargar(docx(`${TIPOS[S.tipo]} · ${a.doc_id}`, t), `${nombre}.docx`);
     else if (b.dataset.exp === 'md') descargar(new Blob([`# ${TIPOS[S.tipo]} · ${a.doc_id}\n\n${t.replace(/\n(?!\n)/g, '  \n')}\n`], { type: 'text/markdown' }), `${nombre}.md`);
     else { ed.blur(); window.print(); }

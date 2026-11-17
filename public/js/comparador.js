@@ -123,7 +123,25 @@ async function cargarPdfjs() {
   if (!pdfjs) { pdfjs = await import('../vendor/pdfjs/pdf.min.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdfjs/pdf.worker.min.mjs', import.meta.url).href; }
   return pdfjs;
 }
-async function leerPDF(file, maxPag = 6) {
+// ---------- OCR (tesseract.js local, español) ----------
+let ocrWorker = null;
+function cargarScript(src) { return new Promise((ok, mal) => { if (window.Tesseract) return ok(); const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => mal(new Error('No se pudo cargar el lector de texto (OCR).')); document.head.append(s); }); }
+let ocrProgreso = () => { };
+async function obtenerOCR() {
+  if (ocrWorker) return ocrWorker;
+  const base = new URL('../vendor/tesseract/', import.meta.url).href;
+  await cargarScript(base + 'tesseract.min.js');
+  ocrWorker = await window.Tesseract.createWorker('spa', 1, { workerPath: base + 'worker.min.js', corePath: base + 'core/', langPath: base + 'lang/', workerBlobURL: false, logger: m => { if (m.status === 'recognizing text') ocrProgreso(m.progress); } });
+  return ocrWorker;
+}
+// Devuelve las líneas leídas con su caja (en coordenadas de la imagen recibida).
+export async function ocr(imagen, alAvanzar = () => { }) {
+  const w = await obtenerOCR(); ocrProgreso = alAvanzar;
+  const { data } = await w.recognize(imagen);
+  const lineas = (data.lines || []).map(l => ({ texto: l.text.replace(/\s+/g, ' ').trim(), caja: { x: l.bbox.x0, y: l.bbox.y0, w: l.bbox.x1 - l.bbox.x0, h: l.bbox.y1 - l.bbox.y0 } })).filter(l => l.texto.length > 1);
+  return lineas.length ? lineas : data.text.split('\n').map(t => ({ texto: t.trim(), caja: null })).filter(l => l.texto.length > 1);
+}
+async function leerPDF(file, maxPag = 6, aviso = () => { }) {
   const lib = await cargarPdfjs();
   const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
   const paginas = [];
@@ -137,16 +155,19 @@ async function leerPDF(file, maxPag = 6) {
       if (u && Math.abs(u.y - it.y) <= 2) { u.t += (it.x - u.fin > 1.5 && !/\s$/.test(u.t) && !/^\s/.test(it.s) ? ' ' : '') + it.s; u.fin = it.x + it.w; }
       else lineas.push({ y: it.y, t: it.s, fin: it.x + it.w });
     }
-    const vp = pg.getViewport({ scale: 1.4 }), c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    const sinTexto = !lineas.some(l => l.t.trim());
+    const vp = pg.getViewport({ scale: sinTexto ? 2.2 : 1.4 }), c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
     await pg.render({ canvasContext: g, viewport: vp }).promise;
-    paginas.push({ n: p, lineas: lineas.map(l => l.t.replace(/\s+/g, ' ').trim()).filter(Boolean), img: c.toDataURL('image/png') });
+    let texto = lineas.map(l => l.t.replace(/\s+/g, ' ').trim()).filter(Boolean), conOcr = false;
+    if (sinTexto) { aviso(`Página ${p} escaneada: leyendo el texto con OCR…`); texto = (await ocr(c, x => aviso(`Página ${p} escaneada: leyendo el texto con OCR (${Math.round(x * 100)} %)…`))).map(l => l.texto); conOcr = true; }
+    paginas.push({ n: p, lineas: texto, img: c.toDataURL('image/png'), ocr: conOcr });
   }
   return { paginas, total: pdf.numPages };
 }
 
 // ---------- estado de la vista ----------
-const S = { modo: 'ejemplo', textoA: '', textoB: '', ejemploTexto: null, pdfA: null, pdfB: null, imgA: null, imgB: null, res: null, vista: 'B', corriendo: false };
+const S = { pares: null, modo: 'ejemplo', textoA: '', textoB: '', ejemploTexto: null, pdfA: null, pdfB: null, imgA: null, imgB: null, res: null, vista: 'B', corriendo: false };
 
 const zonaDe = (r, W, H) => {
   const cx = (r.x + r.w / 2) / W, cy = (r.y + r.h / 2) / H;
@@ -182,11 +203,60 @@ function pintarEntrada(ctx) {
     E.querySelectorAll('[data-ejt]').forEach(b => b.onclick = () => { const d = IA.DEMO.find(x => x.clave === b.dataset.ejt); S.textoA = d.anterior; S.textoB = d.actual; S.ejemploTexto = d; S.res = null; pintarEntrada(ctx); $('#cmp-res').innerHTML = ''; });
   } else {
     const pdf = S.modo === 'pdf', acc = pdf ? 'application/pdf' : 'image/png,image/jpeg,image/webp,image/svg+xml';
-    const nom = l => (pdf ? S['pdf' + l] : S['img' + l])?.name;
-    E.innerHTML = `<div class="probar">${['A', 'B'].map(l => `<label class="soltar" for="cmp-f${l}"><input type="file" id="cmp-f${l}" accept="${acc}"><b>Revisión ${l}${l === 'A' ? ' (anterior)' : ' (nueva)'}</b><span>${nom(l) ? esc(nom(l)) : pdf ? 'Elegir PDF con texto' : 'Elegir imagen de la lámina (PNG, JPG o SVG)'}</span></label>`).join('')}</div>
-      <p class="pista-txt" style="margin-top:10px">${pdf ? 'Se extrae el texto de cada página (hasta 6) y se compara línea por línea; además se comparan las páginas como imagen. Los PDF escaneados no tienen texto: requieren reconocimiento de texto (OCR), que esta versión aún no incluye.' : 'Las dos imágenes se escalan al mismo tamaño y se comparan píxel por píxel. Una imagen no trae texto: la cita literal y la partida requieren reconocimiento de texto (OCR), que esta versión aún no incluye o un SVG con texto.'} Los archivos se procesan en este navegador y no se suben a ningún servidor.</p>`;
-    ['A', 'B'].forEach(l => $(`#cmp-f${l}`).onchange = e => { const f = e.target.files[0]; if (!f) return; if (pdf) S['pdf' + l] = f; else S['img' + l] = f; S.res = null; pintarEntrada(ctx); });
+    const f = l => pdf ? S['pdf' + l] : S['img' + l];
+    const tam = n => n > 1048576 ? `${(n / 1048576).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+    const ICO_SUBIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>';
+    E.innerHTML = `<div class="probar">${['A', 'B'].map(l => `<label class="soltar ${f(l) ? 'lleno' : ''}" for="cmp-f${l}" data-zona="${l}"><input type="file" id="cmp-f${l}" accept="${acc}">
+        <span class="sol-ico" aria-hidden="true">${f(l) ? `<img class="sol-mini" id="mini-${l}" alt="">` : ICO_SUBIR}</span>
+        <span class="sol-txt"><b>Revisión ${l}${l === 'A' ? ' (anterior)' : ' (nueva)'}</b>${f(l) ? `<span>${esc(f(l).name)} · ${tam(f(l).size)}</span><small>Pulsa o suelta otro archivo para cambiarlo</small>` : `<span>Suelta aquí ${pdf ? 'el PDF' : 'la imagen de la lámina'} o pulsa para elegir</span><small>${pdf ? 'PDF con texto o escaneado' : 'PNG, JPG, WEBP o SVG'}</small>`}</span></label>`).join('')}</div>
+      <div class="fila-btn carpeta"><label class="btn peq" for="cmp-carpeta">Cargar una carpeta</label><input type="file" id="cmp-carpeta" webkitdirectory multiple hidden><span class="pista-txt">Empareja la revisión A y la B por nombre (por ejemplo, <code>E-301_revA.pdf</code> y <code>E-301_revB.pdf</code>).</span></div>
+      <div id="cmp-pares" aria-live="polite">${S.pares ? S.pares : ''}</div>
+      <p class="pista-txt" style="margin-top:10px">${pdf ? 'Se extrae el texto de cada página (hasta 6) y se compara línea por línea; además se comparan las páginas como imagen. Si una página es un escaneo, su texto se lee con OCR.' : 'Las dos imágenes se escalan al mismo tamaño y se comparan píxel por píxel; el texto se lee con OCR para citar y proponer la partida.'} Los archivos se procesan en este navegador y no se suben a ningún servidor.</p>`;
+    const asignar = (l, file) => {
+      const ok = pdf ? file.type === 'application/pdf' || /\.pdf$/i.test(file.name) : /^image\//.test(file.type) || /\.(png|jpe?g|webp|svg)$/i.test(file.name);
+      if (!ok) { $('#cmp-pares').innerHTML = `<p class="aviso mal">«${esc(file.name)}» no es ${pdf ? 'un PDF' : 'una imagen'}. ${pdf ? 'Para imágenes usa «Subir dos imágenes».' : 'Para PDF usa «Subir dos PDF».'}</p>`; return false; }
+      if (!file.size) { $('#cmp-pares').innerHTML = `<p class="aviso mal">«${esc(file.name)}» está vacío.</p>`; return false; }
+      if (pdf) S['pdf' + l] = file; else S['img' + l] = file; S.res = null; return true;
+    };
+    ['A', 'B'].forEach(l => {
+      $(`#cmp-f${l}`).onchange = e => { const x = e.target.files[0]; if (x && asignar(l, x)) { S.pares = null; pintarEntrada(ctx); } };
+      const z = E.querySelector(`[data-zona="${l}"]`);
+      z.ondragover = e => { e.preventDefault(); z.classList.add('encima'); }; z.ondragleave = () => z.classList.remove('encima');
+      z.ondrop = e => { e.preventDefault(); z.classList.remove('encima'); const fs = [...e.dataTransfer.files]; if (!fs.length) return;
+        if (fs.length >= 2) { const p = emparejar(fs, pdf); if (p.length) { asignar('A', p[0].A); asignar('B', p[0].B); } else { asignar('A', fs[0]); asignar('B', fs[1]); } } else asignar(l, fs[0]);
+        S.pares = null; pintarEntrada(ctx); };
+      if (f(l)) miniatura(f(l), pdf).then(src => { const im = $(`#mini-${l}`); if (im && src) im.src = src; });
+    });
+    $('#cmp-carpeta').onchange = e => {
+      const p = emparejar([...e.target.files], pdf);
+      if (!p.length) { S.pares = `<p class="aviso mal">No se encontraron dos revisiones del mismo documento en la carpeta. Nombra los archivos con la revisión al final, por ejemplo <code>E-301_revA</code> y <code>E-301_revB</code>.</p>`; pintarEntrada(ctx); return; }
+      asignar('A', p[0].A); asignar('B', p[0].B);
+      S.pares = `<p class="aviso ok">Se emparejó <b>${esc(p[0].base)}</b>: revisión ${esc(p[0].ra)} → ${esc(p[0].rb)}.${p.length > 1 ? ` Hay ${p.length - 1} documento${p.length === 2 ? '' : 's'} más en la carpeta:` : ''}</p>${p.length > 1 ? `<div class="fila-btn">${p.slice(1).map((x, k) => `<button class="btn peq" data-par="${k + 1}">${esc(x.base)} (${esc(x.ra)} → ${esc(x.rb)})</button>`).join('')}</div>` : ''}`;
+      S.listaPares = p; pintarEntrada(ctx);
+    };
+    E.querySelectorAll('[data-par]').forEach(b => b.onclick = () => { const x = S.listaPares[Number(b.dataset.par)]; asignar('A', x.A); asignar('B', x.B); S.pares = `<p class="aviso ok">Se emparejó <b>${esc(x.base)}</b>: revisión ${esc(x.ra)} → ${esc(x.rb)}.</p>`; pintarEntrada(ctx); });
   }
+}
+// Agrupa archivos por nombre base y toma las dos últimas revisiones (A = anterior, B = nueva).
+export function emparejar(files, pdf) {
+  const ok = f => pdf ? /\.pdf$/i.test(f.name) : /\.(png|jpe?g|webp|svg)$/i.test(f.name);
+  const grupos = {};
+  for (const f of files.filter(ok)) {
+    const stem = f.name.replace(/\.[^.]+$/, '');
+    const m = /^(.*?)[\s_.-]*(?:rev(?:isi[oó]n)?[\s_.-]*)?([A-Za-z]|\d{1,2})$/i.exec(stem);
+    if (!m || !m[1]) continue;
+    const base = m[1].replace(/[\s_.-]+$/, ''), rev = m[2].toUpperCase();
+    (grupos[base.toLowerCase()] ||= { base, revs: [] }).revs.push({ rev, f });
+  }
+  return Object.values(grupos).filter(g => g.revs.length >= 2).map(g => { const r = g.revs.sort((x, y) => (isNaN(x.rev) || isNaN(y.rev) ? x.rev.localeCompare(y.rev) : x.rev - y.rev)); const a = r[r.length - 2], b = r[r.length - 1]; return { base: g.base, ra: a.rev, rb: b.rev, A: a.f, B: b.f }; });
+}
+async function miniatura(file, pdf) {
+  try {
+    if (!pdf) return URL.createObjectURL(file);
+    const lib = await cargarPdfjs(), doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise, pg = await doc.getPage(1);
+    const vp = pg.getViewport({ scale: 0.3 }), c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); await pg.render({ canvasContext: g, viewport: vp }).promise; return c.toDataURL('image/png');
+  } catch { return null; }
 }
 
 // ---------- detección ----------
@@ -210,17 +280,27 @@ async function detectar(ctx) {
       r = { tipo: 'texto', lineasA: lA, lineasB: lB, doc: { doc_id: 'DOC-1', tipo: d?.tipo || (S.textoA.trim() ? 'Lámina' : 'Carta'), titulo: 'Documento comparado', especialidad: 'Por determinar', revision: 'B', revision_anterior: S.textoA.trim() ? 'A' : '—', emisor: 'Texto pegado', texto_anterior: S.textoA, texto: S.textoB, demo_clave: d?.clave } };
     } else if (S.modo === 'pdf') {
       if (!S.pdfA || !S.pdfB) return fallo('Elige los dos PDF: la revisión A y la B.');
-      const [A, B] = await Promise.all([leerPDF(S.pdfA), leerPDF(S.pdfB)]);
+      const aviso = t => { out.innerHTML = `<p class="estado-ia"><span class="spin"></span>${esc(t)}</p>`; };
+      const A = await leerPDF(S.pdfA, 6, t => aviso(`Revisión A · ${t}`)), B = await leerPDF(S.pdfB, 6, t => aviso(`Revisión B · ${t}`));
       const lA = A.paginas.flatMap(p => [`Página ${p.n}`, ...p.lineas]), lB = B.paginas.flatMap(p => [`Página ${p.n}`, ...p.lineas]);
-      if (lB.length <= B.paginas.length) return fallo('El PDF de la revisión B no tiene texto extraíble (¿es un escaneo?). Usa la entrada de imágenes o un PDF con texto.');
+      if (lB.length <= B.paginas.length) return fallo('No se pudo leer texto en el PDF de la revisión B, ni siquiera con OCR. Revisa que el escaneo sea legible.');
       const pags = [];
       for (let k = 0; k < Math.min(A.paginas.length, B.paginas.length); k++) pags.push({ n: k + 1, ...(await compararImagenes(A.paginas[k].img, B.paginas[k].img, 1000)), srcA: A.paginas[k].img, srcB: B.paginas[k].img });
-      r = { tipo: 'pdf', lineasA: lA, lineasB: lB, paginas: pags, ...(pags[0] || {}), srcA: pags[0]?.srcA, srcB: pags[0]?.srcB, doc: { doc_id: 'DOC-1', tipo: 'Lámina', titulo: S.pdfB.name, especialidad: 'Por determinar', revision: 'B', revision_anterior: 'A', emisor: 'PDF cargado', texto_anterior: lA.join('\n'), texto: lB.join('\n') } };
+      r = { tipo: 'pdf', ocr: A.paginas.some(p => p.ocr) || B.paginas.some(p => p.ocr), lineasA: lA, lineasB: lB, paginas: pags, ...(pags[0] || {}), srcA: pags[0]?.srcA, srcB: pags[0]?.srcB, doc: { doc_id: 'DOC-1', tipo: 'Lámina', titulo: S.pdfB.name, especialidad: 'Por determinar', revision: 'B', revision_anterior: 'A', emisor: 'PDF cargado', texto_anterior: lA.join('\n'), texto: lB.join('\n') } };
     } else {
       if (!S.imgA || !S.imgB) return fallo('Elige las dos imágenes: la revisión A y la B.');
       const sA = URL.createObjectURL(S.imgA), sB = URL.createObjectURL(S.imgB);
       const img = await compararImagenes(sA, sB);
       r = { tipo: 'imagen', srcA: sA, srcB: sB, ...img };
+      if (!(S.imgB.type === 'image/svg+xml' && S.imgA.type === 'image/svg+xml')) {
+        // Imagen raster: se lee el texto con OCR sobre las imágenes ya escaladas (mismas coordenadas que las zonas).
+        const aviso = t => { out.innerHTML = `<p class="estado-ia"><span class="spin"></span>${esc(t)}</p>`; };
+        try {
+          aviso('Leyendo el texto de la revisión A con OCR…'); const oA = await ocr(img.cA, x => aviso(`Leyendo el texto de la revisión A con OCR (${Math.round(x * 100)} %)…`));
+          aviso('Leyendo el texto de la revisión B con OCR…'); const oB = await ocr(img.cB, x => aviso(`Leyendo el texto de la revisión B con OCR (${Math.round(x * 100)} %)…`));
+          if (oB.length) Object.assign(r, { tipo: 'lamina', ocr: true, lineasA: oA.map(l => l.texto), lineasB: oB.map(l => l.texto), cajasB: oB.map(l => l.caja ? [l.caja] : []), doc: { doc_id: 'DOC-1', tipo: 'Lámina', titulo: S.imgB.name, especialidad: 'Por determinar', revision: 'B', revision_anterior: 'A', emisor: 'Imagen cargada (texto leído con OCR)', texto_anterior: oA.map(l => l.texto).join('\n'), texto: oB.map(l => l.texto).join('\n') } });
+        } catch (e) { r.ocrError = e.message; }
+      }
       if (S.imgB.type === 'image/svg+xml' && S.imgA.type === 'image/svg+xml') {
         const [tA, tB] = await Promise.all([S.imgA.text(), S.imgB.text()]); const lA = lineasSVG(tA), lB = lineasSVG(tB);
         Object.assign(r, { tipo: 'lamina', lineasA: lA.map(l => l.texto), lineasB: lB.map(l => l.texto), cajasB: lB.map(l => l.cajas), doc: { doc_id: 'DOC-1', tipo: 'Lámina', titulo: S.imgB.name, especialidad: 'Por determinar', revision: 'B', revision_anterior: 'A', emisor: 'SVG cargado', texto_anterior: lA.map(l => l.texto).join('\n'), texto: lB.map(l => l.texto).join('\n') } });
@@ -332,13 +412,13 @@ function pintarTarjetas(ctx) {
   if (!T) return;
   if (r.fase === 'ia') { R.innerHTML = `<p class="estado-ia"><span class="spin" aria-hidden="true"></span>La IA revisa qué diferencias tienen impacto (${esc(IA.ETIQUETA[IA.modoIA()])})…</p>`; T.innerHTML = ''; return; }
   if (r.fase === 'sin-texto') {
-    R.innerHTML = `<p class="aviso info">La imagen no trae texto: sin OCR no hay cita literal que verificar ni partida que proponer. Las zonas sirven para ubicar el cambio en la lámina.</p>`;
+    R.innerHTML = `<p class="aviso info">${r.ocrError ? `No se pudo leer el texto con OCR (${esc(r.ocrError)}).` : 'El OCR no encontró texto legible en la imagen.'} Sin texto no hay cita literal que verificar ni partida que proponer; las zonas sirven para ubicar el cambio en la lámina.</p>`;
     T.innerHTML = `<h3 class="cmp-h">Zonas detectadas</h3><div class="tarjetas-cmp">${r.regiones.map((g, k) => `<article class="tarj-cmp" data-tz="${k}"><header><span class="n">${k + 1}</span><div><h4>Zona ${k + 1}</h4><small>${zonaDe(g, r.W, r.H)} · ${(g.frac * 100).toFixed(2).replace('.', ',')} % del área</small></div>${g.frac < UMBRAL_EVIDENTE ? '<span class="etq ambar">No evidente a simple vista</span>' : ''}</header>
       <div class="ab"><figure><figcaption>Antes</figcaption><img alt="Zona ${k + 1} en la revisión A" src="${recorte(r.cA, g)}"></figure><figure><figcaption>Después</figcaption><img alt="Zona ${k + 1} en la revisión B" src="${recorte(r.cB, g)}"></figure></div></article>`).join('')}</div>`;
     return;
   }
   if (r.fase === 'error-ia') {
-    R.innerHTML = `<div class="aviso mal">${esc(r.errorIA)} <a href="#ajustes">Abrir Ajustes de IA</a></div>`;
+    R.innerHTML = `<div class="aviso mal">${esc(r.errorIA)} <a href="#ajustes">Abrir Ajustes de IA</a></div>${r.ocr ? '<p class="pista-txt">Texto leído con OCR: revisa cifras y unidades; el reconocimiento puede confundir dígitos.</p>' : ''}`;
     T.innerHTML = r.ops.length ? `<h3 class="cmp-h">Diferencias encontradas (sin interpretar)</h3><div class="tarjetas-cmp">${r.ops.map((o, k) => tarjetaDiff(o, k)).join('')}</div>` : '';
     return;
   }
@@ -349,7 +429,7 @@ function pintarTarjetas(ctx) {
     ${(() => { if (!r.regiones || !hs.length) return ''; const usadas = new Set(hs.flatMap(h => h.regiones)); const resto = r.regiones.map((g, k) => k).filter(k => !usadas.has(k)); if (!resto.length) return '';
       const cambiadas = r.ops.filter(o => o.ib != null).map(o => o.ib); const textos = resto.map(k => cambiadas.find(i => (r.cajasB?.[i] || []).some(cj => cruza(r.regiones[k], cj, 2)))).filter(i => i != null).map(i => `«${r.lineasB[i]}»`);
       return `<p class="pista-txt">${resto.length === 1 ? 'La zona' : 'Las zonas'} ${resto.map(k => k + 1).join(', ')} no ${resto.length === 1 ? 'tiene' : 'tienen'} impacto según la IA${textos.length ? `: ${esc([...new Set(textos)].join(', '))}` : ''}.</p>`; })()}
-    <p class="origen">${IA.chipIA(r.tipoIA)} ${esc(r.origen || '')}</p>`;
+    <p class="origen">${IA.chipIA(r.tipoIA)} ${esc(r.origen || '')}</p>${r.ocr ? '<p class="pista-txt">Texto leído con OCR: revisa cifras y unidades antes de decidir. La cita se verifica contra el texto leído.</p>' : ''}`;
   const cards = hs.map((h, k) => tarjetaHecho(ctx, r, h, k)).join('');
   const rech = [...(r.rechazadas || []), ...(r.rechazadasI2 || [])];
   T.innerHTML = `${hs.length ? `<h3 class="cmp-h">Cambios con impacto</h3><div class="tarjetas-cmp">${cards}</div>` : ''}

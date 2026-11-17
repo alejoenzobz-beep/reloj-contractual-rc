@@ -6,6 +6,7 @@ import { SISTEMA_CHAT } from './asistente_ia.js';
 import { vComparar } from './comparador.js';
 import { vSalidas } from './salidas.js';
 import * as AUD from './auditoria.js';
+import * as CAL from './calendario.js';
 import { casosDePrueba } from './pruebas.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -189,7 +190,7 @@ function render() {
   pintarProyecto();
   $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -492,8 +493,11 @@ function vBandeja() {
       <label>Días restantes<select id="f-dias">${[['todos', 'Cualquier plazo'], ['1', '1 día o menos'], ['3', '3 días o menos'], ['7', '7 días o menos']].map(([k, t]) => `<option value="${k}" ${(est.bdias || 'todos') === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
       <label>Especialidad<select id="f-esp"><option value="todas">Todas</option>${esps.map(e => `<option ${est.esp === e ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
     </div>
+    <div class="segmento peq" role="tablist" aria-label="Vista de la bandeja" style="margin:0 0 12px">${[['lista', 'Lista'], ['calendario', 'Calendario']].map(([k, t]) => `<button role="tab" aria-selected="${(est.bvista || 'lista') === k}" data-bv="${k}">${t}</button>`).join('')}</div>
+    ${est.bvista === 'calendario' ? (() => { const mes = est.bmes || est.hoy.slice(0, 8) + '01'; const items = lista.map(a => ({ fecha: a.limite, href: `#alerta-${a.id.toLowerCase()}`, texto: `${a.doc_id} · ${a.elemento}`, titulo: `${a.doc_id} · ${a.elemento}: vence el ${N.fmtFecha(a.limite)}`, estado: estadoDe(a) })); const fuera = items.filter(i => i.fecha.slice(0, 7) !== mes.slice(0, 7)).length;
+      return `<div class="panel cal-bandeja"><div class="plazo-cab"><div class="fila-btn"><button class="btn peq" id="bm-ant" aria-label="Mes anterior">←</button><button class="btn peq" id="bm-sig" aria-label="Mes siguiente">→</button></div><span class="pista-txt">Vencimientos de los cambios filtrados. ${fuera ? `${fuera} vence${fuera === 1 ? '' : 'n'} en otros meses.` : ''}</span></div>${CAL.calendarioVencimientos({ mes, hoy: est.hoy, items, feriados: proyF === 'todos' ? FER() : feriadosProy(proyF) })}<div class="cm-ley"><span><i class="l-verde"></i>En plazo</span><span><i class="l-ambar"></i>Vence pronto</span><span><i class="l-lim"></i>Vencido o último día</span><span><i class="l-ok"></i>Decidido</span></div></div>`; })() : ''}
     <p class="pista-txt" style="margin:-4px 0 12px">Cada barra va de la recepción al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, casos de referencia).</p>
-    <div class="lista">${lista.length ? lista.map(a => `<a class="alerta-fila" href="#alerta-${a.id.toLowerCase()}">
+    <div class="lista" ${est.bvista === 'calendario' ? 'hidden' : ''}>${lista.length ? lista.map(a => `<a class="alerta-fila" href="#alerta-${a.id.toLowerCase()}">
         ${diasBadge(a)}
         <div><div class="doc-id">${esc(a.doc_id)} <span>· ${esc(a.doc.titulo)}${proyF === 'todos' ? ` · ${esc(PROY[a.proyecto].nombre)}` : ''}</span></div><div class="resumen-cambio">${esc(a.cambio)}</div></div>
         <div class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto</b>'}<span class="conf ${a.confianza}">Confianza ${esc(String(a.confianza).toLowerCase())}</span></div>
@@ -507,9 +511,17 @@ function vBandeja() {
   $('#f-esp').onchange = e => { est.esp = e.target.value; vBandeja(); };
   $('#f-proy').onchange = e => { est.bproy = e.target.value; vBandeja(); };
   $('#f-dias').onchange = e => { est.bdias = e.target.value; vBandeja(); };
+  document.querySelectorAll('[data-bv]').forEach(b => b.onclick = () => { est.bvista = b.dataset.bv; vBandeja(); });
+  const ba = $('#bm-ant'), bs = $('#bm-sig'); const mesAct = est.bmes || est.hoy.slice(0, 8) + '01';
+  if (ba) ba.onclick = () => { est.bmes = CAL.mesAnterior(mesAct); vBandeja(); }; if (bs) bs.onclick = () => { est.bmes = CAL.mesSiguiente(mesAct); vBandeja(); };
 }
 
 // ---------- DETALLE ----------
+function icsDe(a) {
+  const pp = P(a);
+  return CAL.ics({ id: a.id, limite: a.limite, resumen: `Vence plazo para notificar · ${a.doc_id} · ${a.elemento}`,
+    descripcion: `${PROY[a.proyecto].nombre}. Cláusula ${pp.clausula}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción (${N.fmtFecha(a.fecha_recepcion)}). Cambio: ${primeraFrase(a.cambio)} Cita: «${a.cita}». Fecha calculada por Reloj Contractual (demostración).` });
+}
 // Panel de decisiones del cambio: cada rol ve solo los botones de su punto de decisión.
 function panelDecision(a) {
   const dec = est.decisiones[a.id], ap = est.aprobaciones[a.id], emi = est.emitidas[a.id];
@@ -539,6 +551,8 @@ function vAlerta(id) {
     <a class="volver" href="#bandeja">← Bandeja de cambios</a>
     <div class="det-cab">${diasBadge(a)}<div><h2>${esc(a.doc_id)} rev. ${esc(d.revision)} · ${esc(a.elemento)}</h2><p class="frase">${esc(fraseDias(a))}</p></div></div>
     <div class="panel plazo-panel"><div class="plazo-cab"><h3>Plazo contractual</h3><span class="pista-txt">${esc(PROY[a.proyecto].nombre)} · <a href="#plazos">parámetros</a></span></div>${barraPlazo(a)}
+      <details class="tec cal-det" open><summary>Ver el plazo en el calendario</summary>${CAL.calendarioPlazo({ inicio: a.fecha_recepcion, limite: a.limite, feriados: FER(a), tipo: P(a).tipo_dias, hoy: est.hoy, refMax: REF.max, titulo: `${a.doc_id} · ${a.elemento}` })}</details>
+      <div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="d-ics">Agregar al calendario (.ics)</button><span class="pista-txt" style="align-self:center">Evento el ${N.fmtFecha(a.limite)} con aviso dos días antes. Sirve con Google Calendar, Outlook y Apple.</span></div>
       <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE</label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
     <div class="det-cuerpo">
       <div>
@@ -563,6 +577,7 @@ function vAlerta(id) {
   const decidir = (estado, partida) => { est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar(rolN(), `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); };
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
+  $('#d-ics').onclick = () => { CAL.descargarIcs(icsDe(a), `plazo_${a.doc_id}_${a.id}.ics`.replace(/[^\w.-]+/g, '_')); registrar(rolN(), `${a.doc_id} · fecha límite agregada al calendario (.ics)`, { tipo: 'registro', alerta: a.id }); };
   const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { est.aprobaciones[a.id] = { estado: 'aprobada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const arc = $('#d-archivar'); if (arc) arc.onclick = () => { est.aprobaciones[a.id] = { estado: 'archivada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
@@ -686,7 +701,7 @@ function vPlazos() {
         <div id="pz-msg" aria-live="polite"></div>
       </form>
       <div class="panel"><h3>Vista previa</h3><p>Un documento recibido hoy (${N.fmtFecha(est.hoy)}) vence el <b style="color:var(--naranja)">${N.fmtFecha(ej)}</b>.</p>
-        ${calendario(est.hoy, ej, est.hoy, fer, pp.tipo_dias !== 'habiles')}
+        ${CAL.calendarioPlazo({ inicio: est.hoy, limite: ej, feriados: fer, tipo: pp.tipo_dias, hoy: est.hoy, titulo: 'Documento recibido hoy' })}
         <p class="pista-txt" style="margin-top:10px">${abiertos} cambio${abiertos === 1 ? '' : 's'} abierto${abiertos === 1 ? '' : 's'} de este proyecto se recalculan al guardar.</p>
         ${id === 'R1' ? `<details class="tec"><summary>Texto de la cláusula ${esc(clausula143.clausula)}</summary><blockquote class="aviso info" style="margin:8px 0 0">«${esc(clausula143.texto_literal)}»</blockquote></details>` : ''}</div>
       <div class="panel"><h3>Feriados</h3><p class="pista-txt">Se descuentan solo cuando el plazo es en días hábiles.</p>
