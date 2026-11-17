@@ -304,7 +304,7 @@ function vPanorama() {
       <a class="kpi emitir" href="#salidas"><b class="num">${porEmitirDe(id).length}</b>aprobados, por emitir</a></div>
     <div class="panorama-grid">
       <div class="panel"><h3>Plazo restante de los cambios abiertos</h3><p class="pista-txt" style="margin:2px 0 12px">Cada barra es la fracción del plazo que queda. <a href="#plazos">Parámetros</a></p>${miniPlazos(abiertas)}</div>
-      <div class="panel"><h3>Agenda de vencimientos</h3>${porFecha.length ? `<ul class="agenda">${porFecha.map(f => { const d = N.difDias(f, est.hoy); return `<li><time datetime="${f}">${fCorta(f)}<small>${DIAS[N.isoAFecha(f).getUTCDay()]} · ${d < 0 ? `hace ${-d} d` : d === 0 ? 'hoy' : `en ${d} d`}</small></time><ul>${proximos.filter(a => a.limite === f).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${esc(a.doc_id)} · ${esc(a.elemento)}</a> <small class="pista-txt">${est.decisiones[a.id] ? (estadoAprob(a) ? 'por emitir' : 'por aprobar') : 'por decidir'}</small></li>`).join('')}</ul></li>`; }).join('')}</ul>` : '<p class="vacio">Sin vencimientos próximos.</p>'}</div>
+      <div class="panel"><h3>Agenda de vencimientos</h3>${porFecha.length ? `<ul class="agenda">${porFecha.map(f => { const d = N.difDias(f, est.hoy); return `<li><time datetime="${f}">${fCorta(f)}<small>${DIAS[N.isoAFecha(f).getUTCDay()]} · ${d < 0 ? `hace ${-d} d` : d === 0 ? 'hoy' : `en ${d} d`}</small></time><ul>${unaPorAlerta(proximos.filter(a => a.limite === f)).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${esc(tituloAlerta(a))}</a> <small class="pista-txt">${est.decisiones[a.id] ? (estadoAprob(a) ? 'por emitir' : 'por aprobar') : 'por decidir'}</small></li>`).join('')}</ul></li>`; }).join('')}</ul>` : '<p class="vacio">Sin vencimientos próximos.</p>'}</div>
     </div>
     ${id === 'R1' ? casosR1() : ''}`;
   document.querySelectorAll('#v-panorama [data-ir]').forEach(b => b.onclick = () => { est.filtro = b.dataset.ir; est.bproy = id; });
@@ -373,8 +373,8 @@ function casosR1() {
 function miniPlazos(lista) {
   if (!lista.length) return '<p class="vacio">Sin cambios abiertos a esta fecha.</p>';
   const col = { verde: 'var(--verde)', ambar: 'var(--ambar)', rojo: 'var(--naranja)', vencido: 'var(--naranja)' };
-  return `<ul class="mini-plazos">${lista.slice(0, 8).map(a => { const tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), d = N.diasRestantes(a.limite, est.hoy), e = estadoDe(a);
-    return `<li><a href="#alerta-${a.id.toLowerCase()}"><span class="mp-n">${esc(a.doc_id)} · ${esc(a.elemento)}</span><span class="mp-b"><span style="width:${Math.max(2, Math.min(100, d / tot * 100))}%;background:${col[e] || 'var(--azul-2)'}"></span></span><span class="mp-d num" style="color:${col[e]}">${d < 0 ? `vencido ${-d} d` : `${d} d`}</span></a></li>`; }).join('')}</ul>
+  return `<ul class="mini-plazos">${unaPorAlerta(lista).slice(0, 8).map(a => { const tot = Math.max(1, N.difDias(a.limite, a.fecha_recepcion)), d = N.diasRestantes(a.limite, est.hoy), e = estadoDe(a);
+    return `<li><a href="#alerta-${a.id.toLowerCase()}"><span class="mp-n">${esc(tituloAlerta(a))}</span><span class="mp-b"><span style="width:${Math.max(2, Math.min(100, d / tot * 100))}%;background:${col[e] || 'var(--azul-2)'}"></span></span><span class="mp-d num" style="color:${col[e]}">${d < 0 ? `vencido ${-d} d` : `${d} d`}</span></a></li>`; }).join('')}</ul>
     ${lista.length > 8 ? `<p class="pista-txt" style="margin-top:6px">y ${lista.length - 8} más en la <a href="#bandeja">bandeja</a>.</p>` : ''}`;
 }
 // ---------- SIMULACIÓN ----------
