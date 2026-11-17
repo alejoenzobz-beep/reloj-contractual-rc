@@ -34,11 +34,18 @@ public/                 lo que se publica en Netlify (publish = "public")
   js/salidas.js         carta, acta e informe; exportación DOCX, PDF y MD
   js/auditoria.js       registro encadenado con SHA-256
   js/pruebas.js         casos de prueba CP-01 a CP-12 (portados de la v1)
+  js/asistente_ia.js    instrucción fija y acciones permitidas del asistente con Gemini
+  js/calendario.js      calendario mensual del plazo y archivo .ics
+  js/drive.js           Google Drive (Picker y subida); activo solo con GOOGLE_CLIENT_ID y GOOGLE_API_KEY
   data/*.json           documentos, proyecto, salidas registradas, cifras medidas
   vendor/pdfjs/         pdf.js local (sin CDN)
-netlify/functions/ia.mjs  proxy a Gemini; lee GEMINI_API_KEY del entorno
+  vendor/tesseract/     tesseract.js local con datos de español (OCR, sin CDN)
+netlify/functions/ia.mjs        proxy a Gemini (detección, partida, herramientas y chat); lee GEMINI_API_KEY
+netlify/functions/telegram.mjs  aviso por Telegram; lee TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID
+netlify/functions/config.mjs    entrega GOOGLE_CLIENT_ID y GOOGLE_API_KEY (públicos) para Drive
 referencia_v1/          app de Kevin (Firebase): solo lectura, no se publica
-docs/REVISION_Y_BACKLOG.md   ← qué hacer, en qué orden y con qué criterio de aceptación
+docs/REVISION_Y_BACKLOG.md   backlog P0 (T0–T6, hecho)
+docs/PLAN_DE_MEJORAS.md      plan de mejoras (bloques A–D)
 ```
 
 ## Diseño

@@ -7,6 +7,7 @@ import { vComparar } from './comparador.js';
 import { vSalidas } from './salidas.js';
 import * as AUD from './auditoria.js';
 import * as CAL from './calendario.js';
+import * as DRIVE from './drive.js';
 import { casosDePrueba } from './pruebas.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -188,9 +189,9 @@ function render() {
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'bandeja' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   pintarProyecto();
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Registro de auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   pintarFecha();
-  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -241,7 +242,7 @@ function vInicio() {
       <div class="panel" style="margin:0"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${abiertas.slice(0, 3).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(a.doc_id)} · ${esc(a.elemento)}</h4><p>Notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>` : `<p class="vacio">Sin cambios abiertos en este proyecto.</p>`}
         <p class="pista-txt" style="margin-top:10px"><a href="#bandeja">Bandeja de cambios</a> · <a href="#panorama">Panorama del proyecto</a></p></div>
     </div>
-    ${guiaVista() ? '' : `<div class="invita" id="invita-guia"><p><b>¿Primera vez?</b> Recorrido guiado de 6 pasos con la lámina de ejemplo: de la revisión nueva a la carta emitida. <small>Unos 2 minutos.</small></p><div class="fila-btn"><button class="btn prim peq" id="guia-ini">Empezar el recorrido</button><button class="btn peq" id="guia-saltar">Saltar</button></div></div>`}`;
+    ${guiaVista() ? '' : `<div class="invita" id="invita-guia"><p><b>¿Primera vez?</b> Recorrido guiado de 6 pasos con la lámina de ejemplo: de la revisión nueva a la carta emitida. <small>Unos 2 minutos.</small></p><div class="fila-btn"><button class="btn prim peq" id="guia-ini">Empezar el recorrido</button><button class="btn peq" id="guia-saltar">Ahora no</button></div></div>`}`;
   const gi = $('#guia-ini'); if (gi) gi.onclick = () => iniciarGuia();
   const gs = $('#guia-saltar'); if (gs) gs.onclick = () => { marcarGuia(); $('#invita-guia').remove(); };
 }
@@ -279,6 +280,7 @@ function pintarProyecto() {
   const c = cdeDe(est.proyecto); $('#cde-btn').classList.toggle('off', !c);
   $('#cde-txt').textContent = c ? ({ 'Autodesk Construction Cloud': 'ACC', 'Google Drive': 'Drive' }[c.tipo] || c.tipo) : 'Sin CDE';
   $('#cde-btn').title = c ? `Conectado a ${c.tipo} · ${c.ruta} (demostración)` : 'Sin conexión al entorno común de datos';
+  $('#cde-btn').setAttribute('aria-label', `${$('#cde-btn').title}. Cambiar la conexión`);
 }
 function pintarRol() { const b = $('#rol-btn'); b.textContent = ROLES[est.rol].ini; b.title = `Rol activo: ${rolN()}. Cambiar de rol`; b.setAttribute('aria-label', `Rol activo: ${rolN()}. Cambiar de rol`); }
 $('#proy-btn').onclick = () => abrirPop($('#proy-btn'), $('#pop-proy'), () => {
@@ -352,7 +354,7 @@ const PASOS = ['Llega el documento', 'La IA compara', 'La app verifica la cita',
 function vSim() {
   const a = alertaPorId[SIM_ALERTA], d = a.doc, p = est.simPaso;
   $('#v-simulacion').innerHTML = `
-    <div class="tab-cab"><div><h2>Cómo funciona, con un caso real del proyecto</h2><p class="sub" style="color:var(--texto-2)">La lámina E-204 rev. C llega al CDE. Sigue los 7 pasos; en cada uno puedes abrir el detalle técnico.</p></div></div>
+    <div class="tab-cab"><div><h2>Cómo funciona, paso a paso con un caso del proyecto de demostración</h2><p class="sub" style="color:var(--texto-2)">La lámina E-204 rev. C llega al CDE. Sigue los 7 pasos; en cada uno puedes abrir el detalle técnico.</p></div></div>
     <div class="sim">
       <ol class="pasos">${PASOS.map((t, i) => `<li><button data-n="${i + 1}" data-paso="${i}" ${i === p ? 'aria-current="step"' : ''} class="${i < p ? 'hecho' : ''}">${t}</button></li>`).join('')}</ol>
       <div class="escena" id="escena"></div>
@@ -503,7 +505,7 @@ function vBandeja() {
         <div class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto</b>'}<span class="conf ${a.confianza}">Confianza ${esc(String(a.confianza).toLowerCase())}</span></div>
         <div class="pista">${barraPlazo(a, true)}</div></a>`).join('') : `<div class="vacio">No hay cambios con estos filtros al ${N.fmtFecha(est.hoy)}. ${proyF !== 'todos' && !alertas.some(a => a.proyecto === proyF) ? '<a href="#comparar">Compara dos revisiones</a> para registrar cambios en este proyecto.' : 'Prueba con «Todos» o mueve la fecha simulada.'}</div>`}</div>
     <div class="hoy"><label for="hoy-r">Fecha simulada <span class="etq ambar">demostración</span></label><div><input type="range" id="hoy-r" min="0" max="${max}" value="${idx}" aria-valuetext="${N.fmtFecha(est.hoy)}"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--texto-2)"><span>${N.fmtFecha(PRIMERA)}</span><span>Mueve la fecha y mira cómo corren los plazos${porLlegar ? ` · ${porLlegar} cambios llegan después` : ''}</span><span>${N.fmtFecha(ULTIMA)}</span></div></div><div class="fecha num" id="hoy-f">${N.fmtFecha(est.hoy)}</div></div>
-    <section class="seccion"><h3>Registro de decisiones</h3><p style="color:var(--texto-2);font-size:.9rem;margin:4px 0 10px">Cada decisión queda anotada con quién la tomó. En esta demostración el registro se guarda en este navegador.</p>
+    <section class="seccion"><h3>Últimas decisiones</h3><p style="color:var(--texto-2);font-size:.9rem;margin:4px 0 10px">Cada decisión queda anotada con el rol que la tomó; la cadena completa y sellada está en el <a href="#auditoria">registro de auditoría</a>. En esta demostración se guarda en este navegador.</p>
     <div class="panel"><ul class="registro">${est.registro.slice(0, 10).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || '<li><time>—</time><span>Todavía no hay decisiones. Abre un cambio y confírmalo, corrígelo o descártalo.</span></li>'}</ul></div></section>`;
   const r = $('#hoy-r');
   r.oninput = () => { est.hoy = N.sumarDias(PRIMERA, Number(r.value)); vBandeja(); pintarFecha(); $('#hoy-r').focus(); };
@@ -517,6 +519,28 @@ function vBandeja() {
 }
 
 // ---------- DETALLE ----------
+// Trazabilidad del caso: lo que pasó con este cambio, de la recepción a la emisión (eventos del registro sellado).
+function trazaCaso(a) {
+  const ev = AUD.lista().filter(e => e.alerta === a.id || (e.que.startsWith(`${a.doc_id} ·`) && (!e.alerta || e.alerta === a.id)));
+  const items = [{ tipo: 'detectado', quien: 'Entorno común de datos', que: `Documento ${a.doc_id} rev. ${a.doc.revision} recibido: empieza a correr el plazo`, cuando: N.fmtFecha(a.fecha_recepcion), base: true },
+    ...(a.origen !== 'comparador' ? [{ tipo: 'detectado', quien: 'Asistente', que: `Cambio detectado por la IA con cita verificada; partida propuesta ${a.partida || 'ninguna'}`, cuando: N.fmtFecha(a.fecha_recepcion), base: true }] : []),
+    ...ev.map(e => ({ tipo: e.tipo, quien: e.quien, que: e.que.replace(`${a.doc_id} · `, ''), cuando: `${N.fmtFecha(e.fecha_sim || est.hoy)} · ${new Date(e.ts).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`, sello: e.hash }))];
+  return `<ol class="traza">${items.map(i => { const T = AUD.TIPOS[i.tipo] || AUD.TIPOS.registro; return `<li><span class="ev-punto t-${T.c}" aria-hidden="true"></span><div><span class="etq t-${T.c}">${T.t}</span> <b>${esc(i.quien)}</b> <time>${esc(i.cuando)}</time><p>${esc(i.que)}</p>${i.sello ? `<code class="hash">sello ${i.sello.slice(0, 10)}…</code>` : i.base ? '<small class="pista-txt">Dato del documento</small>' : ''}</div></li>`; }).join('')}</ol>`;
+}
+// Telegram: se activa solo si el servidor tiene TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID.
+const TG = { activo: false,
+  async enviar(a) {
+    const d = N.diasRestantes(a.limite, est.hoy);
+    let r; try { r = await fetch('/.netlify/functions/telegram', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ proyecto: PROY[a.proyecto].nombre, documento: `${a.doc_id} rev. ${a.doc.revision}`, elemento: a.elemento, cambio: primeraFrase(a.cambio), fecha_limite: N.fmtFecha(a.limite), dias: d < 0 ? `venció hace ${-d} días` : `quedan ${d} días`, estado: est.decisiones[a.id] ? `Decisión: ${est.decisiones[a.id].estado}` : 'Por decidir' }) }); }
+    catch { throw new Error('Sin conexión con el servidor para enviar el aviso.'); }
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.mensaje || `El servidor respondió ${r.status}.`); return j;
+  } };
+const DRV = { get activo() { return DRIVE.activo(); }, subir: (b, n) => DRIVE.subir(b, n), elegir: o => DRIVE.elegir(o) };
+async function iniciarConexiones() {
+  try { const r = await fetch('/.netlify/functions/telegram'); if (r.ok && (r.headers.get('content-type') || '').includes('json')) TG.activo = !!(await r.json()).configurado; } catch { }
+  await DRIVE.iniciar();
+  if (TG.activo || DRIVE.activo()) render();
+}
 function icsDe(a) {
   const pp = P(a);
   return CAL.ics({ id: a.id, limite: a.limite, resumen: `Vence plazo para notificar · ${a.doc_id} · ${a.elemento}`,
@@ -552,7 +576,7 @@ function vAlerta(id) {
     <div class="det-cab">${diasBadge(a)}<div><h2>${esc(a.doc_id)} rev. ${esc(d.revision)} · ${esc(a.elemento)}</h2><p class="frase">${esc(fraseDias(a))}</p></div></div>
     <div class="panel plazo-panel"><div class="plazo-cab"><h3>Plazo contractual</h3><span class="pista-txt">${esc(PROY[a.proyecto].nombre)} · <a href="#plazos">parámetros</a></span></div>${barraPlazo(a)}
       <details class="tec cal-det" open><summary>Ver el plazo en el calendario</summary>${CAL.calendarioPlazo({ inicio: a.fecha_recepcion, limite: a.limite, feriados: FER(a), tipo: P(a).tipo_dias, hoy: est.hoy, refMax: REF.max, titulo: `${a.doc_id} · ${a.elemento}` })}</details>
-      <div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="d-ics">Agregar al calendario (.ics)</button><span class="pista-txt" style="align-self:center">Evento el ${N.fmtFecha(a.limite)} con aviso dos días antes. Sirve con Google Calendar, Outlook y Apple.</span></div>
+      <div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="d-ics">Agregar al calendario (.ics)</button>${TG.activo ? '<button class="btn peq" id="d-tg">Enviar aviso por Telegram</button>' : ''}<span class="pista-txt" style="align-self:center">Evento el ${N.fmtFecha(a.limite)} con aviso dos días antes. Sirve con Google Calendar, Outlook y Apple.</span></div><div id="d-tg-msg" aria-live="polite"></div>
       <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE</label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
     <div class="det-cuerpo">
       <div>
@@ -561,7 +585,7 @@ function vAlerta(id) {
           : `${d.texto_anterior ? `<div class="doc" style="margin-bottom:10px"><div class="cab"><span>${esc(d.revision_anterior)}</span></div>${esc(d.texto_anterior)}</div>` : ''}<div class="doc"><div class="cab"><span>${esc(d.tipo)} · ${esc(d.emisor)}</span><span>${N.fmtFecha(d.fecha_recepcion)}</span></div>${cuerpoNuevo}</div>`}
           <div class="check"><span class="ico si">✓</span><div><b>Cita verificada en el documento:</b> «${esc(a.cita)}»</div></div>
         </div>
-        <div class="panel"><h3>Registro de esta alerta</h3><ul class="registro">${est.registro.filter(r => r.que.includes(a.doc_id)).map(r => `<li><time>${esc(r.t)}</time><span><b>${esc(r.quien)}:</b> ${esc(r.que)}</span></li>`).join('') || `<li><time>${N.fmtFecha(d.fecha_recepcion)}</time><span><b>Sistema:</b> alerta generada por la IA (detección y vínculo a partida) con cita verificada.</span></li>`}</ul></div>
+        <div class="panel"><div class="plazo-cab"><h3>Trazabilidad del caso</h3><a class="pista-txt" href="#auditoria">Registro de auditoría sellado</a></div>${trazaCaso(a)}</div>
       </div>
       <div>
         ${panelDecision(a)}
@@ -578,6 +602,7 @@ function vAlerta(id) {
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
   const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
   $('#d-ics').onclick = () => { CAL.descargarIcs(icsDe(a), `plazo_${a.doc_id}_${a.id}.ics`.replace(/[^\w.-]+/g, '_')); registrar(rolN(), `${a.doc_id} · fecha límite agregada al calendario (.ics)`, { tipo: 'registro', alerta: a.id }); };
+  const tg = $('#d-tg'); if (tg) tg.onclick = async () => { tg.disabled = true; $('#d-tg-msg').innerHTML = '<p class="estado-ia"><span class="spin"></span>Enviando aviso…</p>'; try { await TG.enviar(a); $('#d-tg-msg').innerHTML = '<p class="aviso ok" style="margin-top:8px">Aviso enviado por Telegram.</p>'; registrar(rolN(), `${a.doc_id} · aviso enviado por Telegram`, { tipo: 'registro', alerta: a.id }); } catch (e) { $('#d-tg-msg').innerHTML = `<p class="aviso mal" style="margin-top:8px">${esc(e.message)}</p>`; } tg.disabled = false; };
   const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { est.aprobaciones[a.id] = { estado: 'aprobada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const arc = $('#d-archivar'); if (arc) arc.onclick = () => { est.aprobaciones[a.id] = { estado: 'archivada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
@@ -621,7 +646,7 @@ function vCalidad() {
       <tr><td>Sin IA · documentos nuevos</td><td>${pct(s.prueba_nueva.cobertura)}</td><td>${pct(s.prueba_nueva.precision)}</td><td>no vincula</td><td>—</td></tr></tbody></table></div>
       <p style="color:var(--texto-2);font-size:.88rem;margin-top:8px">Pruebas del plan: ${esc(cifras.pruebas_cp)} superadas en la medición (se vuelven a ejecutar abajo).</p></section>
     <section class="seccion" id="pruebas"><h3>Pruebas automatizadas</h3><p class="pista-txt" style="margin:4px 0 10px">Se ejecutan ahora, en este navegador, sobre la misma lógica que usa la app (nucleo.js). Cada una dice qué garantiza.</p>
-      <div class="panel"><div class="fila-btn" style="justify-content:space-between;align-items:center;margin-bottom:8px"><b id="pr-total"></b><button class="btn peq" id="pr-correr">Ejecutar de nuevo</button></div><ul class="pruebas" id="pr-lista"></ul></div></section>
+      <div class="panel"><div class="fila-btn" style="justify-content:space-between;align-items:center;margin-bottom:8px"><b id="pr-total"></b><button class="btn peq" id="pr-correr">Volver a ejecutar las pruebas</button></div><ul class="pruebas" id="pr-lista"></ul></div></section>
     <section class="seccion" id="casos-referencia"><h3>Casos de referencia</h3><p class="pista-txt" style="margin:4px 0 10px">${esc(cifras.casos_referencia.nota)} Fuente: ${esc(cifras.casos_referencia.fuente)}.</p>
       <div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr))">${cifras.casos_referencia.casos.map(c => `<div class="vidrio caso3"><span class="etq">${esc(c.rol)} · plazo de ${c.plazo_dias} días</span><p style="font-size:1.05rem;margin:6px 0">Entender el cambio tomó <b>${c.entender_dias_min} a ${c.entender_dias_max} días</b>: quedaron ${c.plazo_dias - c.entender_dias_max} a ${c.plazo_dias - c.entender_dias_min} para preparar el sustento.</p></div>`).join('')}</div>
       <div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px">
@@ -663,7 +688,7 @@ async function vAuditoria(estados = null) {
   const ev = [...AUD.lista()].map((e, i) => ({ ...e, i })).reverse(), alt = AUD.alterado();
   const roto = estados && estados.some(x => x !== 'ok');
   $('#v-auditoria').innerHTML = `
-    <div class="tab-cab"><div><h2>Auditoría</h2><p class="sub2">Quién decidió qué y cuándo. Cada evento queda sellado con el hash SHA-256 del anterior: si alguien altera uno, la cadena se rompe desde ese punto y se nota al verificar.</p></div></div>
+    <div class="tab-cab"><div><h2>Registro de auditoría</h2><p class="sub2">La prueba de que nadie alteró nada: todos los eventos de todos los casos, en orden, cada uno sellado con el hash SHA-256 del anterior. Si alguien cambia o borra un evento, la cadena se rompe desde ese punto y se nota al verificar. La historia de un caso concreto está en su detalle, en «Trazabilidad del caso».</p></div></div>
     <div class="aud-barra"><button class="btn prim" id="aud-verificar" ${ev.length ? '' : 'disabled'}>Verificar integridad</button>
       ${ev.length ? (alt ? '<button class="btn" id="aud-restaurar">Restaurar el evento alterado</button>' : '<button class="btn" id="aud-alterar">Alterar un evento (demostración)</button>') : ''}
       <span id="aud-res" aria-live="polite">${estados ? (roto ? `<span class="aud-mal">✗ Cadena rota en el evento ${estados.findIndex(x => x !== 'ok') + 1}: su contenido ya no coincide con el sello.</span>` : `<span class="aud-ok">✓ Cadena íntegra: ${ev.length} evento${ev.length === 1 ? '' : 's'} verificado${ev.length === 1 ? '' : 's'}.</span>`) : ''}</span></div>
@@ -705,7 +730,7 @@ function vPlazos() {
         <p class="pista-txt" style="margin-top:10px">${abiertos} cambio${abiertos === 1 ? '' : 's'} abierto${abiertos === 1 ? '' : 's'} de este proyecto se recalculan al guardar.</p>
         ${id === 'R1' ? `<details class="tec"><summary>Texto de la cláusula ${esc(clausula143.clausula)}</summary><blockquote class="aviso info" style="margin:8px 0 0">«${esc(clausula143.texto_literal)}»</blockquote></details>` : ''}</div>
       <div class="panel"><h3>Feriados</h3><p class="pista-txt">Se descuentan solo cuando el plazo es en días hábiles.</p>
-        <ul class="feriados">${fer.map(f => `<li><span class="num">${N.fmtFecha(f)}</span><button class="btn peq" data-quita="${f}" aria-label="Quitar feriado ${N.fmtFecha(f)}">Quitar</button></li>`).join('')}</ul>
+        <ul class="feriados">${fer.map(f => `<li><span class="num">${N.fmtFecha(f)}</span>${puede('plazos') ? `<button class="btn peq" data-quita="${f}" aria-label="Quitar feriado ${N.fmtFecha(f)}">Quitar</button>` : ''}</li>`).join('')}</ul>
         ${puede('plazos') ? '<div class="fila-btn"><label class="sr" for="pz-f">Nuevo feriado</label><input type="date" id="pz-f"><button class="btn peq" id="pz-fadd">Agregar feriado</button></div>' : ''}</div>
     </div>`;
   document.querySelectorAll('[data-proy]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.proy; guardarActivo(); vPlazos(); });
@@ -806,6 +831,11 @@ function vAjustes() {
         <label class="tit" for="aj-clave">Clave de API de Google AI Studio</label><input type="password" id="aj-clave" autocomplete="off" spellcheck="false" placeholder="${clave ? 'Clave guardada en esta pestaña' : 'Pega aquí tu clave'}">
         <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar y usar mi clave</button>${clave ? '<button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite"></div></div>
     </div>
+    <section class="seccion"><h3>Conexiones</h3><div class="conexiones">
+      <div class="conex"><b>Gemini (Google AI Studio)</b><span>${e?.servidor && e?.clave ? '<span class="aud-ok">✓ Activo en el servidor</span>' : clave ? '<span class="aud-ok">✓ Con tu clave</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Variable de Netlify: <code>GEMINI_API_KEY</code>.</small></div>
+      <div class="conex"><b>Google Drive</b><span>${DRIVE.activo() ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Elegir revisiones en Comparar y guardar la carta. Requiere <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_API_KEY</code> en Netlify.</small></div>
+      <div class="conex"><b>Telegram</b><span>${TG.activo ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Aviso al celular con el cambio y su fecha límite. Requiere <code>TELEGRAM_BOT_TOKEN</code> y <code>TELEGRAM_CHAT_ID</code> en Netlify.</small></div>
+      <div class="conex"><b>Autodesk Construction Cloud y Notion</b><span><span class="etq ambar">demostración</span></span><small>Se muestran como conexión de demostración: no leen archivos reales.</small></div></div></section>
     <div class="aviso info" style="margin-top:16px"><b>Privacidad.</b> En el plan gratuito de Google AI Studio, Google puede usar los datos enviados para mejorar sus productos. Por eso al asistente solo se le envía tu pregunta y un resumen del proyecto de demostración, nunca documentos; y en Comparar conviene usar solo documentos de demostración o sin información sensible.</div>
     <section class="seccion"><h3>Instrucciones que recibe la IA</h3><p class="pista-txt">Son las mismas en todos los caminos y las mismas con las que se midieron los resultados.</p>
       <details class="tec"><summary>Detectar cambios con impacto</summary><pre class="crudo">${esc(IA.I1())}</pre></details>
@@ -933,5 +963,6 @@ $('#pop-r').oninput = e => { est.hoy = N.sumarDias(PRIMERA, Number(e.target.valu
 document.addEventListener('click', e => { if (!e.target.closest('#pop-fecha, #chip-fecha')) { $('#pop-fecha').hidden = true; $('#chip-fecha').setAttribute('aria-expanded', 'false'); } });
 pintarRol();
 render();
+iniciarConexiones();
 try { if (!localStorage.getItem('rc-bienvenida')) abrirBienvenida(); } catch { }
 IA.iniciarModo().then(() => { pintarModoIA(); if (!$('#asist').hidden) pintarChat(); if (['comparar', 'ajustes', 'salidas'].includes(ruta().vista)) render(); });

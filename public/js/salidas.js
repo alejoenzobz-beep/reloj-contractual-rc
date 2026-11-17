@@ -130,6 +130,19 @@ export function docx(titulo, texto) {
     ['word/document.xml', doc],
   ]);
 }
+// Correo .eml (MIME) con el DOCX adjunto; X-Unsent hace que Outlook lo abra como borrador.
+const b64utf8 = t => btoa(String.fromCharCode(...new TextEncoder().encode(t)));
+async function b64blob(blob) { const u = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); }
+const partir = s => s.replace(/.{1,76}/g, '$&\r\n');
+export async function eml({ asunto, cuerpo, adjunto, nombreAdjunto }) {
+  const lim = 'rc-' + Math.random().toString(36).slice(2);
+  const enc = t => `=?UTF-8?B?${b64utf8(t)}?=`;
+  const txt = ['MIME-Version: 1.0', 'X-Unsent: 1', `Subject: ${enc(asunto)}`, 'To: ', `Date: ${new Date().toUTCString()}`, `Content-Type: multipart/mixed; boundary="${lim}"`, '',
+    `--${lim}`, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', partir(b64utf8(cuerpo)),
+    `--${lim}`, `Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document; name="${nombreAdjunto}"`, 'Content-Transfer-Encoding: base64', `Content-Disposition: attachment; filename="${nombreAdjunto}"`, '', partir(await b64blob(adjunto)),
+    `--${lim}--`, ''].join('\r\n');
+  return new Blob([txt], { type: 'message/rfc822' });
+}
 function descargar(blob, nombre) { const u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = nombre; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); }
 
 // ---------- vista ----------
@@ -156,9 +169,12 @@ export function vSalidas(ctx, idSel) {
         <p class="pista-txt">Texto editable. Resaltado: datos confirmados que la app verifica (cita, partida, fechas, cláusula). <button class="enlace" id="sal-reset" ${est.borradores[clave] != null ? '' : 'hidden'}>Volver a la plantilla</button></p>
         <div id="sal-avisos" aria-live="polite"></div>
         <div class="sal-acciones">
-          <div class="fila-btn"><span class="tit2">Exportar</span><button class="btn peq" data-exp="docx">Descargar DOCX</button><button class="btn peq" data-exp="pdf">Imprimir o guardar PDF</button><button class="btn peq" data-exp="md">Descargar MD</button><button class="btn peq" data-exp="ics">Agregar fecha límite al calendario</button></div>
+          <div class="fila-btn"><span class="tit2">Exportar</span><button class="btn peq" data-exp="docx">Descargar DOCX</button><button class="btn peq" data-exp="pdf">Imprimir o guardar PDF</button><button class="btn peq" data-exp="md">Descargar MD</button><button class="btn peq" data-exp="ics">Agregar fecha límite al calendario</button>${ctx.drive?.activo ? '<button class="btn peq" data-exp="drive">Guardar DOCX en Google Drive</button>' : ''}</div>
+          <div class="fila-btn"><span class="tit2">Enviar</span><button class="btn peq prim" data-env="eml">Correo con el DOCX adjunto (.eml)</button><button class="btn peq" data-env="mailto">Abrir en mi correo</button><button class="btn peq" data-env="copiar">Copiar texto de la carta</button>${ctx.telegram?.activo ? '<button class="btn peq" data-env="telegram">Enviar aviso por Telegram</button>' : ''}</div>
+          <div class="fila-btn"><span class="tit2">Redactar con mi IA</span><button class="btn peq" data-env="instruccion">Copiar instrucción para mi IA</button><span class="pista-txt">La instrucción usa solo los datos confirmados; si pegas aquí la respuesta, la app la verifica igual.</span></div>
           <div class="fila-btn"><span class="tit2">Herramientas · ${esc(IA.ETIQUETA[IA.modoIA()])}</span>${Object.entries(HERRAMIENTAS).map(([k, h]) => `<button class="btn peq" data-her="${k}">${h.titulo}</button>`).join('')}</div>
         </div>
+        <div id="sal-env" aria-live="polite"></div>
         <div id="sal-her" aria-live="polite"></div>
         <div class="sal-emitir ${emi ? 'hecho' : ''}">${emi ? `<p><b>✓ ${esc(TIPOS[emi.tipo])} emitida</b> el ${N.fmtFecha(emi.fecha)} por ${esc(emi.quien)}. Queda en el registro de auditoría.</p><button class="btn peq" id="sal-anular">Anular registro de emisión</button>`
           : ctx.puede('emitir') ? `<p><b>¿Listo para firmar?</b> Exportar no es emitir. Registra la emisión cuando el documento se firme y envíe: queda en el registro con fecha y responsable.</p><button class="btn prim" id="sal-emitir">Registrar emisión</button>` : `<div><p><b>Exportar no es emitir.</b> La firma y el registro de la emisión los hace el gerente de proyecto.</p>${ctx.notaRol('emitir', 'Registrar la emisión')}</div>`}</div>
@@ -181,10 +197,38 @@ export function vSalidas(ctx, idSel) {
   raiz.querySelectorAll('[data-exp]').forEach(b => b.onclick = () => {
     const t = leerEditor(ed);
     if (b.dataset.exp === 'ics') { const u = URL.createObjectURL(new Blob([ctx.icsDe(a)], { type: 'text/calendar;charset=utf-8' })); const l = document.createElement('a'); l.href = u; l.download = `plazo_${a.doc_id}_${a.id}.ics`.replace(/[^\w.-]+/g, '_'); document.body.append(l); l.click(); l.remove(); ctx.registrar(ctx.rolN(), `${a.doc_id} · fecha límite agregada al calendario (.ics)`); return; }
+    if (b.dataset.exp === 'drive') { msg('<span class="spin"></span> Guardando en Google Drive…', 'info'); ctx.drive.subir(docx(`${TIPOS[S.tipo]} · ${a.doc_id}`, t), `${nombre}.docx`).then(r => { msg(`Guardado en Google Drive: <a href="${esc(r.webViewLink || '#')}" target="_blank" rel="noopener">${esc(r.name || nombre)}</a>.`); ctx.registrar(ctx.rolN(), `${a.doc_id} · DOCX guardado en Google Drive`); }).catch(e => msg(esc(e.message), 'mal')); return; }
     if (b.dataset.exp === 'docx') descargar(docx(`${TIPOS[S.tipo]} · ${a.doc_id}`, t), `${nombre}.docx`);
     else if (b.dataset.exp === 'md') descargar(new Blob([`# ${TIPOS[S.tipo]} · ${a.doc_id}\n\n${t.replace(/\n(?!\n)/g, '  \n')}\n`], { type: 'text/markdown' }), `${nombre}.md`);
     else { ed.blur(); window.print(); }
     ctx.registrar(ctx.rolN(), `${a.doc_id} · ${TIPOS[S.tipo].toLowerCase()} exportada (${b.dataset.exp.toUpperCase()})`);
+  });
+  const asunto = `Notificación de variación · ${a.doc_id}, revisión ${a.doc.revision} · ${c.proyecto}`;
+  const cortesia = `Señores:\n\nAdjuntamos la notificación de variación correspondiente al documento ${c.documento} (revisión ${c.revision}), recibido en el entorno común de datos el ${c.fecha_recepcion}, conforme a la cláusula ${c.clausula} del contrato.\n\nQuedamos atentos a sus comentarios.\n\nAtentamente,`;
+  const msg = (html, cls = 'ok') => { $('#sal-env').innerHTML = `<p class="aviso ${cls}" style="margin-top:8px">${html}</p>`; };
+  raiz.querySelectorAll('[data-env]').forEach(b => b.onclick = async () => {
+    const t = leerEditor(ed), k = b.dataset.env;
+    if (k === 'eml') {
+      const blob = docx(`${TIPOS[S.tipo]} · ${a.doc_id}`, t);
+      descargar(await eml({ asunto, cuerpo: `${cortesia}\n\n---\n\n${t}`, adjunto: blob, nombreAdjunto: `${nombre}.docx` }), `${nombre}.eml`);
+      msg('Se descargó el correo con la carta en DOCX adjunta. Ábrelo con Outlook, Apple Mail o Thunderbird: se abre como borrador, listo para poner el destinatario y enviar. En Gmail, usa «Abrir en mi correo» y adjunta el DOCX.');
+      ctx.registrar(ctx.rolN(), `${a.doc_id} · correo preparado con el DOCX adjunto (.eml)`);
+    } else if (k === 'mailto') {
+      location.href = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cortesia + '\n\n[Adjunta aquí el DOCX descargado]')}`;
+      msg('Se abrió tu programa de correo con el asunto y un texto de cortesía. Adjunta el DOCX descargado: un enlace «mailto» no puede adjuntar archivos.', 'info');
+    } else if (k === 'copiar') {
+      try { await navigator.clipboard.writeText(t); msg('Texto de la carta copiado al portapapeles.'); } catch { msg('No se pudo copiar automáticamente: selecciona el texto de la hoja y cópialo con Ctrl+C.', 'mal'); }
+    } else if (k === 'telegram') {
+      msg('<span class="spin"></span> Enviando aviso por Telegram…', 'info');
+      try { await ctx.telegram.enviar(a); msg('Aviso enviado por Telegram con el cambio y su fecha límite.'); ctx.registrar(ctx.rolN(), `${a.doc_id} · aviso enviado por Telegram`); } catch (e) { msg(esc(e.message), 'mal'); }
+    } else if (k === 'instruccion') {
+      const ins = `${N.INSTRUCCIONES.I4[N.VERSION_VIGENTE.I4].sistema}\n\n---\n\n${N.mensajeI4(c)}`;
+      let copiado = true; try { await navigator.clipboard.writeText(ins); } catch { copiado = false; }
+      $('#sal-env').innerHTML = `<div class="panel manual"><span class="rotulo-demo" style="color:var(--azul-2);border-color:var(--azul-2)">IA: manual</span><h3>Redactar la carta con tu IA</h3><p class="pista-txt">${copiado ? 'Instrucción copiada.' : 'No se pudo copiar automáticamente: ábrela abajo y cópiala.'} Pégala en la IA que prefieras y pega aquí el texto que devuelva: reemplazará el borrador y la app verificará que cada cifra venga de los datos confirmados.</p>
+        <details class="tec"><summary>Ver instrucción completa</summary><pre class="crudo">${esc(ins)}</pre></details>
+        <label class="tit" for="ins-resp">Texto redactado por tu IA</label><textarea id="ins-resp"></textarea><div class="fila-btn" style="margin-top:8px"><button class="btn prim peq" id="ins-ok">Usar este texto en el borrador</button></div></div>`;
+      $('#ins-ok').onclick = () => { const v = $('#ins-resp').value.trim(); if (!v) return; est.borradores[clave] = v; ctx.guardar(); ctx.registrar(ctx.rolN(), `${a.doc_id} · borrador redactado con IA externa (modo manual)`); vSalidas(ctx, a.id); };
+    }
   });
   raiz.querySelectorAll('[data-her]').forEach(b => b.onclick = () => usarHerramienta(b.dataset.her, leerEditor(ed), c, vencido));
   const em = $('#sal-emitir');

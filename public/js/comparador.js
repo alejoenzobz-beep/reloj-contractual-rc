@@ -209,7 +209,7 @@ function pintarEntrada(ctx) {
     E.innerHTML = `<div class="probar">${['A', 'B'].map(l => `<label class="soltar ${f(l) ? 'lleno' : ''}" for="cmp-f${l}" data-zona="${l}"><input type="file" id="cmp-f${l}" accept="${acc}">
         <span class="sol-ico" aria-hidden="true">${f(l) ? `<img class="sol-mini" id="mini-${l}" alt="">` : ICO_SUBIR}</span>
         <span class="sol-txt"><b>Revisión ${l}${l === 'A' ? ' (anterior)' : ' (nueva)'}</b>${f(l) ? `<span>${esc(f(l).name)} · ${tam(f(l).size)}</span><small>Pulsa o suelta otro archivo para cambiarlo</small>` : `<span>Suelta aquí ${pdf ? 'el PDF' : 'la imagen de la lámina'} o pulsa para elegir</span><small>${pdf ? 'PDF con texto o escaneado' : 'PNG, JPG, WEBP o SVG'}</small>`}</span></label>`).join('')}</div>
-      <div class="fila-btn carpeta"><label class="btn peq" for="cmp-carpeta">Cargar una carpeta</label><input type="file" id="cmp-carpeta" webkitdirectory multiple hidden><span class="pista-txt">Empareja la revisión A y la B por nombre (por ejemplo, <code>E-301_revA.pdf</code> y <code>E-301_revB.pdf</code>).</span></div>
+      <div class="fila-btn carpeta">${ctx.drive?.activo ? '<button class="btn peq" id="cmp-drive">Elegir desde Google Drive</button>' : ''}<label class="btn peq" for="cmp-carpeta">Cargar una carpeta</label><input type="file" id="cmp-carpeta" webkitdirectory multiple hidden><span class="pista-txt">Empareja la revisión A y la B por nombre (por ejemplo, <code>E-301_revA.pdf</code> y <code>E-301_revB.pdf</code>).</span></div>
       <div id="cmp-pares" aria-live="polite">${S.pares ? S.pares : ''}</div>
       <p class="pista-txt" style="margin-top:10px">${pdf ? 'Se extrae el texto de cada página (hasta 6) y se compara línea por línea; además se comparan las páginas como imagen. Si una página es un escaneo, su texto se lee con OCR.' : 'Las dos imágenes se escalan al mismo tamaño y se comparan píxel por píxel; el texto se lee con OCR para citar y proponer la partida.'} Los archivos se procesan en este navegador y no se suben a ningún servidor.</p>`;
     const asignar = (l, file) => {
@@ -227,6 +227,11 @@ function pintarEntrada(ctx) {
         S.pares = null; pintarEntrada(ctx); };
       if (f(l)) miniatura(f(l), pdf).then(src => { const im = $(`#mini-${l}`); if (im && src) im.src = src; });
     });
+    const dv = $('#cmp-drive'); if (dv) dv.onclick = async () => {
+      try { const fs = await ctx.drive.elegir({ mime: pdf ? 'application/pdf' : 'image/png,image/jpeg,image/webp', max: 2 }); if (fs.length < 2) throw new Error('Elige dos archivos: la revisión A y la B.'); const p = emparejar(fs, pdf); const [x, y] = p.length ? [p[0].A, p[0].B] : fs; asignar('A', x); asignar('B', y); S.pares = `<p class="aviso ok">Archivos traídos de Google Drive: ${esc(x.name)} → ${esc(y.name)}.</p>`; }
+      catch (e) { S.pares = `<p class="aviso mal">${esc(e.message)}</p>`; }
+      pintarEntrada(ctx);
+    };
     $('#cmp-carpeta').onchange = e => {
       const p = emparejar([...e.target.files], pdf);
       if (!p.length) { S.pares = `<p class="aviso mal">No se encontraron dos revisiones del mismo documento en la carpeta. Nombra los archivos con la revisión al final, por ejemplo <code>E-301_revA</code> y <code>E-301_revB</code>.</p>`; pintarEntrada(ctx); return; }
