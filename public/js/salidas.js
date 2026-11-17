@@ -180,7 +180,7 @@ export function vSalidas(ctx, idSel) {
           : ctx.puede('emitir') ? `<p><b>¿Listo para firmar?</b> Exportar no es emitir. Registra la emisión cuando el documento se firme y envíe: queda en el registro con fecha y responsable.</p><button class="btn prim" id="sal-emitir">Registrar emisión</button>` : `<div><p><b>Exportar no es emitir.</b> La firma y el registro de la emisión los hace el gerente de proyecto.</p>${ctx.notaRol('emitir', 'Registrar la emisión')}</div>`}</div>
       </section>
     </div>`;
-  function cab() { return `<div class="tab-cab"><div><h2>Documentos de salida</h2><p class="sub2">El borrador usa solo datos confirmados por una persona: la cita literal, la partida y la fecha límite calculada por la fórmula. La app avisa si una cifra no tiene origen.</p></div></div>`; }
+  function cab() { return `<div class="tab-cab"><div><h2>Documentos de salida</h2><p class="sub2">La carta, el acta o el informe de una variación aprobada: revísalo, envíalo y registra la emisión.</p></div></div>`; }
   const ed = $('#sal-ed');
   const pintarAvisos = () => {
     const r = revisar(leerEditor(ed), c, vencido);

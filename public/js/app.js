@@ -274,7 +274,7 @@ function vInicio() {
   const urg = abiertas.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
   const acc = accionPrincipal(id);
   $('#v-inicio').innerHTML = `
-    <div class="saludo anim"><div><span class="sup-id">Asistente de trazabilidad documental y contractual</span><h1>${saludoHora()}<span class="chip-rol">${esc(rolN())}</span></h1>
+    <div class="saludo anim"><div><h1>${saludoHora()}<span class="chip-rol">${esc(rolN())}</span></h1>
       <p>${esc(pr.nombre)}${pr.demo ? ' (demostración)' : ''} · ${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
       <p class="rol-hoy">${esc(ROLES[est.rol].hace)}</p></div></div>
     <div class="inicio-hero">
@@ -296,7 +296,7 @@ function vPanorama() {
   const porFecha = [...new Set(proximos.map(a => a.limite))].slice(0, 8);
   const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   $('#v-panorama').innerHTML = `
-    <div class="tab-cab"><div><h2>Panorama · ${esc(pr.nombre)}</h2><p class="sub2">Las cifras, los plazos y la agenda de vencimientos del proyecto. Cláusula ${esc(pp.clausula)}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción.</p></div></div>
+    <div class="tab-cab"><div><h2>Panorama · ${esc(pr.nombre)}</h2><p class="sub2">Cifras, plazos y agenda de vencimientos del proyecto: mira qué se acumula y qué vence cada día.</p></div></div>
     <div class="resumen-dia cuatro" role="group" aria-label="Resumen del proyecto">
       <a class="kpi nuevo" href="#bandeja" data-ir="nuevos"><b class="num">${nuevos}</b>cambios nuevos (48 h)</a>
       <a class="kpi urg" href="#bandeja" data-ir="urgentes"><b class="num">${urg}</b>urgentes: vencen en 3 días o menos</a>
@@ -515,7 +515,7 @@ function vBandeja() {
   const porLlegar = alertas.filter(a => a.fecha_recepcion > est.hoy && (proyF === 'todos' || a.proyecto === proyF)).length;
   const idx = N.difDias(est.hoy, PRIMERA), max = N.difDias(ULTIMA, PRIMERA);
   $('#v-bandeja').innerHTML = `
-    <div class="tab-cab"><div><h2>Bandeja de cambios</h2><p class="sub2">Cada cambio detectado, con su partida y el plazo que queda para notificarlo. Lo que vence primero va arriba.</p></div></div>
+    <div class="tab-cab"><div><h2>Bandeja de cambios</h2><p class="sub2">Todos los cambios por plazo restante: abre el primero de la lista y decide.</p></div></div>
     <div class="resumen" role="group" aria-label="Filtrar por estado">
       ${[['pendientes', 'Por decidir', cuenta(filtros.pendientes), 'p-gris'], ['nuevos', 'Nuevos (48 h)', cuenta(filtros.nuevos), 'p-gris'], ['urgentes', 'Vencen en 3 días o menos', cuenta(filtros.urgentes), 'p-ambar'], ['vencidas', 'Vencidos sin decidir', cuenta(filtros.vencidas), 'p-vencido'], ['decididas', 'Decididos', cuenta(filtros.decididas), 'p-decidido'], ['todas', 'Todos', base.length, 'p-gris']].map(([k, t, n, c]) => `<button class="chip" data-f="${k}" aria-pressed="${est.filtro === k}"><span class="punto ${c}"></span>${t} <b>${n}</b></button>`).join('')}
     </div>
@@ -707,7 +707,7 @@ async function vAuditoria(estados = null) {
   const ev = [...AUD.lista()].map((e, i) => ({ ...e, i })).reverse(), alt = AUD.alterado();
   const roto = estados && estados.some(x => x !== 'ok');
   $('#v-auditoria').innerHTML = `
-    <div class="tab-cab"><div><h2>Registro de auditoría</h2><p class="sub2">La prueba de que nadie alteró nada: todos los eventos de todos los casos, en orden, cada uno sellado con el hash SHA-256 del anterior. Si alguien cambia o borra un evento, la cadena se rompe desde ese punto y se nota al verificar. La historia de un caso concreto está en su detalle, en «Trazabilidad del caso».</p></div></div>
+    <div class="tab-cab"><div><h2>Registro de auditoría</h2><p class="sub2">Cada decisión, sellada en cadena: pulsa «Verificar integridad» para comprobar que nadie la alteró.</p></div></div>
     <div class="aud-barra"><button class="btn prim" id="aud-verificar" ${ev.length ? '' : 'disabled'}>Verificar integridad</button>
       ${ev.length ? (alt ? '<button class="btn" id="aud-restaurar">Restaurar el evento alterado</button>' : '<button class="btn" id="aud-alterar">Alterar un evento (demostración)</button>') : ''}
       <span id="aud-res" aria-live="polite">${estados ? (roto ? `<span class="aud-mal">✗ Cadena rota en el evento ${estados.findIndex(x => x !== 'ok') + 1}: su contenido ya no coincide con el sello.</span>` : `<span class="aud-ok">✓ Cadena íntegra: ${ev.length} evento${ev.length === 1 ? '' : 's'} verificado${ev.length === 1 ? '' : 's'}.</span>`) : ''}</span></div>
@@ -730,7 +730,7 @@ function vPlazos() {
   const ej = N.fechaLimite(est.hoy, pp, fer);
   const abiertos = alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy && !est.decisiones[a.id]).length;
   $('#v-plazos').innerHTML = `
-    <div class="tab-cab"><div><h2>Plazos y parámetros</h2><p class="sub2">Cada contrato fija su propio plazo para notificar variaciones. La fecha límite de cada cambio la calcula una fórmula con estos parámetros; la IA nunca calcula fechas.</p></div></div>
+    <div class="tab-cab"><div><h2>Plazos y parámetros</h2><p class="sub2">El plazo de cada contrato: valídalo y todas las fechas límite se recalculan con una fórmula, nunca con la IA.</p></div></div>
     <div class="segmento" role="tablist" aria-label="Proyecto">${PROYECTOS.map(p => `<button role="tab" aria-selected="${p.id === id}" data-proy="${p.id}">${esc(p.nombre)}${p.demo ? ' · demostración' : ''}</button>`).join('')}</div>
     <div class="plazos-grid">
       <form class="panel" id="f-plazo" onsubmit="return false">
@@ -838,7 +838,7 @@ function vAjustes() {
     ['manual', IA.NOMBRE_MODO.manual, 'La app te muestra el prompt completo; lo pegas en la IA que prefieras y pegas su respuesta. Se valida igual.', 'Conviene si no quieres que la app envíe datos o usas una IA sin API.', ''],
   ];
   $('#v-ajustes').innerHTML = `
-    <div class="tab-cab"><div><h2>Ajustes de IA</h2><p class="sub2">El modelo solo lee y propone. En todos los caminos, la app verifica cada cita contra el texto, recalcula la confianza de la partida y calcula los plazos con fórmulas, nunca con la IA.</p></div></div>
+    <div class="tab-cab"><div><h2>Ajustes de IA</h2><p class="sub2">Elige cómo se conecta la IA. En todos los casos, la app verifica cada cita y calcula los plazos con fórmulas.</p></div></div>
     <h3 style="margin:6px 0 10px">Cómo conectar la IA</h3>
     <fieldset class="modos"><legend class="sr">Camino de IA</legend>${caminos.map(([k, t, d, c, st]) => `<label class="modo ${m === k ? 'activo' : ''}"><input type="radio" name="modo-ia" value="${k}" ${m === k ? 'checked' : ''}><span class="modo-t">${t}</span><span class="modo-d">${d}</span><span class="modo-c"><b>Cuándo conviene:</b> ${c}</span>${st ? `<span class="modo-st">${st}</span>` : ''}</label>`).join('')}</fieldset>
     <label class="modo modo-sin ${m === 'demo' ? 'activo' : ''}"><input type="radio" name="modo-ia" value="demo" ${m === 'demo' ? 'checked' : ''}><span class="modo-t">${IA.NOMBRE_MODO.demo} <span class="etq ambar">demostración</span></span><span class="modo-d">Usa las respuestas guardadas en la medición con documentos nuevos (16/11/2026) y la preparada para la lámina E-301. No envía datos. Solo procesa los ejemplos; el asistente responde con preguntas preparadas.</span></label>
@@ -852,10 +852,14 @@ function vAjustes() {
         <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar y usar mi clave</button>${clave ? '<button class="btn" id="aj-probar-clave">Probar conexión</button><button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite"></div></form>
     </div>
     <section class="seccion"><h3>Conexiones</h3><div class="conexiones">
-      <div class="conex"><b>IA registrada</b><span>${e?.prueba?.ok ? '<span class="aud-ok">✓ Respondió en la última prueba</span>' : e?.servidor && e?.clave ? '<span class="aud-mal">Con clave, sin respuesta en la última prueba</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Por defecto: Gemini. Variables de Netlify: <code>GEMINI_API_KEY</code> y, opcional, <code>GEMINI_MODEL</code>.</small></div>
-      <div class="conex"><b>Google Drive</b><span>${DRIVE.activo() ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Elegir revisiones en Comparar y guardar la carta. Requiere <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_API_KEY</code> en Netlify.</small></div>
-      <div class="conex"><b>Telegram</b><span>${TG.activo ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Aviso al celular con el cambio y su fecha límite. Requiere <code>TELEGRAM_BOT_TOKEN</code> y <code>TELEGRAM_CHAT_ID</code> en Netlify.</small></div>
+      <div class="conex"><b>IA registrada</b><span>${e?.prueba?.ok ? '<span class="aud-ok">✓ Respondió en la última prueba</span>' : e?.servidor && e?.clave ? '<span class="aud-mal">Con clave, sin respuesta en la última prueba</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Por defecto: Gemini.</small></div>
+      <div class="conex"><b>Google Drive</b><span>${DRIVE.activo() ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Elegir revisiones en Comparar y guardar la carta. </small></div>
+      <div class="conex"><b>Telegram</b><span>${TG.activo ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Aviso al celular con el cambio y su fecha límite. </small></div>
       <div class="conex"><b>Autodesk Construction Cloud y Notion</b><span><span class="etq ambar">demostración</span></span><small>Se muestran como conexión de demostración: no leen archivos reales.</small></div></div></section>
+    <details class="tec admin"><summary>Para quien administra el sitio</summary><p class="pista-txt">Variables de entorno en Netlify (Site settings → Environment variables). Las claves nunca van en el navegador ni en el repositorio.</p><ul class="vars">
+      <li><code>GEMINI_API_KEY</code> · IA registrada. Opcional: <code>GEMINI_MODEL</code> (si tarda o no existe, la función pasa a un modelo liviano).</li>
+      <li><code>TELEGRAM_BOT_TOKEN</code> y <code>TELEGRAM_CHAT_ID</code> · aviso por Telegram.</li>
+      <li><code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_API_KEY</code> · Google Drive.</li></ul></details>
     <div class="aviso info" style="margin-top:16px"><b>Privacidad.</b> En los planes gratuitos, algunos proveedores (como Google AI Studio) pueden usar los datos enviados para mejorar sus productos. Por eso al asistente solo se le envía tu pregunta y un resumen del proyecto de demostración, nunca documentos; y en Comparar conviene usar solo documentos de demostración o sin información sensible.</div>
     <section class="seccion"><h3>Instrucciones que recibe la IA</h3><p class="pista-txt">Son las mismas en todos los caminos y las mismas con las que se midieron los resultados.</p>
       <details class="tec"><summary>Detectar cambios con impacto</summary><pre class="crudo">${esc(IA.I1())}</pre></details>
