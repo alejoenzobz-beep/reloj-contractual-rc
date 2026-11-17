@@ -48,7 +48,8 @@ const PARAMS_R1 = () => paramsProy('R1');
 function guardarProy(id, cambios) { ajustesProy[id] = { ...(ajustesProy[id] || {}), ...cambios }; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); }
 let recepcionCorr = {};
 try { recepcionCorr = JSON.parse(localStorage.getItem('rc-recepcion') || '{}'); } catch { }
-const REF = cifras.casos_referencia.entender_sin_asistente_dias; // 2–4 días (n = 2, casos observados)
+// Referencia «sin asistente»: rango de días para entender un cambio en la consulta (n = 15); si falta, los 2 casos iniciales.
+const REF = consulta?.respuestas?.length ? { min: Math.min(...consulta.respuestas.map(r => r.entender_dias)), max: Math.max(...consulta.respuestas.map(r => r.entender_dias)), n: consulta.respuestas.length } : { ...cifras.casos_referencia.entender_sin_asistente_dias, n: cifras.casos_referencia.casos.length };
 const LAT_MIN = cifras.corpus_base.v1_1.latencia_mediana_min;   // minutos de detección medidos
 
 const alertas = reg.hechos.map(h => {
@@ -161,7 +162,7 @@ function barraPlazo(a, compacta = false) {
     <div class="pb-fila"><span class="pb-et">Para entender el cambio</span><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"><i>Sin asistente: ${REF.min}–${REF.max} días</i></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-asist"><i>Con asistente: día 0</i></span>${hoyM}</div></div>
     <div class="pb-fila"><span class="pb-et">Para sustentar</span><div class="pb-pista"><span class="pb-margen" style="left:1.5%;width:98.5%"><i>Margen con asistente: ${margenCon} día${margenCon === 1 ? '' : 's'}</i></span><span class="pb-fin"></span>${hoyM.replace(/<b>Hoy<\/b>/, '')}</div></div>
     <div class="pb-escala pb-et-pad"><span>Día 0 · recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}</span></div>
-    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = 2), ver <a href="#calidad">Calidad → Casos de referencia</a>. El tiempo de revisión humana se cronometra en este navegador (Calidad → Evidencia).</p></div>`;
+    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = ${REF.n}), ver <a href="#calidad">Calidad</a>. El tiempo de revisión humana se cronometra en este navegador (Calidad → Evidencia).</p></div>`;
 }
 function diasBadge(a, cls = '') {
   const e = estadoDe(a);
@@ -642,52 +643,40 @@ function vAlerta(id) {
 // ---------- RESULTADOS ----------
 function vCalidad() {
   const b = cifras.corpus_base, pn = cifras.prueba_nueva, s = cifras.linea_base_sin_ia;
-  const series = [
-    { n: 'Con IA · corpus base (instrucción vigente)', c: 'var(--plano)', v: [b.v1_1.cobertura, b.v1_1.precision, b.v1_1.vinculacion] },
-    { n: 'Con IA · documentos nuevos (medición más baja)', c: 'var(--tinta)', v: [pn.corrida_1.cobertura, pn.corrida_1.precision, pn.corrida_1.vinculacion] },
-    { n: 'Sin IA · comparador de texto (corpus base)', c: 'var(--linea)', v: [s.corpus_base.cobertura, s.corpus_base.precision, null] },
-  ];
-  const umbral = [0.8, 0.7, 0.7], cats = ['Cobertura', 'Precisión', 'Vinculación a partida'];
-  const W = 600, H = 300, x0 = 46, y = v => 250 - v * 210, gw = (W - x0 - 10) / 3, bw = 40;
-  let svg = [0, .25, .5, .75, 1].map(t => `<line x1="${x0}" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="var(--linea)" stroke-width="${t ? 1 : 1.5}"/><text x="${x0 - 8}" y="${y(t) + 4}" text-anchor="end">${t * 100} %</text>`).join('');
-  cats.forEach((c, i) => {
-    const cx = x0 + gw * i + gw / 2;
-    series.forEach((sr, k) => { const v = sr.v[i], x = cx + (k - 1) * (bw + 6) - bw / 2;
-      svg += v == null ? `<text x="${x + bw / 2}" y="${y(0) - 8}" text-anchor="middle" font-size="10">—</text>` : `<rect x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" rx="3" fill="${sr.c}"/><text x="${x + bw / 2}" y="${y(v) - 6}" text-anchor="middle" font-size="11" style="fill:var(--texto)">${pct(v)}</text>`; });
-    svg += `<line x1="${cx - 70}" x2="${cx + 70}" y1="${y(umbral[i])}" y2="${y(umbral[i])}" stroke="var(--nube)" stroke-width="2" stroke-dasharray="5 3"/><text x="${cx + 72}" y="${y(umbral[i]) + 4}" font-size="10" style="fill:var(--nube)">mín. ${umbral[i] * 100} %</text><text x="${cx}" y="276" text-anchor="middle" style="fill:var(--tinta);font-weight:700">${c}</text>`;
-  });
+  const de = (x, n) => `${x} de ${n}`;
+  const okPartida = m => Math.round(m.vinculacion * m.detectados);
+  const R = consulta?.respuestas || [];
+  const filasModelo = (cifras.precision_por_modelo || []).map(f => `<tr><td>${esc(f.modelo)} <small class="pista-txt">· IA registrada en vivo</small></td><td>${N.fmtFecha(f.fecha)}</td><td>${f.documentos}</td><td>${de(f.detectados, f.cambios_referencia)}</td><td>${f.falsas_alarmas}</td><td>${de(f.partida_correcta, f.detectados)}</td></tr>`).join('');
   $('#v-calidad').innerHTML = `
-    <div class="tab-cab"><div><h2>Calidad: qué tan bien funciona</h2><p style="color:var(--texto-2);max-width:48em">Medido contra respuestas correctas escritas y congeladas antes de correr la IA. Dos conjuntos: el corpus con el que se construyó el prototipo y 10 documentos nuevos que el sistema no conocía.</p></div></div>
+    <div class="tab-cab"><div><h2>Calidad</h2><p class="sub2">Qué se midió, con qué tamaño de muestra y qué no se afirma.</p></div></div>
+    <div class="resumen-dia" role="group" aria-label="Cifras clave">
+      <div class="kpi"><b class="num">${R.length ? `${EV.mediana(R.map(r => r.entender_dias))} días` : '—'}</b>tarda hoy entender un cambio (mediana${R.length ? `, n = ${R.length} profesionales` : ', sin medir todavía'})</div>
+      <div class="kpi nuevo"><b class="num">${pn.corrida_1.detectados} y ${pn.corrida_2.detectados} de ${pn.cambios_referencia}</b>cambios detectados en ${pn.documentos} documentos nuevos (prueba ciega, medición de desarrollo)</div>
+      <div class="kpi emitir"><b class="num" id="pr-kpi">—</b>pruebas automatizadas superadas ahora, en este navegador</div></div>
+    <p class="frase-seguridad">La seguridad no depende del modelo: cada cita se verifica contra el documento y los plazos los calcula una fórmula.</p>
+    <section class="seccion"><h3>Precisión por modelo</h3><p class="pista-txt" style="margin:4px 0 10px">Prueba ciega congelada: ${pn.documentos} documentos nuevos con ${pn.cambios_referencia} cambios, respuestas correctas escritas antes de correr la IA y el mismo cálculo para cada modelo.</p>
+      <div class="panel scroll-x"><table class="t"><thead><tr><th>Modelo</th><th>Fecha</th><th>Documentos</th><th>Cambios detectados</th><th>Falsas alarmas</th><th>Partida correcta</th></tr></thead><tbody>
+        <tr><td>Claude <small class="pista-txt">· medición de desarrollo</small></td><td>${N.fmtFecha(cifras.generado.slice(0, 10))}</td><td>${pn.documentos}</td><td>${de(pn.corrida_1.detectados, pn.cambios_referencia)} y ${de(pn.corrida_2.detectados, pn.cambios_referencia)}</td><td>${pn.corrida_1.falsos_positivos} y ${pn.corrida_2.falsos_positivos}</td><td>${de(okPartida(pn.corrida_1), pn.corrida_1.detectados)} y ${de(okPartida(pn.corrida_2), pn.corrida_2.detectados)}</td></tr>
+        ${filasModelo || `<tr><td>IA registrada <small class="pista-txt">· por defecto: Gemini</small></td><td colspan="5"><span class="aud-mal">Sin medir todavía.</span> <span class="pista-txt">Se mide con <code>npm run medir-ia</code> contra la función publicada, con la misma referencia.</span></td></tr>`}
+      </tbody></table></div></section>
     ${EV.vistaEvidencia({ cifras, consulta })}
-    <h3 style="margin-top:22px">Mediciones de la IA (detalle)</h3>
-    <div class="metricas">
-      <div class="panel grafico"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cobertura, precisión y vinculación por conjunto">${svg}</svg>
-        <div class="leyenda">${series.map(s => `<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join('')}<span><i style="background:var(--nube);height:3px"></i>Umbral mínimo</span></div></div>
-      <div class="panel lectura"><h3>Cómo leerlo</h3><p style="font-size:.9rem;color:var(--texto-2);margin-bottom:10px"><b>Cobertura:</b> de los cambios reales, cuántos encontró. <b>Precisión:</b> de las alertas que dio, cuántas eran cambios reales. <b>Vinculación:</b> de los cambios encontrados, en cuántos acertó la partida.</p><ul>
-        <li><b>Corpus base:</b> ${b.v1_1.detectados} de ${b.v1_1.cambios_referencia} cambios detectados, sin falsas alarmas. La instrucción vigente se afinó con este corpus, por eso importa la prueba nueva.</li>
-        <li><b>Documentos nuevos:</b> ${pn.corrida_1.detectados} y ${pn.corrida_2.detectados} de ${pn.cambios_referencia} en dos mediciones. En una, la IA juntó tabique y puerta del cuarto de máquinas en una sola alerta y la puerta quedó sin partida.</li>
-        <li><b>Sin IA:</b> un comparador de texto encuentra ${s.corpus_base.detectados} de ${s.corpus_base.cambios} cambios, pero marca ${s.corpus_base.falsas_alarmas} líneas que no importan (rótulos, redacción), no lee cartas ni RFI y no propone partida.</li>
-        <li><b>Repetibilidad:</b> con la misma entrada, la primera instrucción cambió su respuesta en ${b.docs_con_diferencias_entre_corridas.v1_0} de 40 documentos y la vigente en ${b.docs_con_diferencias_entre_corridas.v1_1}; con documentos nuevos, en 1 de 10.</li>
-      </ul></div>
-    </div>
-    <section class="seccion"><h3>Todas las mediciones</h3><div class="panel scroll-x" style="margin-top:10px"><table class="t"><thead><tr><th>Medición</th><th>Cobertura</th><th>Precisión</th><th>Vinculación</th><th>Documentos sin cambios bien reconocidos</th></tr></thead><tbody>
-      ${[['Corpus base · primera instrucción', b.v1_0], ['Corpus base · primera instrucción, repetición', b.v1_0_rep], ['Corpus base · instrucción vigente', b.v1_1], ['Corpus base · instrucción vigente, repetición', b.v1_1_rep], ['Documentos nuevos · medición 1', pn.corrida_1], ['Documentos nuevos · medición 2', pn.corrida_2]].map(([n, m]) => `<tr><td>${n}</td><td>${pct(m.cobertura)}</td><td>${pct(m.precision)}</td><td>${pct(m.vinculacion)}</td><td>${m.docs_sin_cambio_ok}</td></tr>`).join('')}
-      <tr><td>Sin IA · corpus base</td><td>${pct(s.corpus_base.cobertura)}</td><td>${pct(s.corpus_base.precision)}</td><td>no vincula</td><td>—</td></tr>
-      <tr><td>Sin IA · documentos nuevos</td><td>${pct(s.prueba_nueva.cobertura)}</td><td>${pct(s.prueba_nueva.precision)}</td><td>no vincula</td><td>—</td></tr></tbody></table></div>
-      <p style="color:var(--texto-2);font-size:.88rem;margin-top:8px">Pruebas del plan: ${esc(cifras.pruebas_cp)} superadas en la medición (se vuelven a ejecutar abajo).</p></section>
-    <section class="seccion" id="pruebas"><h3>Pruebas automatizadas</h3><p class="pista-txt" style="margin:4px 0 10px">Se ejecutan ahora, en este navegador, sobre la misma lógica que usa la app (nucleo.js). Cada una dice qué garantiza.</p>
-      <div class="panel"><div class="fila-btn" style="justify-content:space-between;align-items:center;margin-bottom:8px"><b id="pr-total"></b><button class="btn peq" id="pr-correr">Volver a ejecutar las pruebas</button></div><ul class="pruebas" id="pr-lista"></ul></div></section>
-    <section class="seccion" id="casos-referencia"><h3>Casos de referencia</h3><p class="pista-txt" style="margin:4px 0 10px">${esc(cifras.casos_referencia.nota)} Fuente: ${esc(cifras.casos_referencia.fuente)}.</p>
-      <div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr))">${cifras.casos_referencia.casos.map(c => `<div class="vidrio caso3"><span class="etq">${esc(c.rol)} · plazo de ${c.plazo_dias} días</span><p style="font-size:1.05rem;margin:6px 0">Entender el cambio tomó <b>${c.entender_dias_min} a ${c.entender_dias_max} días</b>: quedaron ${c.plazo_dias - c.entender_dias_max} a ${c.plazo_dias - c.entender_dias_min} para preparar el sustento.</p></div>`).join('')}</div>
-      <div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px">
-      <div class="vidrio caso3"><span class="etq">Lo que dijo el residente</span><p>«Me sirve que permita comparar documentos y reconocer cambios sin tener que revisar manualmente todas las páginas.»</p><p style="font-size:.86rem;color:var(--texto-2)">Pidió: código, nombre de la partida y página donde se origina el cambio. La comparación de PDF ya indica la página.</p></div>
-      <div class="vidrio caso3"><span class="etq">Lo que dijo oficina técnica</span><p>«Agregaría una alerta que indique qué cambios pueden afectar costos, metrados o partidas y cuánto plazo queda para notificarlos.»</p><p style="font-size:.86rem;color:var(--texto-2)">Es la función central: cada cambio trae la partida y los días que quedan.</p></div></div>
-      <p class="pista-txt" style="margin-top:8px"><a href="#simulacion">Ver el caso E-204 paso a paso</a></p></section>
-    <section class="seccion"><h3>Lo que todavía no medimos</h3><div class="panel lectura" style="margin-top:10px"><ul>
-      <li>La línea base del proceso actual viene de 2 casos del equipo (2 a 4 días para entender el cambio, con plazos de 5 y 7): sirve para dimensionar, no es una estadística.</li>
-      <li>La probaron 2 profesionales del equipo; falta un usuario externo y cronometrar la revisión de una alerta.</li>
-      <li>Los documentos de prueba son sintéticos y en texto limpio: faltan planos DWG, PDF escaneados y ruido real.</li>
-      <li>Las respuestas correctas se escribieron con apoyo de IA y sin un revisor humano independiente.</li></ul></div></section>`;
+    <details class="panel detalle-tec"><summary><b>Detalle técnico de las mediciones</b></summary>
+      <div class="lectura" style="margin-top:10px"><ul>
+        <li><b>Corpus base (sintético):</b> ${de(b.v1_1.detectados, b.v1_1.cambios_referencia)} cambios detectados, ${b.v1_1.falsos_positivos} falsas alarmas. La instrucción vigente se afinó con este corpus; por eso pesa más la prueba ciega.</li>
+        <li><b>Documentos nuevos:</b> ${de(pn.corrida_1.detectados, pn.cambios_referencia)} y ${de(pn.corrida_2.detectados, pn.cambios_referencia)} en dos mediciones. En una, la IA juntó tabique y puerta del cuarto de máquinas en una sola alerta y la puerta quedó sin partida.</li>
+        <li><b>Sin IA:</b> un comparador de texto encuentra ${de(s.corpus_base.detectados, s.corpus_base.cambios)} cambios, pero marca ${s.corpus_base.falsas_alarmas} líneas que no importan (rótulos, redacción), no lee cartas ni RFI y no propone partida.</li>
+        <li><b>Repetibilidad:</b> con la misma entrada, la primera instrucción cambió su respuesta en ${de(b.docs_con_diferencias_entre_corridas.v1_0, 40)} documentos y la vigente en ${de(b.docs_con_diferencias_entre_corridas.v1_1, 40)}; con documentos nuevos, en 1 de 10.</li></ul></div>
+      <div class="scroll-x" style="margin-top:10px"><table class="t"><thead><tr><th>Medición</th><th>Cambios detectados</th><th>Alertas sin cambio real</th><th>Partida correcta</th><th>Documentos sin cambios bien reconocidos</th></tr></thead><tbody>
+        ${[['Corpus base · primera instrucción', b.v1_0], ['Corpus base · primera instrucción, repetición', b.v1_0_rep], ['Corpus base · instrucción vigente', b.v1_1], ['Corpus base · instrucción vigente, repetición', b.v1_1_rep], ['Documentos nuevos · medición 1', pn.corrida_1], ['Documentos nuevos · medición 2', pn.corrida_2]].map(([n, m]) => `<tr><td>${n}</td><td>${de(m.detectados, m.cambios_referencia)}</td><td>${de(m.falsos_positivos, m.alertas)}</td><td>${de(okPartida(m), m.detectados)}</td><td>${m.docs_sin_cambio_ok.replace('/', ' de ')}</td></tr>`).join('')}
+        <tr><td>Sin IA · corpus base</td><td>${de(s.corpus_base.detectados, s.corpus_base.cambios)}</td><td>${de(s.corpus_base.falsas_alarmas, s.corpus_base.lineas_marcadas)} líneas</td><td>no vincula</td><td>—</td></tr>
+        <tr><td>Sin IA · documentos nuevos</td><td>${de(s.prueba_nueva.detectados, s.prueba_nueva.cambios)}</td><td>${de(s.prueba_nueva.falsas_alarmas, s.prueba_nueva.lineas_marcadas)} líneas</td><td>no vincula</td><td>—</td></tr></tbody></table></div>
+      <section class="seccion" id="pruebas"><h3>Pruebas automatizadas</h3><p class="pista-txt" style="margin:4px 0 10px">Se ejecutan ahora, en este navegador, sobre la misma lógica que usa la app (nucleo.js). Cada una dice qué garantiza.</p>
+        <div class="fila-btn" style="justify-content:space-between;align-items:center;margin-bottom:8px"><b id="pr-total"></b><button class="btn peq" id="pr-correr">Volver a ejecutar las pruebas</button></div><ul class="pruebas" id="pr-lista"></ul></section>
+      <section class="seccion"><h3>Lo que dijeron al probarlo</h3><div class="casos3" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <div class="vidrio caso3"><span class="etq">Residente de obra</span><p>«Me sirve que permita comparar documentos y reconocer cambios sin tener que revisar manualmente todas las páginas.»</p></div>
+        <div class="vidrio caso3"><span class="etq">Oficina técnica</span><p>«Agregaría una alerta que indique qué cambios pueden afectar costos, metrados o partidas y cuánto plazo queda para notificarlos.»</p></div></div>
+        <p class="pista-txt" style="margin-top:8px"><a href="#simulacion">Ver el caso E-204 paso a paso</a></p></section>
+    </details>`;
 }
 
 // Qué garantiza cada prueba, en una frase.
@@ -707,7 +696,7 @@ const GARANTIZA = {
 };
 function correrPruebas() {
   const cp = casosDePrueba(proyecto, docs), ok = cp.filter(c => c.ok).length;
-  $('#pr-total').textContent = `${ok} de ${cp.length} pruebas superadas ahora`;
+  $('#pr-total').textContent = `${ok} de ${cp.length} pruebas superadas ahora`; const k = $('#pr-kpi'); if (k) k.textContent = `${ok} de ${cp.length}`;
   $('#pr-lista').innerHTML = cp.map(c => `<li class="${c.ok ? 'si' : 'no'}"><span class="ico ${c.ok ? 'si' : 'no'}" aria-label="${c.ok ? 'Superada' : 'Fallida'}">${c.ok ? '✓' : '✗'}</span><div><b>${esc(GARANTIZA[c.id] || c.esc)}</b><small>${esc(c.esc)} · resultado: ${esc(c.det)}</small></div></li>`).join('');
 }
 
@@ -954,7 +943,7 @@ function respuestaBasica(texto) {
   }
   if (ruta().vista === 'alerta' && /partida|por qu/i.test(texto) && alertaPorId[ruta().id]) return { texto: `Partida ${alertaPorId[ruta().id].partida || 'ninguna'}: ${alertaPorId[ruta().id].sustento}` };
   if (/corrij/i.test(texto)) return { texto: 'Si corriges, el cambio guarda tu partida y también la que propuso la IA. Así se puede medir cuántas veces se equivoca el modelo sin perder el dato original.' };
-  if (/barra/i.test(texto)) return { texto: `Cada barra va de la recepción (día 0) al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, 2 casos de referencia); la línea vertical es hoy y el punto naranja, el límite.` };
+  if (/barra/i.test(texto)) return { texto: `Cada barra va de la recepción (día 0) al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días según la consulta, n = ${REF.n}); la línea vertical es hoy y el punto naranja, el límite.` };
   const f = FAQ.find(([re]) => re.test(texto));
   return { texto: f ? f[1] : 'No tengo una respuesta preparada para eso. Prueba con «¿Qué vence primero?», «¿Qué plazo tiene E-204?» o «¿Cómo evita que la IA invente?». Con la IA en vivo puedo responder preguntas abiertas sobre el proyecto.' };
 }

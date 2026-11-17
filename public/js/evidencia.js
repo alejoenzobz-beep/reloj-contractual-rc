@@ -72,7 +72,7 @@ export function vistaEvidencia({ cifras, consulta }) {
       <p>¿Se complicó o se perdió un adicional por el plazo? ${Object.entries(comp).map(([k, v]) => `<b>${esc(k)}</b>: ${v}`).join(' · ')}. Tipo de plazo: ${Object.entries(tipos).map(([k, v]) => `${v} en días ${k === 'habiles' ? 'hábiles' : 'calendario'}`).join(', ')}.</p>
       ${r.nota ? `<p class="pista-txt">${esc(r.nota)}</p>` : ''}
       <details class="tec"><summary>Ver las ${R.length} respuestas (anonimizadas)</summary><div class="scroll-x"><table class="t"><thead><tr><th>Id</th><th>Cargo</th><th>Obra</th><th>Plazo</th><th>Entender</th><th>Margen</th><th>¿Se complicó?</th></tr></thead><tbody>${R.map(x => `<tr><td>${esc(x.id)}</td><td>${esc(x.cargo)}</td><td>${esc(x.obra)}</td><td>${x.plazo_dias} ${x.tipo_dias === 'habiles' ? 'háb.' : 'cal.'}</td><td>${x.entender_dias}</td><td>${x.plazo_dias - x.entender_dias}</td><td>${esc(x.se_complico)}</td></tr>`).join('')}</tbody></table></div></details>
-      ${cifras?.casos_referencia ? `<p class="pista-txt">Antes de esta consulta se usaron ${cifras.casos_referencia.casos.length} casos del equipo (ver «Casos de referencia», más abajo); las barras de plazo siguen usando ese rango.</p>` : ''}`);
+      <p class="pista-txt">Las barras de plazo usan este rango como referencia «sin asistente».</p>`);
   } else c1 = capa(1, 'Línea base: cuánto tarda hoy entender un cambio', '', sinMedir('preguntar a profesionales de obra y oficina técnica cuántos días tenían para notificar y cuántos tardaron en entender el cambio; se reportan conteos y medianas, sin porcentajes.'));
 
   // Capa 2: comparador con documentos reales de revisión.
