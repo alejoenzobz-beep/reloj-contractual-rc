@@ -1,0 +1,178 @@
+{
+ "origen": "real",
+ "fecha": "2026-11-16",
+ "n": 15,
+ "fuente": "Consulta breve por WhatsApp a profesionales de obra y oficina técnica; anonimizada",
+ "resumen": {
+  "mediana_plazo_dias": 7,
+  "mediana_entender_dias": 3,
+  "mediana_margen_dias": 4,
+  "rango_entender_dias": [
+   2,
+   5
+  ],
+  "se_complico": {
+   "Sí": 4,
+   "Casi": 5,
+   "No": 6
+  },
+  "tipo_dias": {
+   "calendario": 12,
+   "habiles": 3
+  },
+  "entender_ocupa_la_mitad_o_mas_del_plazo": 6,
+  "nota": "Los días se cuentan según el tipo de cada contrato (calendario o hábiles). Conteos sobre n = 15; no se reportan porcentajes."
+ },
+ "respuestas": [
+  {
+   "id": "P01",
+   "cargo": "Residente de obra",
+   "obra": "multifamiliar",
+   "plazo_dias": 5,
+   "tipo_dias": "calendario",
+   "entender_dias": 3,
+   "margen_dias": 2,
+   "se_complico": "Sí"
+  },
+  {
+   "id": "P02",
+   "cargo": "Responsable de oficina técnica",
+   "obra": "oficinas",
+   "plazo_dias": 7,
+   "tipo_dias": "calendario",
+   "entender_dias": 3,
+   "margen_dias": 4,
+   "se_complico": "Casi"
+  },
+  {
+   "id": "P03",
+   "cargo": "Supervisor de obra",
+   "obra": "vial",
+   "plazo_dias": 10,
+   "tipo_dias": "calendario",
+   "entender_dias": 4,
+   "margen_dias": 6,
+   "se_complico": "No"
+  },
+  {
+   "id": "P04",
+   "cargo": "Asistente de oficina técnica",
+   "obra": "residencial",
+   "plazo_dias": 5,
+   "tipo_dias": "calendario",
+   "entender_dias": 2,
+   "margen_dias": 3,
+   "se_complico": "Sí"
+  },
+  {
+   "id": "P05",
+   "cargo": "Ingeniero residente",
+   "obra": "comercial",
+   "plazo_dias": 7,
+   "tipo_dias": "calendario",
+   "entender_dias": 4,
+   "margen_dias": 3,
+   "se_complico": "Casi"
+  },
+  {
+   "id": "P06",
+   "cargo": "Responsable de oficina técnica",
+   "obra": "institucional",
+   "plazo_dias": 8,
+   "tipo_dias": "calendario",
+   "entender_dias": 3,
+   "margen_dias": 5,
+   "se_complico": "No"
+  },
+  {
+   "id": "P07",
+   "cargo": "Supervisor de obra",
+   "obra": "multifamiliar",
+   "plazo_dias": 5,
+   "tipo_dias": "habiles",
+   "entender_dias": 3,
+   "margen_dias": 2,
+   "se_complico": "Casi"
+  },
+  {
+   "id": "P08",
+   "cargo": "Coordinador de oficina técnica",
+   "obra": "infraestructura",
+   "plazo_dias": 10,
+   "tipo_dias": "calendario",
+   "entender_dias": 5,
+   "margen_dias": 5,
+   "se_complico": "No"
+  },
+  {
+   "id": "P09",
+   "cargo": "Residente de obra",
+   "obra": "multifamiliar",
+   "plazo_dias": 7,
+   "tipo_dias": "calendario",
+   "entender_dias": 2,
+   "margen_dias": 5,
+   "se_complico": "Sí"
+  },
+  {
+   "id": "P10",
+   "cargo": "Asistente de oficina técnica",
+   "obra": "oficinas",
+   "plazo_dias": 5,
+   "tipo_dias": "calendario",
+   "entender_dias": 4,
+   "margen_dias": 1,
+   "se_complico": "Casi"
+  },
+  {
+   "id": "P11",
+   "cargo": "Especialista de instalaciones",
+   "obra": "institucional",
+   "plazo_dias": 8,
+   "tipo_dias": "habiles",
+   "entender_dias": 3,
+   "margen_dias": 5,
+   "se_complico": "No"
+  },
+  {
+   "id": "P12",
+   "cargo": "Responsable de oficina técnica",
+   "obra": "residencial",
+   "plazo_dias": 7,
+   "tipo_dias": "calendario",
+   "entender_dias": 4,
+   "margen_dias": 3,
+   "se_complico": "Casi"
+  },
+  {
+   "id": "P13",
+   "cargo": "Ingeniero residente",
+   "obra": "infraestructura urbana",
+   "plazo_dias": 10,
+   "tipo_dias": "calendario",
+   "entender_dias": 4,
+   "margen_dias": 6,
+   "se_complico": "No"
+  },
+  {
+   "id": "P14",
+   "cargo": "Supervisora de obra",
+   "obra": "comercial",
+   "plazo_dias": 5,
+   "tipo_dias": "calendario",
+   "entender_dias": 2,
+   "margen_dias": 3,
+   "se_complico": "Sí"
+  },
+  {
+   "id": "P15",
+   "cargo": "Especialista de instalaciones",
+   "obra": "multifamiliar",
+   "plazo_dias": 7,
+   "tipo_dias": "habiles",
+   "entender_dias": 3,
+   "margen_dias": 4,
+   "se_complico": "No"
+  }
+ ]
+}
