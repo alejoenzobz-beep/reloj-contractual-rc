@@ -373,6 +373,20 @@ function casosR1() {
       return `<a class="vidrio caso3" href="#alerta-${cid.toLowerCase()}"><span class="q">${esc(q)}</span><div class="frag">${conCita(d.texto.split('\n').find(l => l.includes(a.cita.slice(0, 18))) || d.texto.slice(0, 160), a.cita).replace('mark class="cita"', 'mark')}</div><span class="etq">${esc(dId)} · ${a.partida ? esc(a.partida) : 'sin partida'}</span></a>`; }).join('')}</div></section>`;
 }
 // Mini gráfico: un renglón por cambio abierto, ordenado por días restantes; la barra es la fracción del plazo que queda.
+// Bloque «Verificación»: cada check sale de una validación que ya existe (cita literal, criterios de la partida, fórmula del plazo, decisiones).
+function panelVerificacion(a, d) {
+  const cita = !!a.cita && a.cita.length >= 8 && N.normalizar(d.texto).includes(N.normalizar(a.cita));
+  const enRango = !!a.partida && !!a.criterios?.[3];
+  const pp = P(a), formula = N.fechaLimite(a.fecha_recepcion, pp, FER(a)) === a.limite;
+  const dec = est.decisiones[a.id], apr = estadoAprob(a);
+  const fila = (ok, t, x) => `<div class="check"><span class="ico ${ok ? 'si' : 'no'}">${ok ? '✓' : '•'}</span><div><b>${t}</b>${x ? ` <small class="pista-txt">${x}</small>` : ''}</div></div>`;
+  return `<div class="panel"><h3>Verificación</h3>
+    ${fila(cita, cita ? 'Cita encontrada literalmente en el documento' : 'Cita no encontrada en el documento', `${esc(a.doc_id)} rev. ${esc(d.revision)}`)}
+    ${fila(enRango, a.partida ? (enRango ? 'Partida en rango' : 'Partida pendiente de revisar: no cumple el criterio de rango o unidad') : 'Partida pendiente: sin partida equivalente', a.partida ? `<code>${esc(a.partida)}</code>` : '')}
+    ${fila(formula, formula ? 'Plazo calculado por fórmula' : 'Plazo no coincide con la fórmula', `cláusula ${esc(String(pp.clausula))} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción · vence el ${N.fmtFecha(a.limite)}`)}
+    ${fila(!!dec, dec ? 'Decisión registrada en Auditoría' : 'Sin decisión registrada todavía', dec ? `${esc(dec.estado)}${apr ? ` · ${esc(apr)}` : ''}` : 'oficina técnica debe confirmar, corregir o descartar')}
+  </div>`;
+}
 function miniPlazos(lista) {
   if (!lista.length) return '<p class="vacio">Sin cambios abiertos a esta fecha.</p>';
   const col = { verde: 'var(--verde)', ambar: 'var(--ambar)', rojo: 'var(--naranja)', vencido: 'var(--naranja)' };
@@ -638,6 +652,7 @@ function vAlerta(id) {
           ${a.alternativa ? `<p style="font-size:.88rem">Alternativa: <code>${esc(a.alternativa)}</code> ${esc(a.alternativa_desc)}</p>` : ''}
           <details class="tec"><summary>Por qué esta partida</summary><p>${esc(a.sustento)}</p></details>
         </div>
+        ${panelVerificacion(a, d)}
       </div>
     </div>`;
   const G = grupoDe(a);
