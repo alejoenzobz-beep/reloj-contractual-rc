@@ -595,6 +595,34 @@ button.avatar { border: 0; cursor: pointer; }
 .capa-local { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--borde); font-size: .88rem; } .capa-local p { margin: 6px 0; }
 .no-afirmamos { margin-top: 16px; } .no-afirmamos h4 { margin: 0 0 8px; }
 
+/* ---------- Entrada, proyectos y «Ver como» ---------- */
+.chip-rol-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--borde-luz); background: var(--azul-suave); color: var(--texto); font: 600 .84rem var(--f-texto); padding: 7px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.chip-rol-btn b { color: var(--tinta); } .rol-corto { display: none; font-weight: 800; color: var(--tinta); }
+.chip-rol { display: inline-block; vertical-align: middle; font: 700 .82rem var(--f-texto); color: var(--azul-2); border: 1px solid var(--borde-luz); background: var(--azul-suave); border-radius: 999px; padding: 4px 12px; margin-left: 10px; letter-spacing: 0; }
+.entrada { width: min(1040px, 100%); text-align: center; }
+.entrada .bv-marca { justify-content: center; font-size: 1.15rem; }
+.entrada h1 { font-size: clamp(1.6rem, 3.6vw, 2.6rem); line-height: 1.2; max-width: 22em; margin: 6px auto 26px; }
+.franja { list-style: none; margin: 0 auto; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; position: relative; }
+.franja::before { content: ""; position: absolute; left: 6%; right: 6%; top: 44px; height: 2px; background: linear-gradient(90deg, var(--azul), var(--naranja)); transform-origin: left; animation: fr-linea 2.6s ease-out both; }
+.franja li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 4px; opacity: 0; animation: fr-paso .5s ease-out both; animation-delay: calc(var(--k) * .5s + .2s); }
+.fr-vis { position: relative; z-index: 1; width: 88px; height: 88px; border-radius: 22px; display: grid; place-items: center; background: var(--fondo-1); border: 1px solid var(--borde-luz); box-shadow: 0 0 24px var(--brillo); }
+.franja b { color: var(--tinta); font: 700 .98rem var(--f-titulo); } .franja small { color: var(--texto-2); font-size: .8rem; line-height: 1.35; }
+.en-lam { display: flex; gap: 3px; } .en-lam img { width: 36px; height: 24px; border-radius: 3px; background: #fff; }
+.franja .fr-vis .en-num { font: 800 2.2rem var(--f-titulo); color: var(--azul-2); } .franja .fr-vis .en-num.naranja { color: var(--naranja); } .franja .fr-vis .en-cod { font: 800 1rem var(--f-titulo); color: var(--tinta); } .franja .fr-vis .en-ok { font-size: 2.2rem; color: var(--verde); }
+@keyframes fr-paso { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fr-linea { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.en-demo { margin: 14px 0 0; font-size: .78rem; color: var(--ambar); }
+.en-acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 26px 0 18px; }
+.en-principio { color: var(--texto-3); font-size: .86rem; letter-spacing: .02em; }
+.proy-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.proy-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: var(--r); background: var(--vidrio); border: 1.5px solid var(--borde); }
+.proy-card.actual { border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-suave); } .proy-card .etq { align-self: flex-start; } .proy-card h3 { margin: 0; } .proy-card p { margin: 0; color: var(--texto-2); font-size: .88rem; }
+.proy-card dl { margin: 4px 0 8px; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: .86rem; } .proy-card dt { color: var(--texto-3); } .proy-card dd { margin: 0; color: var(--tinta); } .proy-card .btn { align-self: flex-start; margin-top: auto; }
+@media (max-width: 900px) { .franja { grid-template-columns: 1fr; gap: 12px; text-align: left; } .franja::before { display: none; } .franja li { flex-direction: row; align-items: center; gap: 14px; } .fr-vis { width: 60px; height: 60px; flex: 0 0 60px; border-radius: 16px; } .franja li > b { min-width: 7em; } .franja .fr-vis .en-num, .franja .fr-vis .en-ok { font-size: 1.5rem; } .franja .fr-vis .en-cod { font-size: .72rem; } .en-lam img { width: 24px; height: 16px; } .rol-largo { display: none; } .rol-corto { display: inline; } .chip-rol { margin: 6px 0 0; } }
+@media (prefers-reduced-motion: reduce) { .franja li, .franja::before { animation: none !important; opacity: 1; transform: none; } }
+
+.origen-docs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 2px 0 12px; } .origen-docs .tit2 { margin-right: 4px; }
+.chip-origen { font-size: .76rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--borde); } .chip-origen.real { color: var(--tinta); border-color: var(--borde-luz); background: var(--azul-suave); } .chip-origen.demo { color: var(--texto-3); border-style: dashed; }
 @media (max-width: 1100px) { .beta { display: none; } }
 @media (max-width: 1500px) { #ruta-vista, #ruta-vista + span, .ruta > span:nth-of-type(1) { display: none; } }
 @media (max-width: 900px) { .inicio-hero, .panorama-grid { grid-template-columns: 1fr; } .resumen-dia.cuatro { grid-template-columns: 1fr 1fr; } .chip-cde span { display: none; } }
@@ -644,17 +672,17 @@ button.avatar { border: 0; cursor: pointer; }
       </div>
       <div class="superior-der">
         <span class="beta" title="Versión beta: los proyectos y documentos son datos de demostración">Beta · datos de demostración</span>
-        <div class="pop-ancla"><button class="chip-cde" id="cde-btn" aria-haspopup="true" aria-expanded="false" aria-controls="pop-cde"><i></i><span id="cde-txt">CDE</span></button><div class="pop" id="pop-cde" hidden></div></div>
         <a class="pastilla" id="estado-ia" href="#ajustes"><i></i>IA: respuestas registradas</a>
         <button class="redondo" id="guia-abrir" aria-label="Recorrido guiado" title="Recorrido guiado de 6 pasos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg></button>
         <a class="redondo" href="#bandeja" aria-label="Cambios urgentes en la bandeja" id="campana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></a>
         <button class="redondo tema-btn" id="tema" aria-label="Cambiar a modo claro" title="Cambiar tema"><span id="tema-ico"></span></button>
-        <div class="pop-ancla"><button class="avatar" id="rol-btn" aria-haspopup="true" aria-expanded="false" aria-controls="pop-rol" title="Rol activo">OT</button><div class="pop pop-der" id="pop-rol" hidden></div></div>
+        <div class="pop-ancla"><button class="chip-rol-btn" id="rol-btn" aria-haspopup="true" aria-expanded="false" aria-controls="pop-rol" title="Rol activo">OT</button><div class="pop pop-der" id="pop-rol" hidden></div></div>
       </div>
     </header>
     <main id="main">
       <section class="vista" id="v-inicio" aria-label="Inicio"></section>
       <section class="vista" id="v-panorama" aria-label="Panorama" hidden></section>
+      <section class="vista" id="v-proyectos" aria-label="Proyectos" hidden></section>
       <section class="vista" id="v-simulacion" aria-label="Cómo funciona" hidden></section>
       <section class="vista" id="v-bandeja" aria-label="Bandeja de cambios" hidden></section>
       <section class="vista" id="v-alerta" aria-label="Detalle de alerta" hidden></section>

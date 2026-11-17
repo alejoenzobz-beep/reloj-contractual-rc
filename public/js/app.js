@@ -179,7 +179,7 @@ function fraseDias(a) {
 }
 
 // ---------- router ----------
-const VISTAS = ['inicio', 'panorama', 'simulacion', 'bandeja', 'comparar', 'salidas', 'auditoria', 'calidad', 'plazos', 'resultados', 'ajustes'];
+const VISTAS = ['inicio', 'proyectos', 'panorama', 'simulacion', 'bandeja', 'comparar', 'salidas', 'auditoria', 'calidad', 'plazos', 'resultados', 'ajustes'];
 function ruta() {
   let h = location.hash.slice(1) || 'inicio';
   if (h === 'probar') h = 'comparar'; if (h === 'tablero') h = 'bandeja'; if (h === 'resultados') h = 'calidad';
@@ -193,10 +193,10 @@ function render() {
   document.querySelectorAll('.vista').forEach(v => v.hidden = v.id !== `v-${r.vista}`);
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === `#${r.vista === 'alerta' ? 'bandeja' : r.vista}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   pintarProyecto();
-  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Registro de auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
+  $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', proyectos: 'Proyectos', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Registro de auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   if (r.vista === 'alerta' && !(ultimaVista?.vista === 'alerta' && ultimaVista.id === r.id) && !est.decisiones[r.id]) EV.abrirDetalle(r.id);
   pintarFecha();
-  ({ inicio: vInicio, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); EV.conectarEvidencia(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, proyectos: vProyectos, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); EV.conectarEvidencia(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -273,7 +273,7 @@ function vInicio() {
   const urg = abiertas.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
   const acc = accionPrincipal(id);
   $('#v-inicio').innerHTML = `
-    <div class="saludo anim"><div><span class="sup-id">Asistente de trazabilidad documental y contractual</span><h1>${saludoHora()}, ${esc(rolN())}.</h1>
+    <div class="saludo anim"><div><span class="sup-id">Asistente de trazabilidad documental y contractual</span><h1>${saludoHora()}<span class="chip-rol">${esc(rolN())}</span></h1>
       <p>${esc(pr.nombre)}${pr.demo ? ' (demostración)' : ''} · ${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
       <p class="rol-hoy">${esc(ROLES[est.rol].hace)}</p></div></div>
     <div class="inicio-hero">
@@ -317,64 +317,50 @@ function abrirPop(btn, pop, pintar) {
 }
 document.addEventListener('click', e => { if (!e.target.closest('.pop-ancla')) { document.querySelectorAll('.pop').forEach(x => { x.hidden = true; }); document.querySelectorAll('.pop-ancla > [aria-expanded]').forEach(x => x.setAttribute('aria-expanded', 'false')); } });
 addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.pop').forEach(x => { if (!x.hidden) { x.hidden = true; x.previousElementSibling?.focus(); } }); });
-function pintarProyecto() {
-  $('#ruta-proy').textContent = PROY[est.proyecto].nombre;
-  const c = cdeDe(est.proyecto); $('#cde-btn').classList.toggle('off', !c);
-  $('#cde-txt').textContent = c ? ({ 'Autodesk Construction Cloud': 'ACC', 'Google Drive': 'Drive' }[c.tipo] || c.tipo) : 'Sin CDE';
-  $('#cde-btn').title = c ? `Conectado a ${c.tipo} · ${c.ruta} (demostración)` : 'Sin conexión al entorno común de datos';
-  $('#cde-btn').setAttribute('aria-label', `${$('#cde-btn').title}. Cambiar la conexión`);
-}
-function pintarRol() { const b = $('#rol-btn'); b.textContent = ROLES[est.rol].ini; b.title = `Rol activo: ${rolN()}. Cambiar de rol`; b.setAttribute('aria-label', `Rol activo: ${rolN()}. Cambiar de rol`); }
+function pintarProyecto() { $('#ruta-proy').textContent = PROY[est.proyecto].nombre; }
+function pintarRol() { const b = $('#rol-btn'); b.innerHTML = `<span class="rol-largo">Ver como: <b>${esc(rolN())}</b></span><span class="rol-corto">${ROLES[est.rol].ini}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`; b.title = `Ver como: ${rolN()}. ${ROLES[est.rol].hace}`; b.setAttribute('aria-label', `Ver como: ${rolN()}. Cambiar de rol`); }
+const ETQ_PROY = p => p.demo ? '<span class="etq ambar">Demostración</span>' : '<span class="etq">Corpus de prueba</span>';
 $('#proy-btn').onclick = () => abrirPop($('#proy-btn'), $('#pop-proy'), () => {
-  $('#pop-proy').innerHTML = `<h4>Proyecto</h4>${PROYECTOS.map(p => { const pa = paramsProy(p.id); return `<button class="pop-op" role="menuitemradio" aria-checked="${p.id === est.proyecto}" data-p="${p.id}"><b>${esc(p.nombre)}${p.demo ? ' · demostración' : ''}</b><small>${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · ${abiertasDe(p.id).length} abiertos</small></button>`; }).join('')}`;
-  $('#pop-proy').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { est.proyecto = b.dataset.p; est.bproy = est.proyecto; guardarActivo(); $('#pop-proy').hidden = true; pintarProyecto(); render(); pintarFecha(); });
+  $('#pop-proy').innerHTML = `<h4>Proyecto</h4>${PROYECTOS.map(p => { const pa = paramsProy(p.id); return `<button class="pop-op" role="menuitemradio" aria-checked="${p.id === est.proyecto}" data-p="${p.id}"><b>${esc(p.nombre)}</b><small>${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · ${abiertasDe(p.id).length} abiertos · ${p.demo ? 'demostración' : 'corpus de prueba'}</small></button>`; }).join('')}<a class="pop-op" href="#proyectos"><b>Ver todos los proyectos</b></a>`;
+  $('#pop-proy').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { abrirProyecto(b.dataset.p, false); $('#pop-proy').hidden = true; });
 });
-$('#cde-btn').onclick = () => abrirPop($('#cde-btn'), $('#pop-cde'), () => {
-  const c = cdeDe(est.proyecto);
-  $('#pop-cde').innerHTML = `<h4>Entorno común de datos · ${esc(PROY[est.proyecto].nombre)}</h4><p style="margin-top:0">${c ? `Conectado a <b>${esc(c.tipo)}</b> · ${esc(c.ruta)}.` : 'Sin conexión.'} Las conexiones de esta versión son de demostración: no leen archivos reales. Para comparar archivos propios usa «Comparar revisiones».</p>
-    ${puede('cde') ? CDE_OPS.map(t => `<button class="pop-op" data-cde="${esc(t)}" aria-checked="${c?.tipo === t}"><b>${esc(t)}</b><small>Conexión de demostración</small></button>`).join('') + (c ? '<button class="pop-op" data-cde=""><b>Desconectar</b></button>' : '') : notaRol('cde', 'Cambiar la conexión del CDE')}`;
-  $('#pop-cde').querySelectorAll('[data-cde]').forEach(b => b.onclick = () => { const t = b.dataset.cde; cdeConex[est.proyecto] = t ? { tipo: t, ruta: `/${est.proyecto}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } registrar(rolN(), `${PROY[est.proyecto].nombre} · ${t ? `CDE conectado: ${t} (demostración)` : 'CDE desconectado'}`, { tipo: 'parametro' }); $('#pop-cde').hidden = true; pintarProyecto(); });
-});
+function abrirProyecto(id, irInicio = true) { est.proyecto = id; est.bproy = id; guardarActivo(); pintarProyecto(); pintarFecha(); if (irInicio && location.hash !== '#inicio') location.hash = '#inicio'; else render(); }
 $('#rol-btn').onclick = () => abrirPop($('#rol-btn'), $('#pop-rol'), () => {
-  $('#pop-rol').innerHTML = `<h4>Rol activo · demostración</h4>${Object.entries(ROLES).map(([k, r]) => `<button class="pop-op" role="menuitemradio" aria-checked="${k === est.rol}" data-r="${k}"><b>${esc(r.n)}</b><small>${esc(r.hace)}</small></button>`).join('')}<p>En la versión real, cada persona entra con su usuario y su rol. Aquí puedes cambiarlo para recorrer el flujo completo.</p><button class="pop-op" id="ver-bienvenida"><b>Volver a la bienvenida</b></button>`;
+  $('#pop-rol').innerHTML = `<h4>Ver como · demostración</h4>${Object.entries(ROLES).map(([k, r]) => `<button class="pop-op" role="menuitemradio" aria-checked="${k === est.rol}" data-r="${k}"><b>${esc(r.n)}</b><small>${esc(r.hace)}</small></button>`).join('')}<p>En la versión real, cada persona entra con su usuario y su rol.</p><button class="pop-op" id="ver-entrada"><b>Ver la presentación de la app</b></button>`;
   $('#pop-rol').querySelectorAll('[data-r]').forEach(b => b.onclick = () => { $('#pop-rol').hidden = true; fijarRol(b.dataset.r); });
-  $('#ver-bienvenida').onclick = () => { $('#pop-rol').hidden = true; abrirBienvenida(); };
+  $('#ver-entrada').onclick = () => { $('#pop-rol').hidden = true; abrirEntrada(); };
 });
-// ---------- bienvenida (3 pasos, se puede saltar y se recuerda) ----------
-const BV = { paso: 0, rol: null, proyecto: null, cde: undefined };
-function abrirBienvenida() { Object.assign(BV, { paso: 0, rol: est.rol, proyecto: est.proyecto, cde: undefined }); $('#bienvenida').hidden = false; pintarBienvenida(); }
-function cerrarBienvenida(aplicar) {
-  if (aplicar) {
-    est.proyecto = BV.proyecto; guardarActivo();
-    if (BV.cde !== undefined) { cdeConex[BV.proyecto] = BV.cde ? { tipo: BV.cde, ruta: `/${BV.proyecto}/Revisiones`, demo: true } : null; try { localStorage.setItem('rc-cde', JSON.stringify(cdeConex)); } catch { } }
-    if (BV.rol !== est.rol) fijarRol(BV.rol, 'bienvenida');
-  }
-  try { localStorage.setItem('rc-bienvenida', 'vista'); } catch { }
-  $('#bienvenida').hidden = true; pintarProyecto(); pintarRol();
-  if (location.hash !== '#inicio') location.hash = '#inicio'; else render();
-  $('#accion-principal')?.focus();
+// ---------- proyectos: tarjetas ----------
+function vProyectos() {
+  $('#v-proyectos').innerHTML = `<div class="tab-cab"><div><h2>Proyectos</h2><p class="sub2">Elige en qué contrato trabajar. Cada uno tiene su propio plazo para notificar variaciones.</p></div></div>
+    <div class="proy-cards">${PROYECTOS.map(p => { const pa = paramsProy(p.id), ab = abiertasDe(p.id), u = ab.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
+      return `<article class="proy-card ${p.id === est.proyecto ? 'actual' : ''}">${ETQ_PROY(p)}<h3>${esc(p.nombre)}</h3><p>${esc(p.desc)}</p>
+        <dl><dt>Plazo para notificar</dt><dd>${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} · cláusula ${esc(pa.clausula)}</dd><dt>Estado</dt><dd>${ab.length ? `${ab.length} cambio${ab.length === 1 ? '' : 's'} abierto${ab.length === 1 ? '' : 's'}${u ? `, ${u} urgente${u === 1 ? '' : 's'}` : ''}` : 'Sin cambios abiertos'}</dd></dl>
+        <button class="btn ${p.id === est.proyecto ? '' : 'prim'}" data-abrir="${p.id}">${p.id === est.proyecto ? 'Seguir en este proyecto' : 'Abrir proyecto'}</button></article>`; }).join('')}</div>`;
+  document.querySelectorAll('[data-abrir]').forEach(b => b.onclick = () => abrirProyecto(b.dataset.abrir));
 }
-function pintarBienvenida() {
+// ---------- entrada: primero se entiende qué hace la app ----------
+function abrirEntrada() {
+  const pp = paramsProy('R1');
   const pasos = [
-    { h: '¿Quién eres?', p: 'Cada rol ve sus decisiones. Puedes cambiarlo después desde el avatar (en la versión real, cada persona entra con su usuario).',
-      ops: Object.entries(ROLES).map(([k, r]) => [k, r.n, r.hace, '']), sel: BV.rol, set: v => BV.rol = v },
-    { h: '¿En qué proyecto trabajamos?', p: 'Cada contrato tiene su propio plazo para notificar variaciones.',
-      ops: PROYECTOS.map(p => { const pa = paramsProy(p.id); return [p.id, p.nombre, `${pa.plazo} días ${pa.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · ${p.desc}`, p.demo ? 'Demostración' : 'Corpus de prueba sintético']; }), sel: BV.proyecto, set: v => BV.proyecto = v },
-    { h: '¿Dónde están tus documentos?', p: 'El entorno común de datos (CDE) es de donde llegan las revisiones. En esta versión las conexiones son de demostración; para usar archivos propios, súbelos en «Comparar revisiones».',
-      ops: [...CDE_OPS.map(t => [t, t, 'Conexión de demostración: no lee archivos reales.', 'Demostración']), ['', 'Solo quiero probar con el ejemplo', 'Sin conexión. Usa la lámina de ejemplo E-301 y los documentos del proyecto R1.', '']], sel: BV.cde === undefined ? (cdeDe(BV.proyecto)?.tipo ?? '') : BV.cde, set: v => BV.cde = v },
+    ['Revisión A → B', 'Llega la lámina E-301 rev. B', `<span class="en-lam"><img alt="" src="${URL.createObjectURL(new Blob([laminaSVG('A')], { type: 'image/svg+xml' }))}"><img alt="" src="${URL.createObjectURL(new Blob([laminaSVG('B')], { type: 'image/svg+xml' }))}"></span>`],
+    ['Cambio detectado', '3 cambios con impacto; 2 no se veían a simple vista', '<b class="en-num">3</b>'],
+    ['Partida', 'Viga V-1 → 03.01.03 Concreto en vigas, con su cita literal', '<b class="en-cod">03.01.03</b>'],
+    ['Días que quedan', `Cláusula ${pp.clausula}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción`, `<b class="en-num naranja">${pp.plazo}</b>`],
+    ['Carta lista', 'Borrador con la cita, la partida y la fecha límite, para firmar', '<b class="en-ok">✓</b>'],
   ];
-  const q = pasos[BV.paso];
-  $('#bienvenida').innerHTML = `<div class="bv-caja">
-    <div class="bv-marca"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12.5" fill="none" stroke="#8FB0FF" stroke-width="3"/><path d="M16 3.5a12.5 12.5 0 0 1 10.8 6.25" fill="none" stroke="#FF8A4C" stroke-width="3" stroke-linecap="round"/><path d="M16 9v7l4.5 3" fill="none" stroke="#8FB0FF" stroke-width="3" stroke-linecap="round"/></svg><div>Reloj Contractual<small>Asistente de trazabilidad documental y contractual · versión beta con datos de demostración</small></div></div>
-    <div class="bv-pasos" aria-hidden="true">${pasos.map((_, k) => `<span class="${k <= BV.paso ? 'on' : ''}"></span>`).join('')}</div>
-    <small class="pista-txt">Paso ${BV.paso + 1} de 3</small><h1 id="bv-titulo">${q.h}</h1><p>${q.p}</p>
-    <div class="bv-ops" role="radiogroup" aria-labelledby="bv-titulo">${q.ops.map(([v, t, d, e]) => `<button class="bv-op" role="radio" aria-checked="${v === q.sel}" data-v="${esc(v)}"><b>${esc(t)}</b><small>${esc(d)}</small>${e ? `<span class="etq ${e === 'Demostración' ? 'ambar' : ''}">${esc(e)}</span>` : ''}</button>`).join('')}</div>
-    <div class="bv-pie"><button class="btn" id="bv-saltar">Saltar y entrar como ${esc(ROLES.ot.n)}</button><div class="fila-btn">${BV.paso ? '<button class="btn" id="bv-atras">Atrás</button>' : ''}<button class="btn prim" id="bv-sig">${BV.paso === 2 ? 'Entrar' : 'Siguiente'}</button></div></div></div>`;
-  $('#bienvenida').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { q.set(b.dataset.v); pintarBienvenida(); $('#bv-sig').focus(); });
-  $('#bv-saltar').onclick = () => { BV.rol = 'ot'; cerrarBienvenida(true); };
-  const at = $('#bv-atras'); if (at) at.onclick = () => { BV.paso--; pintarBienvenida(); };
-  $('#bv-sig').onclick = () => { if (BV.paso === 2) { if (BV.cde === undefined) BV.cde = q.sel; cerrarBienvenida(true); } else { BV.paso++; pintarBienvenida(); } };
-  ($('#bienvenida [aria-checked="true"]') || $('#bv-sig')).focus();
+  $('#bienvenida').innerHTML = `<div class="entrada">
+    <div class="bv-marca"><svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12.5" fill="none" stroke="#8FB0FF" stroke-width="3"/><path d="M16 3.5a12.5 12.5 0 0 1 10.8 6.25" fill="none" stroke="#FF8A4C" stroke-width="3" stroke-linecap="round"/><path d="M16 9v7l4.5 3" fill="none" stroke="#8FB0FF" stroke-width="3" stroke-linecap="round"/></svg><span>Reloj Contractual</span></div>
+    <h1 id="bv-titulo">Detecta qué cambió entre revisiones, propone la partida y te dice cuántos días quedan para notificar.</h1>
+    <ol class="franja" aria-label="Recorrido del ejemplo E-301">${pasos.map(([t, d, v], k) => `<li style="--k:${k}"><div class="fr-vis">${v}</div><b>${t}</b><small>${d}</small></li>`).join('')}</ol>
+    <p class="en-demo">Ejemplo E-301 del proyecto R1 · datos de demostración</p>
+    <div class="en-acciones"><button class="btn prim grande" id="en-entrar">Entrar al proyecto de ejemplo</button><button class="btn" id="en-evaluar">Ver cómo evaluarla en 5 minutos</button></div>
+    <p class="en-principio">El modelo lee y propone. La fórmula cuenta. La persona decide.</p></div>`;
+  $('#bienvenida').hidden = false;
+  const cerrar = () => { try { localStorage.setItem('rc-bienvenida', 'vista'); } catch { } $('#bienvenida').hidden = true; est.proyecto = 'R1'; guardarActivo(); pintarProyecto(); pintarRol(); };
+  $('#en-entrar').onclick = () => { cerrar(); if (location.hash !== '#inicio') location.hash = '#inicio'; else render(); $('#accion-principal')?.focus(); };
+  $('#en-evaluar').onclick = () => { cerrar(); if (location.hash !== '#inicio') location.hash = '#inicio'; else render(); setTimeout(() => { const e = $('.evaluar'); if (e) { e.open = true; e.scrollIntoView({ block: 'start' }); e.querySelector('summary').focus(); } }, 120); };
+  $('#en-entrar').focus();
 }
 function casosR1() {
   const casos = [['ALR-0002', 'E-204', 'Cambio dentro de una nota de lámina'], [alertas.find(a => a.doc_id === 'CT-024')?.id, 'CT-024', 'Instrucción en el cuarto párrafo de una carta'], [alertas.find(a => a.doc_id === 'RFI-155')?.id, 'RFI-155', 'Absolución de RFI sin partida en el presupuesto']];
@@ -798,7 +784,7 @@ function guardarActivo() { try { localStorage.setItem('rc-proyecto-activo', est.
 const guiaVista = () => { try { return localStorage.getItem('rc-guia') === 'vista'; } catch { return false; } };
 const marcarGuia = () => { try { localStorage.setItem('rc-guia', 'vista'); } catch { } };
 const GUIA = [
-  { t: 'Conectar', h: 'El proyecto y su entorno de datos', p: 'Arriba eliges el proyecto y ves su conexión al CDE (en esta demostración, simulada). Cada documento nuevo que llega al CDE arranca un plazo contractual.', ir: '#inicio', foco: '#cde-btn', rol: 'control' },
+  { t: 'Conectar', h: 'El proyecto y su entorno de datos', p: 'Arriba eliges el proyecto: cada contrato tiene su plazo para notificar. Cada revisión nueva que llega arranca ese plazo.', ir: '#inicio', foco: '#proy-btn', rol: 'control' },
   { t: 'Detectar', h: 'Compara la revisión A con la B', p: 'Con la lámina de ejemplo E-301 cargada, pulsa «Detectar cambios». El comparador marca cada zona que cambió sin usar IA.', ir: '#comparar', foco: '#cmp-ir', rol: 'control' },
   { t: 'Entender', h: 'Qué cambió, dónde y con qué prueba', p: 'La IA indica qué diferencias tienen impacto y propone la partida. Cada tarjeta trae la cita literal, verificada contra el texto de la revisión B.', ir: '#comparar', foco: '#cmp-tarjetas', antes: async () => { if (!document.querySelector('#cmp-alerta')) { $('#cmp-ir')?.click(); await esperarSel('#cmp-alerta', 15000); } } },
   { t: 'Decidir', h: 'Oficina técnica decide', p: 'El cambio ya está en la bandeja con su plazo. Como oficina técnica, revisa la evidencia y pulsa «Confirmar» (o corrige la partida). Nada se emite sin esta decisión: el recorrido sigue cuando la tomes.', ir: null, foco: '#panel-decision .acciones', rol: 'ot',
@@ -1010,5 +996,5 @@ document.addEventListener('click', e => { if (!e.target.closest('#pop-fecha, #ch
 pintarRol();
 render();
 iniciarConexiones();
-try { if (!localStorage.getItem('rc-bienvenida')) abrirBienvenida(); } catch { }
+try { if (!localStorage.getItem('rc-bienvenida')) abrirEntrada(); } catch { }
 IA.iniciarModo().then(() => { pintarModoIA(); if (!$('#asist').hidden) pintarChat(); if (['comparar', 'ajustes', 'salidas'].includes(ruta().vista)) render(); });

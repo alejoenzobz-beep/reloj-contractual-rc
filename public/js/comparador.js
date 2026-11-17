@@ -185,6 +185,8 @@ export function vComparar(ctx) {
   const modos = [['ejemplo', 'Ejemplo: lámina E-301'], ['texto', 'Pegar texto'], ['pdf', 'Subir dos PDF'], ['imagen', 'Subir dos imágenes']];
   raiz.innerHTML = `
     <div class="tab-cab"><div><h2>Comparar revisiones</h2><p class="sub2">Elige dos revisiones de un mismo documento. El comparador marca cada diferencia sin usar IA; luego la IA indica cuáles tienen impacto y propone la partida, y la app verifica cada cita contra el texto.</p></div></div>
+    <div class="origen-docs" id="origen-docs"><span class="tit2">Desde dónde traer las revisiones</span>
+      <span class="chip-origen real">Archivos de este equipo</span>${ctx.drive?.activo ? '<span class="chip-origen real">Google Drive</span>' : '<span class="chip-origen demo" title="Conexión de demostración: no lee archivos reales">Google Drive · demostración</span>'}<span class="chip-origen demo" title="Conexión de demostración: no lee archivos reales">Autodesk Construction Cloud · demostración</span><span class="chip-origen demo" title="Conexión de demostración: no lee archivos reales">Notion · demostración</span></div>
     <div class="segmento" role="tablist" aria-label="Tipo de entrada">${modos.map(([k, t]) => `<button role="tab" aria-selected="${S.modo === k}" data-modo="${k}">${t}</button>`).join('')}</div>
     <div class="cmp-entrada panel" id="cmp-entrada"></div>
     <div class="cmp-acciones">${ctx.puede('comparar') ? '<button class="btn prim grande" id="cmp-ir">Detectar cambios</button>' : ctx.notaRol('comparar', 'Comparar revisiones')}<span class="cmp-modo-ia">Modo de IA: <a href="#ajustes" id="cmp-modo">${esc(IA.etiquetaModo())}</a></span></div>
