@@ -191,7 +191,8 @@
    "rechazos_ingesta_ok": "1 de 1",
    "latencia_mediana_ms": 5347,
    "reintentos": 1,
-   "errores": 0
+   "errores": 0,
+   "nota": "Primera corrida descartada: 5 de 9 documentos sin respuesta por tiempo (504); se repitió sin cambiar las instrucciones. Mediana 5,3 s por llamada."
   }
  ]
 }

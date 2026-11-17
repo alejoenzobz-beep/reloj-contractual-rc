@@ -101,7 +101,7 @@ export function vistaEvidencia({ cifras, consulta }) {
     <tr><td>Entender un cambio tomó entre los días indicados en los casos observados (con su n).</td><td>Que ese rango sea el del sector.</td></tr>
     <tr><td>El comparador detectó los cambios conocidos que se indiquen en los pares de láminas medidos.</td><td>Una precisión general del comparador.</td></tr>
     <tr><td>Con la app, la revisión de una alerta tomó la mediana medida (con n personas y decisiones).</td><td>Que ahorre una cantidad de días en obra.</td></tr>
-    <tr><td>Las cifras de precisión de la IA son de un modelo de Claude, con instrucciones fijas, sobre un corpus de demostración y uno ciego.</td><td>Que valgan para la IA en vivo (Gemini u otra), que no se ha medido.</td></tr></tbody></table></div>`;
+    <tr><td>Con la prueba ciega congelada (n = 8 cambios), Claude en desarrollo y la IA registrada en vivo dieron resultados comparables, con instrucciones fijas.</td><td>Que un modelo sea mejor que otro: es una sola corrida en vivo con n pequeño.</td></tr></tbody></table></div>`;
   return `<section class="seccion" id="evidencia"><h3>Evidencia, por capas</h3><p class="pista-txt" style="margin:4px 0 12px">Cada capa dice de dónde sale, con qué n y en qué fecha. Lo que no se ha medido figura como «sin medir todavía». Sin porcentajes con n pequeño.</p>
     <div class="capas">${c1}${c2}${c3}${c4}</div>${noAfirmamos}</section>`;
 }

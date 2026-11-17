@@ -680,7 +680,8 @@ function vCalidad() {
       <div class="panel scroll-x"><table class="t"><thead><tr><th>Modelo</th><th>Fecha</th><th>Documentos</th><th>Cambios detectados</th><th>Falsas alarmas</th><th>Partida correcta</th></tr></thead><tbody>
         <tr><td>Claude <small class="pista-txt">· medición de desarrollo</small></td><td>${N.fmtFecha(cifras.generado.slice(0, 10))}</td><td>${pn.documentos}</td><td>${de(pn.corrida_1.detectados, pn.cambios_referencia)} y ${de(pn.corrida_2.detectados, pn.cambios_referencia)}</td><td>${pn.corrida_1.falsos_positivos} y ${pn.corrida_2.falsos_positivos}</td><td>${de(okPartida(pn.corrida_1), pn.corrida_1.detectados)} y ${de(okPartida(pn.corrida_2), pn.corrida_2.detectados)}</td></tr>
         ${filasModelo || `<tr><td>IA registrada <small class="pista-txt">· por defecto: Gemini</small></td><td colspan="5"><span class="aud-mal">Sin medir todavía.</span> <span class="pista-txt">Se mide con <code>npm run medir-ia</code> contra la función publicada, con la misma referencia.</span></td></tr>`}
-      </tbody></table></div></section>
+      </tbody></table></div>
+      ${(cifras.precision_por_modelo || []).map(f => `<p class="pista-txt" style="margin-top:8px">Resultados comparables (n = ${f.cambios_referencia} cambios, una sola corrida en vivo); ${esc(f.modelo)} con ${f.falsas_alarmas} falsas alarmas de ${f.alertas} alertas.${f.nota ? ` ${esc(f.nota)}` : ''}</p>`).join('')}</section>
     ${EV.vistaEvidencia({ cifras, consulta })}
     <details class="panel detalle-tec"><summary><b>Detalle técnico de las mediciones</b></summary>
       <div class="lectura" style="margin-top:10px"><ul>
