@@ -1,0 +1,2 @@
+Coloca aquí los 10 documentos nuevos de la prueba ciega (documentos.json) y su referencia congelada (referencia.json).
+Luego: npm run medir-ia

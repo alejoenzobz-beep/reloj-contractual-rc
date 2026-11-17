@@ -20,11 +20,11 @@ function permitido(ip) {
 
 // Modelo: GEMINI_MODEL si está definido; si no, uno liviano. Si el pedido tarda o no existe, se pasa a uno liviano
 // disponible (ListModels solo como respaldo). Cada llamada se corta antes del límite de tiempo de Netlify.
-const LIVIANOS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const LIVIANOS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 const MODELO_PEDIDO = process.env.GEMINI_MODEL || LIVIANOS[0];
 let MODELO = MODELO_PEDIDO;
 const TIEMPO_MS = Number(process.env.IA_TIEMPO_MS || 8000);
-const MAX_SALIDA = { P: 16, C: 700, H: 1500, I1: 2048, I2: 2048 };
+const MAX_SALIDA = { P: 256, C: 1024, H: 2048, I1: 3072, I2: 3072 };
 let disponibles = null;
 async function listarModelos(clave) {
   if (disponibles) return disponibles;
@@ -33,17 +33,10 @@ async function listarModelos(clave) {
   if (!r.ok) throw new Error(`ListModels respondió ${r.status}: ${d?.error?.message || 'sin detalle'}`);
   return (disponibles = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace(/^models\//, '')));
 }
-async function elegirLiviano(clave, evitar) {
-  const ok = await listarModelos(clave);
-  const m = LIVIANOS.find(x => x !== evitar && ok.includes(x)) || ok.find(n => /flash-lite/.test(n) && n !== evitar) || ok.find(n => /flash/.test(n) && !/(image|tts|audio|live|exp)/.test(n) && n !== evitar);
-  if (!m) throw new Error('La clave no tiene acceso a un modelo liviano que admita generateContent.');
-  return m;
-}
-// Configuración de generación: sin razonamiento (o el mínimo) y salida acotada.
+// Configuración de generación: razonamiento mínimo (o nulo) y salida acotada.
 function config(p, modelo, conPensamiento = true) {
   const g = { temperature: 0, ...(p.gen || {}), maxOutputTokens: MAX_SALIDA[p.paso] || 1024 };
-  if (conPensamiento) g.thinkingConfig = /gemini-2\.5/.test(modelo) ? { thinkingBudget: 0 } : /gemini-3/.test(modelo) ? { thinkingLevel: 'low' } : undefined;
-  if (!g.thinkingConfig) delete g.thinkingConfig;
+  if (conPensamiento) { if (/gemini-2\.5/.test(modelo)) g.thinkingConfig = { thinkingBudget: 0 }; else if (/gemini-3/.test(modelo)) g.thinkingConfig = { thinkingLevel: 'minimal' }; }
   return g;
 }
 async function llamar(clave, p, modelo, ms, conPensamiento = true) {
@@ -52,19 +45,32 @@ async function llamar(clave, p, modelo, ms, conPensamiento = true) {
     body: JSON.stringify({ systemInstruction: { parts: [{ text: p.sistema }] }, contents: [{ role: 'user', parts: [{ text: p.mensaje }] }], generationConfig: config(p, modelo, conPensamiento) }),
   });
 }
+const PRESUPUESTO_MS = Number(process.env.IA_PRESUPUESTO_MS || 22000);
+// Prueba el modelo actual y, si tarda, no existe, está saturado o responde vacío, pasa al siguiente liviano.
+// Devuelve { salida, modelo } o lanza un error con el último motivo. Recuerda el modelo que respondió.
 async function generar(clave, p) {
-  const t0 = Date.now();
-  try {
-    let r = await llamar(clave, p, MODELO, TIEMPO_MS);
-    if (r.status === 400) { const d = await r.clone().json().catch(() => ({})); if (/thinking/i.test(d?.error?.message || '')) r = await llamar(clave, p, MODELO, TIEMPO_MS, false); }
-    if (r.status !== 404) return r;
-  } catch (e) { if (e.name !== 'TimeoutError' && e.name !== 'AbortError') throw e; }
-  // El modelo pedido no existe o tardó demasiado: se usa uno liviano con el tiempo que queda.
-  const resto = 22000 - (Date.now() - t0);
-  if (resto < 3000) throw Object.assign(new Error('La IA tardó demasiado.'), { tiempo: true });
-  MODELO = await elegirLiviano(clave, MODELO);
-  try { return await llamar(clave, p, MODELO, Math.min(TIEMPO_MS, resto - 1000)); }
-  catch (e) { if (e.name === 'TimeoutError' || e.name === 'AbortError') throw Object.assign(new Error('La IA tardó demasiado.'), { tiempo: true }); throw e; }
+  const t0 = Date.now(), probados = new Set(); let motivo = 'sin respuesta';
+  const siguiente = async () => { if (!probados.size) return MODELO; let ok = LIVIANOS; try { ok = await listarModelos(clave); } catch { } return LIVIANOS.find(m => !probados.has(m) && ok.includes(m)) || null; };
+  for (let modelo = await siguiente(); modelo; modelo = await siguiente()) {
+    probados.add(modelo);
+    const resto = PRESUPUESTO_MS - (Date.now() - t0);
+    if (resto < 2500) break;
+    try {
+      let r = await llamar(clave, p, modelo, Math.min(TIEMPO_MS, resto - 500));
+      let d = await r.json().catch(() => ({}));
+      if (r.status === 400 && /thinking/i.test(d?.error?.message || '')) { r = await llamar(clave, p, modelo, Math.min(TIEMPO_MS, resto - 500), false); d = await r.json().catch(() => ({})); }
+      if ([404, 429, 500, 503].includes(r.status)) { motivo = `${modelo} respondió ${r.status}: ${d?.error?.message || ''}`.slice(0, 220); continue; }
+      if (!r.ok) throw Object.assign(new Error(`El proveedor de IA (Gemini, modelo ${modelo}) respondió ${r.status}: ${d?.error?.message || 'sin detalle'}`), { proveedor: true });
+      const salida = (d.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('').trim();
+      if (!salida) { motivo = `${modelo} devolvió una respuesta vacía (${d.candidates?.[0]?.finishReason || 'sin motivo'})`; continue; }
+      MODELO = modelo; return { salida, modelo };
+    } catch (e) {
+      if (e.proveedor) throw e;
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') { motivo = `${modelo} tardó más de ${Math.round(Math.min(TIEMPO_MS, resto) / 1000)} s`; continue; }
+      throw e;
+    }
+  }
+  throw Object.assign(new Error(`La IA tardó demasiado o no está disponible (${motivo}).`), { tiempo: true });
 }
 
 function armar(paso, e) {
@@ -114,15 +120,12 @@ export default async (req, context) => {
   const ip = context?.ip || req.headers.get('x-nf-client-connection-ip') || 'local';
   if (!permitido(ip)) return json({ error: 'limite', mensaje: `Se alcanzó el límite de ${LIMITE} consultas por hora. Usa el modo manual o el de demostración.` }, 429);
   try {
-    const t0 = Date.now(), r = await generar(clave, p);
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) return json({ error: 'proveedor', mensaje: `El proveedor de IA (Gemini, modelo ${MODELO}) respondió ${r.status}: ${d?.error?.message || 'sin detalle'}` }, 502);
-    const salida = (d.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('').trim();
-    if (!salida) return json({ error: 'vacia', mensaje: 'Gemini devolvió una respuesta vacía.' }, 502);
-    if (p.chat) return json({ ...leerSalidaChat(salida, p.ids), modelo: MODELO });
-    return json({ texto: salida, modelo: MODELO, ms: Date.now() - t0 });
+    const t0 = Date.now(), { salida, modelo } = await generar(clave, p);
+    if (p.chat) return json({ ...leerSalidaChat(salida, p.ids), modelo, ms: Date.now() - t0 });
+    return json({ texto: salida, modelo, ms: Date.now() - t0 });
   } catch (err) {
-    if (err.tiempo) return json({ error: 'tiempo', mensaje: 'La IA tardó demasiado en responder.' }, 504);
+    if (err.tiempo) return json({ error: 'tiempo', mensaje: err.message }, 504);
+    if (err.proveedor) return json({ error: 'proveedor', mensaje: err.message }, 502);
     return json({ error: 'red', mensaje: `No se pudo contactar al proveedor de IA: ${err.message}` }, 502);
   }
 };

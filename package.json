@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "start": "cd public && python3 -m http.server 8765"
+    "start": "cd public && python3 -m http.server 8765",
+    "medir-ia": "node scripts/medir_ia.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
