@@ -62,11 +62,14 @@ export const modoIA = () => modo;
 export function fijarModo(m) { modo = m; elegido = true; try { sessionStorage.setItem('rc-ia-modo', m); } catch { } }
 export let estadoInicial = null;
 // Si la persona no eligió un modo y el servidor tiene clave, arranca con la IA registrada.
+// El verde y el «Disponible» reflejan la última prueba real (una llamada corta), no solo que exista la clave.
 export async function iniciarModo() {
   estadoInicial = await estadoServidor();
-  if (!elegido) modo = estadoInicial.servidor && estadoInicial.clave ? 'servidor' : claveUsuario() ? 'clave' : 'demo';
+  if (estadoInicial.servidor && estadoInicial.clave) estadoInicial.prueba = await probarConexion('servidor');
+  if (!elegido) modo = estadoInicial.prueba?.ok ? 'servidor' : claveUsuario() ? 'clave' : 'demo';
   return estadoInicial;
 }
+export const servidorResponde = () => !!estadoInicial?.prueba?.ok;
 
 export class SinRespuesta extends Error { constructor(msg, codigo) { super(msg); this.codigo = codigo; } }
 
@@ -92,13 +95,15 @@ export async function estadoServidor() {
   } catch { return { servidor: false, motivo: 'Sin conexión con el servidor.' }; }
 }
 
-async function llamarServidor(cuerpo) {
+async function llamarServidor(cuerpo, ms = 20000) {
   let r;
-  try { r = await fetch('/.netlify/functions/ia', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo) }); }
-  catch { throw new SinRespuesta('Sin conexión con el servidor de IA. Revisa tu red o usa el modo manual o el de demostración.', 'red'); }
+  try { r = await fetch('/.netlify/functions/ia', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo), signal: AbortSignal.timeout(ms) }); }
+  catch (e) { if (e.name === 'TimeoutError' || e.name === 'AbortError') throw new SinRespuesta('La IA tardó demasiado en responder.', 'tiempo'); throw new SinRespuesta('Sin conexión con el servidor de IA. Revisa tu red.', 'red'); }
+  if ([502, 503, 504].includes(r.status) && !(r.headers.get('content-type') || '').includes('json')) throw new SinRespuesta('La IA tardó demasiado en responder.', 'tiempo');
   const tipo = r.headers.get('content-type') || '';
   if (!tipo.includes('json')) throw new SinRespuesta('No se encontró el servidor de IA: la app se abrió sin Netlify Functions. Usa tu propia clave, el modo manual o el de demostración.', 'sin_servidor');
-  const d = await r.json();
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 504 || d.error === 'tiempo' || (r.status === 502 && d.errorType)) throw new SinRespuesta('La IA tardó demasiado en responder.', 'tiempo');
   if (d.error === 'sin_clave') throw new SinRespuesta('El servidor no tiene clave de IA configurada: usa tu propia clave, el modo manual o el de demostración.', 'sin_clave');
   if (!r.ok) throw new SinRespuesta(d.mensaje || `El servidor respondió ${r.status}.`, d.error || 'servidor');
   return { texto: d.texto, accion: d.accion, modelo: d.modelo, ms: d.ms, origen: `Respuesta de la IA registrada (${d.modelo}, vía servidor), pasada por el validador de citas.` };
@@ -137,8 +142,8 @@ export async function probarConexion(cual) {
   const t0 = performance.now();
   try {
     if (cual === 'clave') { const r = await llamarDirecto('Responde solo con la palabra OK.', 'Prueba de conexión.'); return { ok: true, detalle: `Respondió «${r.texto.slice(0, 40)}» en ${Math.round(performance.now() - t0)} ms (${nombreProv()}).` }; }
-    const r = await llamarServidor({ paso: 'P' }); return { ok: true, detalle: `Respondió «${String(r.texto).slice(0, 40)}» en ${Math.round(performance.now() - t0)} ms (modelo ${r.modelo}).` };
-  } catch (e) { return { ok: false, detalle: e.message }; }
+    const r = await llamarServidor({ paso: 'P' }, 15000); const res = { ok: true, ms: Math.round(performance.now() - t0), detalle: `Respondió «${String(r.texto).slice(0, 40)}» en ${Math.round(performance.now() - t0)} ms (modelo ${r.modelo}).` }; if (estadoInicial) estadoInicial.prueba = res; return res;
+  } catch (e) { const res = { ok: false, detalle: e.message }; if (cual !== 'clave' && estadoInicial) estadoInicial.prueba = res; return res; }
 }
 
 const docEnvio = d => ({ doc_id: d.doc_id, tipo: d.tipo, titulo: d.titulo, especialidad: d.especialidad, revision: d.revision, revision_anterior: d.revision_anterior, texto: d.texto, texto_anterior: d.texto_anterior || '' });
@@ -152,8 +157,8 @@ export async function detectar(doc) {
     return { texto: d.i1, origen: d.nota, demo: d };
   }
   if (modo === 'manual') return { manual: true, prompt: promptI1(doc) };
-  if (modo === 'clave') return llamarDirecto(I1(), N.mensajeI1([doc]));
-  return llamarServidor({ paso: 'I1', doc: docEnvio(doc) });
+  try { return await (modo === 'clave' ? llamarDirecto(I1(), N.mensajeI1([doc])) : llamarServidor({ paso: 'I1', doc: docEnvio(doc) })); }
+  catch (e) { const d = demoPara(doc); if (d && e.codigo !== 'sin_clave') return { texto: d.i1, origen: `${e.codigo === 'tiempo' ? 'La IA tardó demasiado' : 'La IA en vivo no respondió'}; se usó la respuesta registrada. ${d.nota}`, demo: d, respaldo: true }; throw e; }
 }
 
 // Paso I2 (vínculo a partida). Devuelve { texto, origen }, { manual: true, prompt } o null.
@@ -161,8 +166,10 @@ export async function vincular(doc, hechos, partidas, demo) {
   if (modo === 'demo') return demo?.i2 ? { texto: demo.i2, origen: demo.nota } : null;
   const ps = partidas.map(p => ({ codigo: p.codigo, desc: p.desc, und: p.und, esp: p.esp }));
   if (modo === 'manual') return { manual: true, prompt: promptI2(hechosEnvio(hechos), ps) };
-  if (modo === 'clave') return llamarDirecto(I2(), N.mensajeI2(hechosEnvio(hechos), ps));
-  return llamarServidor({ paso: 'I2', hechos: hechosEnvio(hechos), partidas: ps });
+  // Si la detección ya pasó a la respuesta registrada, la partida también (sin otra llamada lenta).
+  if (demo?.i2) return { texto: demo.i2, origen: demo.nota };
+  try { return await (modo === 'clave' ? llamarDirecto(I2(), N.mensajeI2(hechosEnvio(hechos), ps)) : llamarServidor({ paso: 'I2', hechos: hechosEnvio(hechos), partidas: ps })); }
+  catch (e) { if (demo?.i2) return { texto: demo.i2, origen: demo.nota }; throw e; }
 }
 
 // Herramientas de redacción (resumir, traducir, revisar). Devuelve { texto, origen } o { manual: true, prompt }.
@@ -183,7 +190,7 @@ export async function chat({ pregunta, pantalla, contexto, historial, ids }) {
     const r = await llamarDirecto(SISTEMA_CHAT, mensajeChat({ pregunta, pantalla, contexto, historial }), { json: true });
     return { ...leerSalidaChat(r.texto, ids), origen: `Tu IA (${nombreProv()})` };
   }
-  const r = await llamarServidor({ paso: 'C', pregunta, pantalla, contexto, historial });
+  const r = await llamarServidor({ paso: 'C', pregunta, pantalla, contexto, historial }, 12000);
   const accion = r.accion && (!ids || !r.accion.startsWith('ir:alerta-') || ids.has(r.accion.slice(10))) ? r.accion : null;
   return { texto: r.texto, accion, origen: `IA registrada (${r.modelo}, vía servidor)` };
 }

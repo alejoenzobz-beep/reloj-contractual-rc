@@ -851,12 +851,12 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && guiaPaso >= 0) cerr
 // ---------- AJUSTES ----------
 function pintarModoIA() {
   const m = IA.modoIA(), b = $('#estado-ia');
-  b.innerHTML = `<i></i>${esc(IA.ETIQUETA[m])}`; b.title = IA.etiquetaModo(); b.classList.toggle('vivo', m === 'servidor' || m === 'clave'); b.classList.toggle('manual', m === 'manual');
-  b.title = 'Cambiar el modo de IA';
+  b.innerHTML = `<i></i>${esc(IA.ETIQUETA[m])}`; b.title = m === 'servidor' && !IA.servidorResponde() ? 'IA registrada: no respondió en la última prueba' : IA.etiquetaModo(); b.classList.toggle('falla', m === 'servidor' && !IA.servidorResponde()); b.classList.toggle('vivo', m === 'servidor' || m === 'clave'); b.classList.toggle('manual', m === 'manual');
+
 }
 function vAjustes() {
   const m = IA.modoIA(), clave = IA.claveUsuario(), e = IA.estadoInicial, cfg = IA.configClave();
-  const srv = !e ? '' : e.servidor && e.clave ? `<span class="aud-ok">✓ Disponible</span>` : e.servidor ? '<span class="aud-mal">El servidor no tiene clave configurada</span>' : '<span class="aud-mal">Servidor no disponible en esta versión</span>';
+  const srv = !e ? '' : e.prueba?.ok ? `<span class="aud-ok">✓ Respondió en la última prueba (${e.prueba.ms} ms)</span>` : e.prueba ? `<span class="aud-mal">No respondió en la última prueba: ${esc(e.prueba.detalle)}</span>` : e.servidor && e.clave ? '<span class="aud-mal">Sin probar</span>' : e.servidor ? '<span class="aud-mal">El servidor no tiene clave configurada</span>' : '<span class="aud-mal">Servidor no disponible en esta versión</span>';
   const caminos = [
     ['servidor', IA.NOMBRE_MODO.servidor, 'La app consulta la IA configurada en su servidor. La clave vive en el servidor y nunca llega al navegador.', 'Conviene para evaluar la app: no necesitas configurar nada.', `${srv}<small class="pista-txt">Por defecto: Gemini${e?.modelo ? ` (${esc(e.modelo)})` : ''}.</small>`],
     ['clave', IA.NOMBRE_MODO.clave, 'Usa tu propia clave de un proveedor compatible: Gemini, cualquier API compatible con OpenAI (OpenAI, Groq, OpenRouter, Mistral, DeepSeek…) o Anthropic. Las consultas salen desde este navegador.', 'Conviene si prefieres tu proveedor o tu cuota, o si la IA registrada alcanzó su límite.', clave ? `<span class="aud-ok">✓ Clave guardada en esta pestaña</span><small class="pista-txt">${esc(IA.PROVEEDORES[cfg.prov].n.split(' (')[0])} · ${esc(cfg.modelo)}</small>` : ''],
@@ -877,7 +877,7 @@ function vAjustes() {
         <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar y usar mi clave</button>${clave ? '<button class="btn" id="aj-probar-clave">Probar conexión</button><button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite"></div></form>
     </div>
     <section class="seccion"><h3>Conexiones</h3><div class="conexiones">
-      <div class="conex"><b>IA registrada</b><span>${e?.servidor && e?.clave ? '<span class="aud-ok">✓ Activa en el servidor</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Por defecto: Gemini. Variables de Netlify: <code>GEMINI_API_KEY</code> y, opcional, <code>GEMINI_MODEL</code>.</small></div>
+      <div class="conex"><b>IA registrada</b><span>${e?.prueba?.ok ? '<span class="aud-ok">✓ Respondió en la última prueba</span>' : e?.servidor && e?.clave ? '<span class="aud-mal">Con clave, sin respuesta en la última prueba</span>' : '<span class="aud-mal">Sin clave en el servidor</span>'}</span><small>Por defecto: Gemini. Variables de Netlify: <code>GEMINI_API_KEY</code> y, opcional, <code>GEMINI_MODEL</code>.</small></div>
       <div class="conex"><b>Google Drive</b><span>${DRIVE.activo() ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Elegir revisiones en Comparar y guardar la carta. Requiere <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_API_KEY</code> en Netlify.</small></div>
       <div class="conex"><b>Telegram</b><span>${TG.activo ? '<span class="aud-ok">✓ Activo</span>' : '<span class="aud-mal">Desactivado</span>'}</span><small>Aviso al celular con el cambio y su fecha límite. Requiere <code>TELEGRAM_BOT_TOKEN</code> y <code>TELEGRAM_CHAT_ID</code> en Netlify.</small></div>
       <div class="conex"><b>Autodesk Construction Cloud y Notion</b><span><span class="etq ambar">demostración</span></span><small>Se muestran como conexión de demostración: no leen archivos reales.</small></div></div></section>
@@ -892,7 +892,7 @@ function vAjustes() {
   });
   $('#aj-prov').onchange = () => { const P = IA.PROVEEDORES[$('#aj-prov').value]; $('#aj-modelo').value = P.modelo; $('#aj-base').value = P.base; };
   const probar = async (btn, dest, cual) => { btn.disabled = true; dest.innerHTML = '<p class="estado-ia"><span class="spin"></span>Consultando…</p>'; const r = await IA.probarConexion(cual); btn.disabled = false; dest.innerHTML = `<p class="aviso ${r.ok ? 'ok' : 'mal'}" style="margin-top:8px">${r.ok ? '✓ Conexión correcta. ' : 'La conexión falló. '}${esc(r.detalle)}</p>`; };
-  $('#aj-probar').onclick = () => probar($('#aj-probar'), $('#aj-estado'), 'servidor');
+  $('#aj-probar').onclick = async () => { await probar($('#aj-probar'), $('#aj-estado'), 'servidor'); const m = $('#aj-estado').innerHTML; vAjustes(); $('#aj-estado').innerHTML = m; pintarModoIA(); };
   const pc = $('#aj-probar-clave'); if (pc) pc.onclick = () => probar(pc, $('#aj-clave-msg'), 'clave');
   $('#aj-guardar').onclick = async () => {
     const v = $('#aj-clave').value.trim(); if (!v && !IA.claveUsuario()) { $('#aj-clave-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">Pega primero la clave.</p>'; return; }
@@ -981,7 +981,7 @@ async function enviar(texto) {
   if (IA.chatEnVivo()) {
     const { txt, ids } = contextoChat();
     try { const r = await IA.chat({ pregunta: texto, pantalla: NOMBRE_VISTA[ruta().vista] || ruta().vista, contexto: txt, historial, ids }); Object.assign(m, { content: r.texto, accion: r.accion, origen: r.origen, pendiente: false }); }
-    catch (e) { Object.assign(m, respuestaBasica(texto), { basico: true, pendiente: false, aviso: `La IA no respondió: ${e.message.replace(/\.?$/, '.')} Esta es la respuesta del asistente básico.` }); m.content = m.texto; }
+    catch (e) { Object.assign(m, respuestaBasica(texto), { basico: true, pendiente: false, aviso: e.codigo === 'tiempo' ? 'La IA tardó demasiado; se usó la respuesta del asistente básico.' : `La IA no respondió: ${e.message.replace(/\.?$/, '.')} Se usó la respuesta del asistente básico.` }); m.content = m.texto; }
   } else { const r = respuestaBasica(texto); Object.assign(m, { content: r.texto, accion: r.accion, basico: true, pendiente: false }); }
   delete m.texto; guardarChat(); pintarChat();
 }
