@@ -48,6 +48,9 @@ const PARAMS_R1 = () => paramsProy('R1');
 function guardarProy(id, cambios) { ajustesProy[id] = { ...(ajustesProy[id] || {}), ...cambios }; try { localStorage.setItem('rc-proyectos', JSON.stringify(ajustesProy)); } catch { } recalcular(); }
 let recepcionCorr = {};
 try { recepcionCorr = JSON.parse(localStorage.getItem('rc-recepcion') || '{}'); } catch { }
+// Procedencia de la fecha de recepción: quién la confirmó a mano (solo rótulo).
+let recepcionRol = {};
+try { recepcionRol = JSON.parse(localStorage.getItem('rc-recepcion-rol') || '{}'); } catch { }
 // Referencia «sin asistente»: rango de días para entender un cambio en la consulta (n = 15); si falta, los 2 casos iniciales.
 const REF = consulta?.respuestas?.length ? { min: Math.min(...consulta.respuestas.map(r => r.entender_dias)), max: Math.max(...consulta.respuestas.map(r => r.entender_dias)), n: consulta.respuestas.length } : { ...cifras.casos_referencia.entender_sin_asistente_dias, n: cifras.casos_referencia.casos.length };
 const LAT_MIN = cifras.corpus_base.v1_1.latencia_mediana_min;   // minutos de detección medidos
@@ -615,7 +618,7 @@ function vAlerta(id) {
     <div class="panel plazo-panel"><div class="plazo-cab"><h3>Plazo contractual</h3><span class="pista-txt">${esc(PROY[a.proyecto].nombre)} · <a href="#plazos">parámetros</a></span></div>${barraPlazo(a)}
       <details class="tec cal-det" open><summary>Ver el plazo en el calendario</summary>${CAL.calendarioPlazo({ inicio: a.fecha_recepcion, limite: a.limite, feriados: FER(a), tipo: P(a).tipo_dias, hoy: est.hoy, refMax: REF.max, titulo: `${a.doc_id} · ${a.elemento}` })}</details>
       <div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="d-ics">Agregar al calendario (.ics)</button>${TG.activo ? '<button class="btn peq" id="d-tg">Enviar aviso por Telegram</button>' : ''}<span class="pista-txt" style="align-self:center">Evento el ${N.fmtFecha(a.limite)} con aviso dos días antes. Sirve con Google Calendar, Outlook y Apple.</span></div><div id="d-tg-msg" aria-live="polite"></div>
-      <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE</label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
+      <div class="fecha-rec"><label class="tit" for="d-rec">Fecha de recepción en el CDE <span class="etq ${recepcionCorr[a.id] ? '' : 'ambar'}">${recepcionCorr[a.id] ? `confirmada manualmente por ${esc(recepcionRol[a.id] || 'usuario')}` : 'demostración'}</span></label><input type="date" id="d-rec" value="${a.fecha_recepcion}"><button class="btn peq" id="d-rec-ok">Corregir fecha</button>${recepcionCorr[a.id] ? `<button class="btn peq" id="d-rec-reset">Volver a ${N.fmtFecha(d.fecha_recepcion)}</button><span class="pista-txt">Corregida a mano; el documento registra ${N.fmtFecha(d.fecha_recepcion)}.</span>` : ''}</div></div>
     <div class="det-cuerpo">
       <div>
         <div class="panel"><h3>${d.tipo === 'Lámina' ? 'Qué cambió entre revisiones' : 'Qué dice el documento'}</h3>
@@ -657,7 +660,7 @@ function vAlerta(id) {
   const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { estadoGrupo(a).dec.forEach(x => { est.aprobaciones[x.id] = { estado: 'aprobada', fecha: est.hoy }; }); registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const arc = $('#d-archivar'); if (arc) arc.onclick = () => { estadoGrupo(a).dec.forEach(x => { est.aprobaciones[x.id] = { estado: 'archivada', fecha: est.hoy }; }); registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
   const des = $('#d-deshacer'); if (des) des.onclick = () => { G.forEach(x => delete est.decisiones[x.id]); registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
-  const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar(rolN(), `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
+  const fijarRec = v => { if (v) { recepcionCorr[a.id] = v; recepcionRol[a.id] = rolN(); } else { delete recepcionCorr[a.id]; delete recepcionRol[a.id]; } try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); localStorage.setItem('rc-recepcion-rol', JSON.stringify(recepcionRol)); } catch { } recalcular1(a); registrar(rolN(), `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}, confirmada manualmente por ${rolN()}` : 'restablecida al dato de demostración'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
   $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
   const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
 }
