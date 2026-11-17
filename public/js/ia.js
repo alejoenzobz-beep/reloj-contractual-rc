@@ -2,6 +2,7 @@
 // Modos: demostración (respuestas registradas o preparadas), servidor (Gemini vía Netlify Function) y manual.
 import * as N from './nucleo.js';
 import { HERRAMIENTAS } from './herramientas.js';
+import { SISTEMA_CHAT, GEN_CHAT, mensajeChat, leerSalidaChat } from './asistente_ia.js';
 
 export const I1 = () => N.INSTRUCCIONES.I1[N.VERSION_VIGENTE.I1].sistema;
 export const I2 = () => N.INSTRUCCIONES.I2[N.VERSION_VIGENTE.I2].sistema;
@@ -53,10 +54,17 @@ export function demoPara(doc) {
 
 // ---------- modo activo ----------
 export const ETIQUETA = { demo: 'IA: respuestas registradas', servidor: 'IA: Gemini (en vivo)', manual: 'IA: manual' };
-let modo = 'demo';
-try { modo = sessionStorage.getItem('rc-ia-modo') || 'demo'; } catch { }
+let modo = 'demo', elegido = false;
+try { const g = sessionStorage.getItem('rc-ia-modo'); if (g) { modo = g; elegido = true; } } catch { }
 export const modoIA = () => modo;
-export function fijarModo(m) { modo = m; try { sessionStorage.setItem('rc-ia-modo', m); } catch { } }
+export function fijarModo(m) { modo = m; elegido = true; try { sessionStorage.setItem('rc-ia-modo', m); } catch { } }
+// Modo por defecto: si la persona no eligió uno y el servidor tiene clave, arranca en Gemini en vivo.
+export let estadoInicial = null;
+export async function iniciarModo() {
+  estadoInicial = await estadoServidor();
+  if (!elegido) modo = (estadoInicial.servidor && estadoInicial.clave) || claveUsuario() ? 'servidor' : 'demo';
+  return estadoInicial;
+}
 
 export class SinRespuesta extends Error { constructor(msg, codigo) { super(msg); this.codigo = codigo; } }
 
@@ -83,16 +91,16 @@ async function llamarServidor(cuerpo) {
   const d = await r.json();
   if (d.error === 'sin_clave') throw new SinRespuesta('Servidor sin clave: usa el modo manual o el de demostración, o pega tu propia clave en Ajustes.', 'sin_clave');
   if (!r.ok) throw new SinRespuesta(d.mensaje || `El servidor respondió ${r.status}.`, d.error || 'servidor');
-  return { texto: d.texto, origen: `Respuesta de Gemini en vivo (${d.modelo}, vía servidor), pasada por el validador de citas.` };
+  return { texto: d.texto, accion: d.accion, modelo: d.modelo, origen: `Respuesta de Gemini en vivo (${d.modelo}, vía servidor), pasada por el validador de citas.` };
 }
 
 // Llamada directa con la clave que pegó el usuario (se guarda solo en sessionStorage).
-async function llamarDirecto(sistema, mensaje) {
+async function llamarDirecto(sistema, mensaje, gen = { temperature: 0 }) {
   let r;
   try {
     r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO_DIRECTO}:generateContent`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': claveUsuario() },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: sistema }] }, contents: [{ role: 'user', parts: [{ text: mensaje }] }], generationConfig: { temperature: 0 } }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: sistema }] }, contents: [{ role: 'user', parts: [{ text: mensaje }] }], generationConfig: gen }),
     });
   } catch { throw new SinRespuesta('No se pudo contactar a Gemini desde el navegador. Revisa tu red.', 'red'); }
   const d = await r.json().catch(() => ({}));
@@ -134,3 +142,25 @@ export async function herramienta(clave, texto) {
   if (claveUsuario()) return llamarDirecto(h.sistema, texto);
   return llamarServidor({ paso: 'H', herramienta: clave, texto });
 }
+
+// Asistente conversacional. Usa Gemini solo con el modo «Gemini en vivo» (servidor o clave propia).
+// Envía la pregunta, la pantalla y un resumen del proyecto; nunca documentos del usuario.
+export const chatEnVivo = () => modo === 'servidor';
+export async function chat({ pregunta, pantalla, contexto, historial, ids }) {
+  if (!chatEnVivo()) throw new SinRespuesta('El asistente con IA usa el modo «Gemini en vivo».', 'modo');
+  if (claveUsuario()) {
+    const r = await llamarDirecto(SISTEMA_CHAT, mensajeChat({ pregunta, pantalla, contexto, historial }), GEN_CHAT);
+    return { ...leerSalidaChat(r.texto, ids), origen: `Gemini (${MODELO_DIRECTO}, con tu clave)` };
+  }
+  const r = await llamarServidor({ paso: 'C', pregunta, pantalla, contexto, historial });
+  const accion = r.accion && (!ids || !r.accion.startsWith('ir:alerta-') || ids.has(r.accion.slice(10))) ? r.accion : null;
+  return { texto: r.texto, accion, origen: `Gemini (${r.modelo}, vía servidor)` };
+}
+
+// Etiqueta visible de origen para todo resultado de un modelo (o preparado para la demostración).
+const CHIP = {
+  vivo: ['vivo', 'IA · Gemini en vivo'], registrada: ['reg', 'IA · respuesta registrada'], manual: ['man', 'IA · respuesta pegada (manual)'],
+  preparada: ['prep', 'Demostración · respuesta preparada, sin IA'],
+};
+export const chipIA = t => { const [c, x] = CHIP[t] || CHIP.registrada; return `<span class="chip-ia ${c}">${x}</span>`; };
+export const tipoOrigen = r => r?.demo ? (r.demo.origen === 'preparada' ? 'preparada' : 'registrada') : r?.manual ? 'manual' : 'vivo';

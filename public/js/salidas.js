@@ -197,11 +197,11 @@ export function vSalidas(ctx, idSel) {
 
 async function usarHerramienta(k, texto, c, vencido) {
   const out = $('#sal-her'), h = HERRAMIENTAS[k];
-  const caja = (titulo, cuerpo, nota) => `<div class="panel her-res"><div class="plazo-cab"><h3>${esc(titulo)}</h3><button class="btn peq" id="her-copiar">Copiar</button></div><pre class="crudo" id="her-txt">${esc(cuerpo)}</pre><p class="origen">${esc(nota)}</p></div>`;
+  const caja = (titulo, cuerpo, nota, chip = '') => `<div class="panel her-res"><div class="plazo-cab"><h3>${esc(titulo)} ${chip}</h3><button class="btn peq" id="her-copiar">Copiar</button></div><pre class="crudo" id="her-txt">${esc(cuerpo)}</pre><p class="origen">${esc(nota)}</p></div>`;
   const copiar = () => { const b = $('#her-copiar'); if (b) b.onclick = async () => { try { await navigator.clipboard.writeText($('#her-txt').textContent); b.textContent = 'Copiado'; } catch { b.textContent = 'Selecciona y copia con Ctrl+C'; } }; };
   if (IA.modoIA() === 'demo') {
-    if (k === 'resumir') out.innerHTML = caja(h.titulo, `• Cambio: ${c.cambio} (${c.ubicacion}).\n• Partida afectada: ${c.partida}.\n• Notificar según la cláusula ${c.clausula} hasta el ${c.fecha_limite}.`, 'Resumen armado por la app con los datos confirmados (modo demostración, sin IA).');
-    else if (k === 'revisar') { const r = revisar(texto, c, vencido); out.innerHTML = caja(h.titulo, r.av.length ? r.av.map(x => `• ${x.t}`).join('\n') : 'Sin observaciones: la cita, la fecha límite y las cifras coinciden con los datos confirmados.', 'Revisión automática de la app (modo demostración, sin IA). Con Gemini o el modo manual, la IA revisa además la redacción.'); }
+    if (k === 'resumir') out.innerHTML = caja(h.titulo, `• Cambio: ${c.cambio} (${c.ubicacion}).\n• Partida afectada: ${c.partida}.\n• Notificar según la cláusula ${c.clausula} hasta el ${c.fecha_limite}.`, 'Resumen armado por la app con los datos confirmados (modo demostración, sin IA).', '<span class="chip-ia basico">Sin IA · armado por la app</span>');
+    else if (k === 'revisar') { const r = revisar(texto, c, vencido); out.innerHTML = caja(h.titulo, r.av.length ? r.av.map(x => `• ${x.t}`).join('\n') : 'Sin observaciones: la cita, la fecha límite y las cifras coinciden con los datos confirmados.', 'Revisión automática de la app (modo demostración, sin IA). Con Gemini o el modo manual, la IA revisa además la redacción.', '<span class="chip-ia basico">Sin IA · armado por la app</span>'); }
     else out.innerHTML = `<div class="aviso info">En modo demostración no hay una traducción registrada para este texto. Cambia a «Gemini en vivo» o «Manual» en <a href="#ajustes">Ajustes</a> para traducirlo.</div>`;
     copiar(); return;
   }
@@ -213,9 +213,9 @@ async function usarHerramienta(k, texto, c, vencido) {
         <div class="fila-btn"><button class="btn peq" id="hm-copiar">Copiar instrucción</button></div><details class="tec"><summary>Ver instrucción completa</summary><pre class="crudo">${esc(r.prompt)}</pre></details>
         <label class="tit" for="hm-resp">Respuesta</label><textarea id="hm-resp"></textarea><div class="fila-btn" style="margin-top:8px"><button class="btn prim peq" id="hm-ok">Mostrar respuesta</button></div></div>`;
       $('#hm-copiar').onclick = async () => { try { await navigator.clipboard.writeText(r.prompt); $('#hm-copiar').textContent = 'Instrucción copiada'; } catch { $('#hm-copiar').textContent = 'No se pudo copiar: ábrela abajo'; } };
-      $('#hm-ok').onclick = () => { const t = $('#hm-resp').value.trim(); if (!t) return; out.innerHTML = caja(h.titulo, t, 'Respuesta pegada en modo manual. Revísala antes de usarla: la app no verifica este texto.'); copiar(); };
+      $('#hm-ok').onclick = () => { const t = $('#hm-resp').value.trim(); if (!t) return; out.innerHTML = caja(h.titulo, t, 'Respuesta pegada en modo manual. Revísala antes de usarla: la app no verifica este texto.', IA.chipIA('manual')); copiar(); };
       return;
     }
-    out.innerHTML = caja(h.titulo, r.texto, `${r.origen.replace(', pasada por el validador de citas', '')}. Revísala antes de usarla: la app no verifica este texto.`); copiar();
+    out.innerHTML = caja(h.titulo, r.texto, `${r.origen.replace(', pasada por el validador de citas', '')}. Revísala antes de usarla: la app no verifica este texto.`, IA.chipIA('vivo')); copiar();
   } catch (e) { out.innerHTML = `<div class="aviso mal">${esc(e.message)} <a href="#ajustes">Abrir Ajustes de IA</a></div>`; }
 }

@@ -3,6 +3,7 @@
 // no acepta prompts libres, así no sirve como proxy abierto.
 import * as N from '../../public/js/nucleo.js';
 import { HERRAMIENTAS, MAX_TEXTO_HERRAMIENTA } from '../../public/js/herramientas.js';
+import { SISTEMA_CHAT, MAX_PREGUNTA, MAX_CONTEXTO, MAX_HISTORIAL, GEN_CHAT, mensajeChat, leerSalidaChat } from '../../public/js/asistente_ia.js';
 
 const MODELO = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const BASE = process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com/v1beta';
@@ -37,6 +38,15 @@ function armar(paso, e) {
     if (!h || !texto(e.texto, MAX_TEXTO_HERRAMIENTA) || !e.texto.trim()) return null;
     return { sistema: h.sistema, mensaje: e.texto };
   }
+  if (paso === 'C') {
+    // Chat: pregunta corta + resumen del proyecto que arma la app (con las fechas ya calculadas por nucleo.js).
+    const { pregunta, pantalla, contexto, historial = [] } = e;
+    if (!texto(pregunta, MAX_PREGUNTA) || !pregunta.trim() || !texto(contexto, MAX_CONTEXTO) || !texto(String(pantalla || ''), 60)) return null;
+    try { JSON.parse(contexto); } catch { return null; }
+    if (!Array.isArray(historial) || historial.length > MAX_HISTORIAL || !historial.every(x => x && ['usuario', 'asistente'].includes(x.rol) && texto(x.texto, MAX_PREGUNTA * 3))) return null;
+    let ids = new Set(); try { ids = new Set((JSON.parse(contexto).cambios || []).map(c => String(c.id).toUpperCase())); } catch { }
+    return { sistema: SISTEMA_CHAT, mensaje: mensajeChat({ pregunta, pantalla, contexto, historial }), gen: GEN_CHAT, chat: true, ids };
+  }
   return null;
 }
 
@@ -53,12 +63,13 @@ export default async (req, context) => {
   try {
     const r = await fetch(`${BASE}/models/${encodeURIComponent(MODELO)}:generateContent`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': clave },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: p.sistema }] }, contents: [{ role: 'user', parts: [{ text: p.mensaje }] }], generationConfig: { temperature: 0 } }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: p.sistema }] }, contents: [{ role: 'user', parts: [{ text: p.mensaje }] }], generationConfig: p.gen || { temperature: 0 } }),
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) return json({ error: 'gemini', mensaje: `Gemini respondió ${r.status}: ${d?.error?.message || 'sin detalle'}` }, 502);
     const salida = (d.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('').trim();
     if (!salida) return json({ error: 'vacia', mensaje: 'Gemini devolvió una respuesta vacía.' }, 502);
+    if (p.chat) return json({ ...leerSalidaChat(salida, p.ids), modelo: MODELO });
     return json({ texto: salida, modelo: MODELO });
   } catch (err) {
     return json({ error: 'red', mensaje: `No se pudo contactar a Gemini: ${err.message}` }, 502);

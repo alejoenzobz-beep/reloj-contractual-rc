@@ -2,6 +2,7 @@
 // el modelo lee y propone, la fórmula cuenta, la persona decide.
 import * as N from './nucleo.js';
 import * as IA from './ia.js';
+import { SISTEMA_CHAT } from './asistente_ia.js';
 import { vComparar } from './comparador.js';
 import { vSalidas } from './salidas.js';
 import * as AUD from './auditoria.js';
@@ -438,7 +439,7 @@ function vAlerta(id) {
             <div id="d-corr" hidden style="margin-top:10px"><label class="tit" for="d-sel">Partida correcta</label><select id="d-sel" style="max-width:100%">${proyecto.partidas.map(x => `<option value="${x.codigo}" ${x.codigo === a.partida ? 'selected' : ''}>${x.codigo} ${esc(x.desc)}</option>`).join('')}</select> <button class="btn peq prim" id="d-corr-ok">Guardar corrección</button></div>`}
           <div id="d-carta-box"></div>
         </div>
-        <div class="panel"><h3>Lo que propone la IA</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
+        <div class="panel"><h3>Lo que propone la IA ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
         <div class="panel"><h3>Partida del presupuesto</h3>
           <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto contractual</b>'} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
           ${a.criterios ? `<div class="criterios">${['Mismo elemento', 'Misma especialidad', 'Ubicación compatible', 'Rango o unidad'].map((t, i) => `<div class="check"><span class="ico ${a.criterios[i] ? 'si' : 'no'}">${a.criterios[i] ? '✓' : '✗'}</span>${t}</div>`).join('')}</div>` : ''}
@@ -639,39 +640,48 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && guiaPaso >= 0) cerr
 // ---------- AJUSTES ----------
 function pintarModoIA() {
   const m = IA.modoIA(), b = $('#estado-ia');
-  b.innerHTML = `<i></i>${esc(IA.ETIQUETA[m])}`; b.classList.toggle('vivo', m === 'servidor'); b.classList.toggle('manual', m === 'manual');
+  b.innerHTML = `<i></i>${esc(m === 'servidor' && IA.claveUsuario() ? 'IA: Gemini (tu clave)' : IA.ETIQUETA[m])}`; b.classList.toggle('vivo', m === 'servidor'); b.classList.toggle('manual', m === 'manual');
   b.title = 'Cambiar el modo de IA';
 }
 function vAjustes() {
-  const m = IA.modoIA(), clave = IA.claveUsuario();
-  const op = [
-    ['demo', 'Demostración', 'IA: respuestas registradas', 'Usa respuestas guardadas: las de la prueba con documentos nuevos (16/11/2026) y la preparada para la lámina E-301. No envía datos a ningún servicio. Solo procesa los ejemplos.'],
-    ['servidor', 'Gemini en vivo', 'IA: Gemini (en vivo)', 'Envía el documento a Gemini (Google AI Studio, plan gratuito) a través del servidor de la app. La clave está en el servidor, nunca en el navegador.'],
-    ['manual', 'Manual', 'IA: manual', 'Muestra la instrucción completa para que la copies en el asistente de IA que prefieras. Pegas su respuesta y la app la valida igual que en los otros modos.'],
+  const m = IA.modoIA(), clave = IA.claveUsuario(), e = IA.estadoInicial;
+  const activo = m === 'servidor' ? (clave ? 'clave' : 'servidor') : m;
+  const srv = !e ? '' : e.servidor && e.clave ? `<span class="aud-ok">✓ Servidor listo (${esc(e.modelo)})</span>` : e.servidor ? '<span class="aud-mal">Servidor sin clave</span>' : '<span class="aud-mal">Servidor no disponible en esta versión</span>';
+  const caminos = [
+    ['servidor', 'Servidor de la app (Gemini)', 'La app consulta Gemini con la clave guardada en su servidor. La clave nunca llega al navegador.', 'Conviene para la demostración: no necesitas configurar nada.', srv],
+    ['clave', 'Mi propia clave de Gemini', 'Las consultas salen desde este navegador con tu clave de Google AI Studio (gratuita, sin tarjeta). Se guarda solo en esta pestaña.', 'Conviene si el servidor alcanzó su límite por hora o quieres usar tu propia cuota.', clave ? '<span class="aud-ok">✓ Clave guardada en esta pestaña</span>' : ''],
+    ['manual', 'Manual: copiar y pegar', 'La app te muestra la instrucción completa; la pegas en la IA que prefieras y pegas su respuesta. Se valida igual.', 'Conviene si prefieres otra IA (ChatGPT, Claude) o no quieres que la app envíe datos.', ''],
   ];
   $('#v-ajustes').innerHTML = `
-    <div class="tab-cab"><div><h2>Ajustes de IA</h2><p class="sub2">El modelo solo lee y propone. En los tres modos, la app verifica cada cita contra el texto, recalcula la confianza de la partida y calcula los plazos con fórmulas, nunca con la IA.</p></div></div>
-    <fieldset class="modos"><legend class="sr">Modo de IA</legend>${op.map(([k, t, e, d]) => `<label class="modo ${m === k ? 'activo' : ''}"><input type="radio" name="modo-ia" value="${k}" ${m === k ? 'checked' : ''}><span class="modo-t">${t}</span><span class="etq">${e}</span><span class="modo-d">${d}</span></label>`).join('')}</fieldset>
-    <div class="ajustes-grid">
+    <div class="tab-cab"><div><h2>Ajustes de IA</h2><p class="sub2">El modelo solo lee y propone. En todos los caminos, la app verifica cada cita contra el texto, recalcula la confianza de la partida y calcula los plazos con fórmulas, nunca con la IA.</p></div></div>
+    <h3 style="margin:6px 0 10px">Cómo conectar la IA</h3>
+    <fieldset class="modos"><legend class="sr">Camino de IA</legend>${caminos.map(([k, t, d, c, st]) => `<label class="modo ${activo === k ? 'activo' : ''}"><input type="radio" name="modo-ia" value="${k}" ${activo === k ? 'checked' : ''}><span class="modo-t">${t}</span><span class="modo-d">${d}</span><span class="modo-c"><b>Cuándo conviene:</b> ${c}</span>${st ? `<span class="modo-st">${st}</span>` : ''}</label>`).join('')}</fieldset>
+    <label class="modo modo-sin ${activo === 'demo' ? 'activo' : ''}"><input type="radio" name="modo-ia" value="demo" ${activo === 'demo' ? 'checked' : ''}><span class="modo-t">Sin IA en vivo: respuestas registradas <span class="etq ambar">demostración</span></span><span class="modo-d">Usa las respuestas guardadas en la prueba con documentos nuevos (16/11/2026) y la preparada para la lámina E-301. No envía datos. Solo procesa los ejemplos; el asistente responde con preguntas preparadas.</span></label>
+    <div class="ajustes-grid" style="margin-top:16px">
       <div class="panel"><h3>Servidor de IA</h3><p class="pista-txt">Comprueba si el servidor de la app tiene configurada la clave de Gemini (<code>GEMINI_API_KEY</code> en las variables de entorno de Netlify).</p>
         <div class="fila-btn"><button class="btn" id="aj-probar">Probar conexión con el servidor</button></div><div id="aj-estado" aria-live="polite"></div></div>
-      <div class="panel"><h3>Usar mi propia clave de Gemini</h3><p class="pista-txt">Opcional. Se guarda solo en esta pestaña (sessionStorage) y se borra al cerrarla. Se obtiene gratis y sin tarjeta en aistudio.google.com.</p>
+      <div class="panel" id="aj-panel-clave"><h3>Mi propia clave de Gemini</h3><p class="pista-txt">Se obtiene gratis y sin tarjeta en aistudio.google.com. Se guarda solo en esta pestaña (sessionStorage) y se borra al cerrarla.</p>
         <label class="tit" for="aj-clave">Clave de API de Google AI Studio</label><input type="password" id="aj-clave" autocomplete="off" spellcheck="false" placeholder="${clave ? 'Clave guardada en esta pestaña' : 'Pega aquí tu clave'}">
-        <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar en esta pestaña</button>${clave ? '<button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite">${clave ? '<p class="aviso ok" style="margin-top:8px">Con el modo «Gemini en vivo», las consultas usan tu clave directamente desde este navegador.</p>' : ''}</div></div>
+        <div class="fila-btn" style="margin-top:10px"><button class="btn prim" id="aj-guardar">Guardar y usar mi clave</button>${clave ? '<button class="btn" id="aj-olvidar">Olvidar clave</button>' : ''}</div><div id="aj-clave-msg" aria-live="polite"></div></div>
     </div>
-    <div class="aviso info" style="margin-top:16px"><b>Privacidad.</b> En el plan gratuito de Google AI Studio, Google puede usar los datos enviados para mejorar sus productos. Usa solo documentos de demostración o sin información sensible.</div>
-    <section class="seccion"><h3>Instrucciones que recibe la IA</h3><p class="pista-txt">Son las mismas en los tres modos y las mismas con las que se midieron los resultados.</p>
-      <details class="tec"><summary>Paso 1 · Detectar cambios con impacto</summary><pre class="crudo">${esc(IA.I1())}</pre></details>
-      <details class="tec"><summary>Paso 2 · Proponer la partida del presupuesto</summary><pre class="crudo">${esc(IA.I2())}</pre></details></section>`;
-  document.querySelectorAll('[name="modo-ia"]').forEach(r => r.onchange = () => { IA.fijarModo(r.value); vAjustes(); pintarModoIA(); });
+    <div class="aviso info" style="margin-top:16px"><b>Privacidad.</b> En el plan gratuito de Google AI Studio, Google puede usar los datos enviados para mejorar sus productos. Por eso al asistente solo se le envía tu pregunta y un resumen del proyecto de demostración, nunca documentos; y en Comparar conviene usar solo documentos de demostración o sin información sensible.</div>
+    <section class="seccion"><h3>Instrucciones que recibe la IA</h3><p class="pista-txt">Son las mismas en todos los caminos y las mismas con las que se midieron los resultados.</p>
+      <details class="tec"><summary>Detectar cambios con impacto</summary><pre class="crudo">${esc(IA.I1())}</pre></details>
+      <details class="tec"><summary>Proponer la partida del presupuesto</summary><pre class="crudo">${esc(IA.I2())}</pre></details>
+      <details class="tec"><summary>Asistente conversacional</summary><pre class="crudo">${esc(SISTEMA_CHAT)}</pre></details></section>`;
+  document.querySelectorAll('[name="modo-ia"]').forEach(r => r.onchange = () => {
+    if (r.value === 'clave' && !IA.claveUsuario()) { IA.fijarModo('servidor'); vAjustes(); pintarModoIA(); $('#aj-clave').focus(); $('#aj-clave-msg').innerHTML = '<p class="aviso info" style="margin-top:8px">Pega tu clave y pulsa «Guardar y usar mi clave».</p>'; return; }
+    if (r.value === 'servidor') IA.fijarClave('');
+    IA.fijarModo(r.value === 'clave' ? 'servidor' : r.value); vAjustes(); pintarModoIA();
+  });
   $('#aj-probar').onclick = async () => {
     const b = $('#aj-probar'); b.disabled = true; $('#aj-estado').innerHTML = '<p class="estado-ia"><span class="spin"></span>Consultando…</p>';
     const e = await IA.estadoServidor(); b.disabled = false;
-    $('#aj-estado').innerHTML = !e.servidor ? `<p class="aviso mal" style="margin-top:8px">${esc(e.motivo)} Usa el modo manual o el de demostración${IA.claveUsuario() ? '' : ', o pega tu propia clave'}.</p>`
+    $('#aj-estado').innerHTML = !e.servidor ? `<p class="aviso mal" style="margin-top:8px">${esc(e.motivo)} Usa tu propia clave, el modo manual o las respuestas registradas.</p>`
       : e.clave ? `<p class="aviso ok" style="margin-top:8px">Servidor listo. Modelo: ${esc(e.modelo)}.</p>` : '<p class="aviso mal" style="margin-top:8px">Servidor sin clave: usa el modo manual o el de demostración.</p>';
   };
   $('#aj-guardar').onclick = () => { const v = $('#aj-clave').value.trim(); if (!v) { $('#aj-clave-msg').innerHTML = '<p class="aviso mal" style="margin-top:8px">Pega primero la clave.</p>'; return; } IA.fijarClave(v); IA.fijarModo('servidor'); vAjustes(); pintarModoIA(); };
-  const o = $('#aj-olvidar'); if (o) o.onclick = () => { IA.fijarClave(''); vAjustes(); };
+  const o = $('#aj-olvidar'); if (o) o.onclick = () => { IA.fijarClave(''); vAjustes(); pintarModoIA(); };
 }
 
 // ---------- ASISTENTE ----------
@@ -680,36 +690,87 @@ const FAQ = [
   [/empez|c[oó]mo (lo )?uso|primero/i, 'Empieza por el recorrido guiado (botón «?» de la barra superior): son 6 pasos con la lámina de ejemplo, de la revisión nueva a la carta. Luego abre la «Bandeja de cambios» y el cambio que vence primero.'],
   [/hoy|fecha|desliz|mover|simulad/i, 'La fecha simulada (chip «Hoy» y la barra de la bandeja) hace correr los días de la demostración. Al moverla verás cómo cada cambio pasa de verde a ámbar y a vencido.'],
   [/confianza|criterio|r-?v|partida/i, 'La partida la propone la IA, pero la confianza la calcula la app con 4 criterios: mismo elemento, misma especialidad, ubicación compatible y rango o unidad. 4 de 4 es Alta, 3 Media y 2 o menos Baja.'],
-  [/cita|invent|alucin/i, 'Cada alerta trae un fragmento copiado literalmente del documento. La app lo busca en el texto: si no aparece, la alerta se rechaza. En el paso 3 de «Cómo funciona» puedes probarlo con una cita inventada.'],
+  [/cita|invent|alucin/i, 'Cada alerta trae un fragmento copiado literalmente del documento. La app lo busca en el texto: si no aparece, la alerta se rechaza. Puedes probarlo con una cita inventada en «Calidad → Ver el caso E-204 paso a paso», paso 3.'],
   [/plazo|d[ií]as|vence|cl[aá]usula/i, 'Cada proyecto tiene su plazo, en «Plazos y parámetros». En R1, la cláusula 14.3 da 7 días calendario desde la recepción. Administración contractual la valida una vez; luego la fecha límite sale de una fórmula, con feriados si son días hábiles. El modelo nunca calcula fechas.'],
-  [/resultado|funciona bien|precisi|cobertura/i, 'En el corpus base detectó 41 de 41 cambios. Con 10 documentos nuevos, 7 y 8 de 8 en dos corridas. Un comparador de texto sin IA encontró 33 de 41 con 22 falsas alarmas y no lee cartas ni RFI.'],
+  [/resultado|funciona bien|precisi|cobertura/i, 'En el corpus base detectó 41 de 41 cambios. Con 10 documentos nuevos, 7 y 8 de 8 en dos mediciones. Un comparador de texto sin IA encontró 33 de 41 con 22 falsas alarmas y no lee cartas ni RFI.'],
   [/detecta|bluebeam|procore|comparador|por qu[eé] ia/i, 'Primero un comparador sin IA marca cada zona y línea que cambió, incluido el rótulo. Luego la IA indica cuáles tienen impacto y propone la partida; la app verifica cada cita contra el texto y la confianza con 4 criterios.'],
   [/modo|gemini|clave|manual|ia en vivo/i, 'Hay tres modos de IA, en Ajustes: demostración (respuestas registradas o preparadas), Gemini en vivo (vía el servidor, sin exponer la clave) y manual (copias la instrucción, la pegas en tu asistente de IA y pegas su respuesta). En los tres, la app verifica cada cita.'],
   [/hash|sello|borra|audit|integridad/i, 'Cada evento guarda el sello SHA-256 del anterior. Si alguien cambia o borra un evento, los sellos dejan de coincidir y «Verificar integridad» marca en rojo desde ese punto. En esta demostración el registro vive en el navegador; en producción iría en un servidor de solo anexado.'],
   [/l[ií]mit|no (hace|mide)|falta/i, 'Limitaciones: documentos sintéticos en texto, sin DWG ni PDF escaneados; la línea base viene de solo 2 casos; falta un usuario externo; no se integra con el CDE.'],
 ];
-const SUG = { inicio: ['¿Qué hace este asistente?', '¿Por dónde empiezo?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], bandeja: ['¿Qué hace la fecha simulada?', '¿Qué significan las barras?'], alerta: ['¿Por qué esta partida?', '¿Qué pasa si corrijo?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], calidad: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'], auditoria: ['¿Para qué sirve el hash?', '¿Qué pasa si alguien borra un evento?'] };
-const chat = [];
+const SUG = { inicio: ['¿Qué vence primero y qué hago hoy?', '¿Qué hace este asistente?'], salidas: ['¿Qué falta para emitir esta carta?', '¿Exportar es lo mismo que emitir?'], plazos: ['¿Cómo se calcula la fecha límite?', '¿Qué pasa si son días hábiles?'], ajustes: ['¿Qué modo de IA me conviene?', '¿Qué datos se envían a Gemini?'], simulacion: ['¿Cómo evita que la IA invente?', '¿Cómo se calcula el plazo?'], bandeja: ['¿Qué hace la fecha simulada?', '¿Qué significan las barras?'], alerta: ['¿Qué hago hoy con este cambio?', '¿Por qué esta partida?'], comparar: ['¿Cómo detecta los cambios?', '¿Por qué no basta un comparador?'], calidad: ['¿Qué tan bien funciona?', '¿Qué limitaciones tiene?'], auditoria: ['¿Para qué sirve el hash?', '¿Qué pasa si alguien borra un evento?'] };
+// Resumen del proyecto activo para el asistente: las fechas y los días ya vienen calculados por nucleo.js.
+function contextoChat() {
+  const r = ruta(), id = est.proyecto, pp = paramsProy(id);
+  const estadoTxt = a => { const dec = est.decisiones[a.id]; if (dec) return `decidido (${dec.estado})${est.emitidas[a.id] ? ', documento emitido' : ', falta emitir el documento'}`; const e = estadoDe(a); return { vencido: 'vencido sin notificar', rojo: 'urgente', ambar: 'urgente', verde: 'en plazo' }[e] || e; };
+  const lista = alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy).sort((x, y) => (!!est.decisiones[x.id]) - (!!est.decisiones[y.id]) || N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
+  const item = a => ({ id: a.id, documento: `${a.doc_id} rev. ${a.doc.revision}`, elemento: a.elemento, cambio: primeraFrase(a.cambio).slice(0, 160), recibido: N.fmtFecha(a.fecha_recepcion), fecha_limite: N.fmtFecha(a.limite), dias_restantes: N.diasRestantes(a.limite, est.hoy), estado: estadoTxt(a), partida: a.partida ? `${a.partida} ${a.partida_desc}` : 'sin partida' });
+  const abiertos = abiertasDe(id);
+  const base = {
+    nota: 'Datos de demostración. Fechas en formato día/mes/año, calculadas por la app.',
+    hoy: N.fmtFecha(est.hoy) + ' (fecha simulada de la demostración)',
+    proyecto: { nombre: PROY[id].nombre, demostracion: PROY[id].demo, clausula: pp.clausula, plazo: `${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción` },
+    totales: { abiertos: abiertos.length, urgentes: abiertos.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length, por_emitir: porEmitirDe(id).length },
+    detalle_en_pantalla: r.vista === 'alerta' && alertaPorId[r.id] ? { ...item(alertaPorId[r.id]), cita_verificada: alertaPorId[r.id].cita } : undefined,
+    cambios: lista.map(item),
+  };
+  let txt = JSON.stringify(base);
+  while (txt.length > 5800 && base.cambios.length) { base.cambios.pop(); base.cambios_omitidos = (base.cambios_omitidos || 0) + 1; txt = JSON.stringify(base); }
+  return { txt, ids: new Set(lista.map(a => a.id)) };
+}
+const NOMBRE_VISTA = { inicio: 'Inicio', bandeja: 'Bandeja de cambios', comparar: 'Comparar revisiones', salidas: 'Documentos de salida', plazos: 'Plazos y parámetros', auditoria: 'Auditoría', calidad: 'Calidad', ajustes: 'Ajustes' };
+const textoAccion = a => a.startsWith('ir:alerta-') ? `Abrir el cambio ${a.slice(10)}` : `Ir a ${NOMBRE_VISTA[a.slice(3)] || a.slice(3)}`;
+let chat = [];
+try { chat = JSON.parse(sessionStorage.getItem('rc-chat') || '[]'); } catch { }
+const guardarChat = () => { try { sessionStorage.setItem('rc-chat', JSON.stringify(chat.slice(-30))); } catch { } };
+function pintarModoChat() {
+  $('#asist-modo').innerHTML = IA.chatEnVivo() ? `${IA.chipIA('vivo')} Solo se envía tu pregunta y un resumen del proyecto de demostración, nunca tus documentos.` : `<span class="chip-ia basico">Asistente básico (sin IA)</span> Respuestas preparadas. Para usar Gemini, elige «Gemini en vivo» en <a href="#ajustes">Ajustes</a>.`;
+}
 function pintarChat() {
-  $('#asist-msgs').innerHTML = (chat.length ? '' : '<div class="msg ia">Hola. Puedo explicarte cualquier pantalla o decisión de la app. Elige una pregunta o escribe la tuya.</div>') + chat.map(m => `<div class="msg ${m.role === 'user' ? 'yo' : 'ia'}">${esc(m.content)}</div>`).join('');
+  pintarModoChat();
+  $('#asist-msgs').innerHTML = (chat.length ? '' : `<div class="msg ia">Hola. Puedo decirte qué vence primero, explicar cualquier pantalla y llevarte a donde tienes que actuar. Elige una pregunta o escribe la tuya.</div>`) + chat.map((m, k) => m.role === 'user' ? `<div class="msg yo">${esc(m.content)}</div>`
+    : `<div class="msg ia">${m.pendiente ? '<span class="spin" aria-hidden="true"></span> Pensando…' : esc(m.content)}${m.pendiente ? '' : `<div class="msg-pie">${m.basico ? '<span class="chip-ia basico">Asistente básico (sin IA)</span>' : `${IA.chipIA('vivo')}<small>${esc(m.origen || '')}</small>`}${m.accion ? `<button class="btn peq prim" data-acc="${k}">${esc(textoAccion(m.accion))}</button>` : ''}</div>${m.aviso ? `<small class="msg-aviso">${esc(m.aviso)}</small>` : ''}`}</div>`).join('');
   $('#asist-msgs').scrollTop = 1e6;
+  $('#asist-msgs').querySelectorAll('[data-acc]').forEach(b => b.onclick = () => { const a = chat[Number(b.dataset.acc)].accion; location.hash = '#' + a.slice(3).toLowerCase(); });
   $('#asist-sug').innerHTML = (SUG[ruta().vista] || SUG.inicio).map(s => `<button type="button">${esc(s)}</button>`).join('');
   $('#asist-sug').querySelectorAll('button').forEach(b => b.onclick = () => enviar(b.textContent));
 }
-async function enviar(texto) {
-  if (!texto.trim()) return;
-  chat.push({ role: 'user', content: texto }); pintarChat();
-  const m = { role: 'assistant', content: '…' }; chat.push(m); pintarChat();
+// Respuesta básica sin IA: preguntas frecuentes y, si se nombra un documento, sus fechas calculadas por la app.
+function respuestaBasica(texto) {
+  const doc = alertas.filter(a => a.fecha_recepcion <= est.hoy).find(a => new RegExp(`\\b${a.doc_id.replace('-', '[- ]?')}\\b`, 'i').test(texto));
+  if (doc) {
+    const d = N.diasRestantes(doc.limite, est.hoy), dec = est.decisiones[doc.id];
+    const paso = !dec ? 'Revisa la evidencia y decide en el detalle: confirmar, corregir la partida o descartar.' : !est.emitidas[doc.id] && dec.estado !== 'descartada' ? 'Ya está decidido: redacta la carta y registra la emisión en Documentos de salida.' : 'No tiene acciones pendientes.';
+    return { texto: `${doc.doc_id} · ${doc.elemento}: recibido el ${N.fmtFecha(doc.fecha_recepcion)}, la fecha límite para notificar es el ${N.fmtFecha(doc.limite)} (${d < 0 ? `venció hace ${-d} día${d === -1 ? '' : 's'}` : d === 0 ? 'vence hoy' : `quedan ${d} día${d === 1 ? '' : 's'}`}, ${P(doc).plazo} días ${P(doc).tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}). ${paso}`, accion: dec && !est.emitidas[doc.id] && dec.estado !== 'descartada' ? `ir:salidas` : `ir:alerta-${doc.id}` };
+  }
+  if (/hoy|urgente|vence primero|qu[eé] hago/i.test(texto)) {
+    const ab = abiertasDe(est.proyecto);
+    if (!ab.length) return { texto: `No hay cambios abiertos en ${PROY[est.proyecto].nombre}. Compara dos revisiones para empezar.`, accion: 'ir:comparar' };
+    const a = ab[0]; return { texto: `Lo que vence primero en ${PROY[est.proyecto].nombre}: ${a.doc_id} · ${a.elemento}, con fecha límite el ${N.fmtFecha(a.limite)} (${N.diasRestantes(a.limite, est.hoy)} días). Hay ${ab.length} cambio${ab.length === 1 ? '' : 's'} abierto${ab.length === 1 ? '' : 's'}.`, accion: `ir:alerta-${a.id}` };
+  }
+  if (ruta().vista === 'alerta' && /partida|por qu/i.test(texto) && alertaPorId[ruta().id]) return { texto: `Partida ${alertaPorId[ruta().id].partida || 'ninguna'}: ${alertaPorId[ruta().id].sustento}` };
+  if (/corrij/i.test(texto)) return { texto: 'Si corriges, el cambio guarda tu partida y también la que propuso la IA. Así se puede medir cuántas veces se equivoca el modelo sin perder el dato original.' };
+  if (/barra/i.test(texto)) return { texto: `Cada barra va de la recepción (día 0) al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, 2 casos de referencia); la línea vertical es hoy y el punto naranja, el límite.` };
   const f = FAQ.find(([re]) => re.test(texto));
-  m.content = f ? f[1] : 'Con las respuestas preparadas no tengo esa. Prueba con «¿Por dónde empiezo?», «¿Cómo evita que la IA invente?» o «¿Qué limitaciones tiene?». ';
-  if (ruta().vista === 'alerta' && /partida|por qu/i.test(texto) && alertaPorId[ruta().id]) m.content = `Partida ${alertaPorId[ruta().id].partida || 'ninguna'}: ${alertaPorId[ruta().id].sustento}`;
-  if (/corrij/i.test(texto)) m.content = 'Si corriges, la alerta guarda tu partida y también la que propuso la IA. Así se puede medir cuántas veces se equivoca el modelo sin perder el dato original.';
-  if (/barra/i.test(texto)) m.content = `Cada barra va de la recepción (día 0) al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, 2 casos de referencia); la línea vertical es hoy y el punto naranja, el límite.`;
-  pintarChat();
+  return { texto: f ? f[1] : 'No tengo una respuesta preparada para eso. Prueba con «¿Qué vence primero?», «¿Qué plazo tiene E-204?» o «¿Cómo evita que la IA invente?». Con Gemini en vivo puedo responder preguntas abiertas sobre el proyecto.' };
+}
+async function enviar(texto) {
+  texto = texto.trim().slice(0, 600);
+  if (!texto) return;
+  const historial = chat.filter(m => !m.pendiente).slice(-6).map(m => ({ rol: m.role === 'user' ? 'usuario' : 'asistente', texto: String(m.content).slice(0, 1800) }));
+  chat.push({ role: 'user', content: texto });
+  const m = { role: 'assistant', content: '', pendiente: true }; chat.push(m); pintarChat();
+  if (IA.chatEnVivo()) {
+    const { txt, ids } = contextoChat();
+    try { const r = await IA.chat({ pregunta: texto, pantalla: NOMBRE_VISTA[ruta().vista] || ruta().vista, contexto: txt, historial, ids }); Object.assign(m, { content: r.texto, accion: r.accion, origen: r.origen, pendiente: false }); }
+    catch (e) { Object.assign(m, respuestaBasica(texto), { basico: true, pendiente: false, aviso: `Gemini no respondió: ${e.message.replace(/\.?$/, '.')} Esta es la respuesta del asistente básico.` }); m.content = m.texto; }
+  } else { const r = respuestaBasica(texto); Object.assign(m, { content: r.texto, accion: r.accion, basico: true, pendiente: false }); }
+  delete m.texto; guardarChat(); pintarChat();
 }
 $('#asist-abrir').onclick = () => { const p = $('#asist'); p.hidden = !p.hidden; $('#asist-abrir').setAttribute('aria-expanded', String(!p.hidden)); if (!p.hidden) { pintarChat(); $('#asist-in').focus(); } };
 $('#asist-cerrar').onclick = () => { $('#asist').hidden = true; $('#asist-abrir').setAttribute('aria-expanded', 'false'); $('#asist-abrir').focus(); };
 $('#asist-form').onsubmit = e => { e.preventDefault(); const i = $('#asist-in'); enviar(i.value); i.value = ''; };
+$('#asist-borrar').onclick = () => { chat = []; guardarChat(); pintarChat(); };
 
 // ---------- tema claro / oscuro ----------
 const SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
@@ -728,5 +789,5 @@ function pintarFecha() {
 $('#chip-fecha').onclick = () => { const p = $('#pop-fecha'); p.hidden = !p.hidden; $('#chip-fecha').setAttribute('aria-expanded', String(!p.hidden)); };
 $('#pop-r').oninput = e => { est.hoy = N.sumarDias(PRIMERA, Number(e.target.value)); const v = ruta().vista; if (v === 'inicio') { vInicio(); } else if (v === 'bandeja') vBandeja(); pintarFecha(); };
 document.addEventListener('click', e => { if (!e.target.closest('#pop-fecha, #chip-fecha')) { $('#pop-fecha').hidden = true; $('#chip-fecha').setAttribute('aria-expanded', 'false'); } });
-$('#asist-modo').textContent = 'Respuestas preparadas sobre cada pantalla';
 render();
+IA.iniciarModo().then(() => { pintarModoIA(); if (!$('#asist').hidden) pintarChat(); if (['comparar', 'ajustes', 'salidas'].includes(ruta().vista)) render(); });

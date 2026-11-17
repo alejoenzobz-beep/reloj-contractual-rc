@@ -184,7 +184,7 @@ function pintarEntrada(ctx) {
     const pdf = S.modo === 'pdf', acc = pdf ? 'application/pdf' : 'image/png,image/jpeg,image/webp,image/svg+xml';
     const nom = l => (pdf ? S['pdf' + l] : S['img' + l])?.name;
     E.innerHTML = `<div class="probar">${['A', 'B'].map(l => `<label class="soltar" for="cmp-f${l}"><input type="file" id="cmp-f${l}" accept="${acc}"><b>Revisión ${l}${l === 'A' ? ' (anterior)' : ' (nueva)'}</b><span>${nom(l) ? esc(nom(l)) : pdf ? 'Elegir PDF con texto' : 'Elegir imagen de la lámina (PNG, JPG o SVG)'}</span></label>`).join('')}</div>
-      <p class="pista-txt" style="margin-top:10px">${pdf ? 'Se extrae el texto de cada página (hasta 6) y se compara línea por línea; además se comparan las páginas como imagen. Los PDF escaneados no tienen texto: requieren OCR (pendiente).' : 'Las dos imágenes se escalan al mismo tamaño y se comparan píxel por píxel. Una imagen no trae texto: la cita literal y la partida requieren OCR (pendiente) o un SVG con texto.'} Los archivos se procesan en este navegador y no se suben a ningún servidor.</p>`;
+      <p class="pista-txt" style="margin-top:10px">${pdf ? 'Se extrae el texto de cada página (hasta 6) y se compara línea por línea; además se comparan las páginas como imagen. Los PDF escaneados no tienen texto: requieren reconocimiento de texto (OCR), que esta versión aún no incluye.' : 'Las dos imágenes se escalan al mismo tamaño y se comparan píxel por píxel. Una imagen no trae texto: la cita literal y la partida requieren reconocimiento de texto (OCR), que esta versión aún no incluye o un SVG con texto.'} Los archivos se procesan en este navegador y no se suben a ningún servidor.</p>`;
     ['A', 'B'].forEach(l => $(`#cmp-f${l}`).onchange = e => { const f = e.target.files[0]; if (!f) return; if (pdf) S['pdf' + l] = f; else S['img' + l] = f; S.res = null; pintarEntrada(ctx); });
   }
 }
@@ -242,6 +242,7 @@ async function procesarIA(ctx, r) {
   await espera(600);
   try {
     let d1 = await IA.detectar(r.doc);
+    r.tipoIA = d1.manual ? 'manual' : IA.tipoOrigen(d1);
     if (d1.manual) { const t = await pedirManual('Paso 1 de 2 · Detección de cambios', d1.prompt, false); d1 = { texto: t, origen: 'Respuesta pegada en modo manual, pasada por el validador de citas.' }; r.fase = 'ia'; pintarTarjetas(ctx); }
     const { texto, origen, demo } = d1;
     const res = N.parsearI1(texto, { [r.doc.doc_id]: r.doc });
@@ -348,7 +349,7 @@ function pintarTarjetas(ctx) {
     ${(() => { if (!r.regiones || !hs.length) return ''; const usadas = new Set(hs.flatMap(h => h.regiones)); const resto = r.regiones.map((g, k) => k).filter(k => !usadas.has(k)); if (!resto.length) return '';
       const cambiadas = r.ops.filter(o => o.ib != null).map(o => o.ib); const textos = resto.map(k => cambiadas.find(i => (r.cajasB?.[i] || []).some(cj => cruza(r.regiones[k], cj, 2)))).filter(i => i != null).map(i => `«${r.lineasB[i]}»`);
       return `<p class="pista-txt">${resto.length === 1 ? 'La zona' : 'Las zonas'} ${resto.map(k => k + 1).join(', ')} no ${resto.length === 1 ? 'tiene' : 'tienen'} impacto según la IA${textos.length ? `: ${esc([...new Set(textos)].join(', '))}` : ''}.</p>`; })()}
-    <p class="origen">${esc(r.origen || '')}</p>`;
+    <p class="origen">${IA.chipIA(r.tipoIA)} ${esc(r.origen || '')}</p>`;
   const cards = hs.map((h, k) => tarjetaHecho(ctx, r, h, k)).join('');
   const rech = [...(r.rechazadas || []), ...(r.rechazadasI2 || [])];
   T.innerHTML = `${hs.length ? `<h3 class="cmp-h">Cambios con impacto</h3><div class="tarjetas-cmp">${cards}</div>` : ''}
@@ -359,7 +360,7 @@ function pintarTarjetas(ctx) {
   if (b) b.onclick = () => {
     const doc = { ...r.doc, fecha_recepcion: ctx.est.hoy };
     delete doc.demo_clave;
-    const nuevas = ctx.crearAlertas(doc, hs.map(h => ({ ...h, ...(r.vinculos[h.id] || {}) })));
+    const nuevas = ctx.crearAlertas(doc, hs.map(h => ({ ...h, ...(r.vinculos[h.id] || {}), origen_ia: r.tipoIA })));
     location.hash = `#alerta-${nuevas[0].id.toLowerCase()}`;
   };
 }
@@ -378,12 +379,12 @@ function tarjetaHecho(ctx, r, h, k) {
   const crops = g && r.cA ? `<div class="ab"><figure><figcaption>Antes · rev. A</figcaption><img alt="Zona antes del cambio" src="${recorte(r.cA, g)}"></figure><figure><figcaption>Después · rev. B</figcaption><img alt="Zona después del cambio" src="${recorte(r.cB, g)}"></figure></div>` : '';
   const conf = v ? (v.confianza === 'Alta' ? 'verde' : v.confianza === 'Media' ? 'ambar' : 'naranja') : '';
   return `<article class="tarj-cmp anim" style="animation-delay:${k * .12}s" data-tz="${h.regiones.join(' ')}">
-    <header><span class="n">${k + 1}</span><div><h4>${esc(h.elemento)}</h4><small>${esc(donde)} · ${esc(h.especialidad)}</small></div>${h.evidente === false ? '<span class="etq ambar">No evidente a simple vista</span>' : ''}</header>
+    <header><span class="n">${k + 1}</span><div><h4>${esc(h.elemento)}</h4><span class="chip-fila">${IA.chipIA(r.tipoIA)}</span><small>${esc(donde)} · ${esc(h.especialidad)}</small></div>${h.evidente === false ? '<span class="etq ambar">No evidente a simple vista</span>' : ''}</header>
     <p class="cambio">${esc(h.cambio)}</p>
     ${crops}
     ${h.antes != null || h.despues ? `<div class="ab txt">${h.antes != null ? `<div><small>Antes</small><p class="antes">${m.A}</p></div>` : ''}<div><small>Después</small><p class="despues">${h.antes != null ? m.B : esc(h.despues)}</p></div></div>` : ''}
     <div class="check"><span class="ico si">✓</span><div><b>Cita literal verificada en la revisión B:</b> «${esc(h.cita)}»</div></div>
-    <div class="partida-prop">${v ? `<span class="tit2">Partida propuesta por la IA</span><p><code>${esc(v.partida || '—')}</code> ${esc(v.partida_desc)} <span class="etq ${conf}">Confianza ${esc(v.confianza.toLowerCase())}</span></p>${v.confianza_ajustada ? `<small class="pista-txt">La IA dijo «${esc(v.confianza_modelo)}»; la app la recalcula con los 4 criterios.</small>` : ''}<details class="tec"><summary>Por qué esta partida</summary><p>${esc(v.sustento)}</p></details>`
+    <div class="partida-prop">${v ? `<span class="tit2">Partida propuesta${r.tipoIA === 'preparada' ? ' (demostración)' : ' por la IA'}</span><p><code>${esc(v.partida || '—')}</code> ${esc(v.partida_desc)} <span class="etq ${conf}">Confianza ${esc(v.confianza.toLowerCase())}</span></p>${v.confianza_ajustada ? `<small class="pista-txt">La IA dijo «${esc(v.confianza_modelo)}»; la app la recalcula con los 4 criterios.</small>` : ''}<details class="tec"><summary>Por qué esta partida</summary><p>${esc(v.sustento)}</p></details>`
       : `<span class="tit2">Partida</span><p class="pista-txt">Sin propuesta de partida en este modo. Se puede asignar en el detalle de la alerta.</p>`}</div>
   </article>`;
 }

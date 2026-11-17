@@ -475,6 +475,20 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
 .pruebas li .ico { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; } .pruebas .ico.si { background: var(--verde-suave); color: var(--verde); } .pruebas .ico.no { background: var(--naranja-suave); color: var(--naranja); }
 .pruebas b { display: block; color: var(--tinta); font-weight: 600; } .pruebas small { color: var(--texto-2); font-size: .8rem; }
 
+/* ---------- IA visible y asistente con Gemini ---------- */
+.chip-ia { display: inline-flex; align-items: center; gap: 4px; font: 700 .68rem var(--f-texto); letter-spacing: .02em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; vertical-align: middle; border: 1px solid transparent; }
+.chip-ia.vivo { background: rgba(61,220,151,.14); color: var(--verde); border-color: rgba(61,220,151,.4); }
+.chip-ia.reg, .chip-ia.man { background: var(--azul-suave); color: var(--azul-2); border-color: var(--borde-luz); }
+.chip-ia.prep, .chip-ia.basico { background: var(--ambar-suave); color: var(--ambar); border-color: rgba(255,193,90,.35); }
+.chip-ia.vivo::before, .chip-ia.reg::before, .chip-ia.man::before { content: "✦"; font-size: .7rem; }
+.chip-fila { display: block; margin: 3px 0 2px; }
+.asist-cab { flex-wrap: wrap; row-gap: 8px; } .asist-nota { flex: 1 1 100%; line-height: 1.45; } .asist-nota .chip-ia { margin-right: 4px; } .asist-cab small a { color: var(--enlace); }
+.msg-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; } .msg-pie small { color: var(--texto-3); font-size: .72rem; }
+.msg-aviso { display: block; margin-top: 6px; color: var(--texto-3); font-size: .74rem; }
+.msg .spin { display: inline-block; vertical-align: middle; width: 13px; height: 13px; }
+.modo-c { font-size: .84rem; color: var(--texto); } .modo-st { font-size: .8rem; }
+.modo-sin { flex-direction: column; margin-bottom: 4px; } .modo-sin .modo-t { font-size: .95rem; }
+
 @media (max-width: 1100px) { .pano { grid-template-columns: 1fr; } .casos3 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; } .lateral { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 14px; gap: 10px; }
@@ -542,7 +556,7 @@ button.enlace { background: none; border: 0; padding: 0; color: var(--enlace); t
 </div>
 
 <aside class="asist" id="asist" hidden aria-label="Asistente">
-  <div class="asist-cab"><div><b>Asistente</b><small id="asist-modo">Respuestas preparadas</small></div><button class="btn peq" id="asist-cerrar">Cerrar</button></div>
+  <div class="asist-cab"><b>Asistente</b><div class="fila-btn" style="flex-wrap:nowrap"><button class="btn peq" id="asist-borrar" title="Empezar una conversación nueva">Nueva conversación</button><button class="btn peq" id="asist-cerrar">Cerrar</button></div><small id="asist-modo" class="asist-nota"></small></div>
   <div class="asist-msgs" id="asist-msgs" aria-live="polite"></div>
   <div class="sugeridas" id="asist-sug"></div>
   <form id="asist-form"><label class="sr" for="asist-in">Tu pregunta</label><input id="asist-in" autocomplete="off" placeholder="Pregunta lo que quieras de esta pantalla"><button class="btn prim peq">Enviar</button></form>
