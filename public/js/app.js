@@ -219,7 +219,6 @@ const cdeDe = id => cdeConex[id] === null ? null : cdeConex[id] || (id === 'H3' 
 const abiertasDe = id => alertas.filter(a => a.proyecto === id && a.fecha_recepcion <= est.hoy && !est.decisiones[a.id]).sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
 const porAprobarDe = id => alertas.filter(a => a.proyecto === id && ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado) && !estadoAprob(a));
 const porEmitirDe = id => alertas.filter(a => a.proyecto === id && estadoAprob(a) === 'aprobada' && !est.emitidas?.[a.id]);
-function saludoHora() { const h = new Date().getHours(); return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'; }
 const ICO_ACC = {
   comparar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M12 2v20"/></svg>',
   bandeja: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 13l2.5-7h11L20 13v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg>',
@@ -274,8 +273,9 @@ function vInicio() {
   const urg = abiertas.filter(a => ['rojo', 'ambar', 'vencido'].includes(estadoDe(a))).length;
   const acc = accionPrincipal(id);
   $('#v-inicio').innerHTML = `
-    <div class="saludo anim"><div><h1>${saludoHora()}<span class="chip-rol">${esc(rolN())}</span></h1>
-      <p>${esc(pr.nombre)}${pr.demo ? ' (demostración)' : ''} · ${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
+    <div class="saludo anim"><div><h1>${esc(pr.nombre)} ${ETQ_PROY(pr)}<span class="chip-rol">${esc(rolN())}</span></h1>
+      <p class="cab-proy">Cláusula ${esc(String(paramsProy(id).clausula))} · ${paramsProy(id).plazo} días ${paramsProy(id).tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} para notificar · Documentos: ${cdeDe(id) ? `${esc(cdeDe(id).tipo)} · ${esc(cdeDe(id).ruta || '')}${cdeDe(id).demo ? ' (demostración)' : ''}` : 'sin origen conectado'}</p>
+      <p>${abiertas.length ? `${abiertas.length} cambio${abiertas.length === 1 ? '' : 's'} abierto${abiertas.length === 1 ? '' : 's'}${urg ? `, ${urg} urgente${urg === 1 ? '' : 's'}` : ''}` : 'sin cambios abiertos'} · fecha simulada ${N.fmtFecha(est.hoy)}.</p>
       <p class="rol-hoy">${esc(ROLES[est.rol].hace)}</p></div></div>
     <div class="inicio-hero">
       <div class="accion-principal anim"><div><h2>${esc(acc.t)}</h2><p>${esc(acc.d)}</p></div><a class="btn prim grande" href="${acc.h}" id="accion-principal">${esc(acc.b)}</a></div>
