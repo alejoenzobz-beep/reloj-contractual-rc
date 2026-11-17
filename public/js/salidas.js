@@ -9,27 +9,35 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const TIPOS = { carta: 'Carta de notificación', acta: 'Acta de reunión', informe: 'Informe de impacto' };
 
 // ---------- datos confirmados y plantillas ----------
+// Campos de una alerta: todos los cambios confirmados del mismo documento y revisión (ctx.grupo), cada uno con su
+// cita y su partida. Un cambio sin partida se notifica igual, como «partida por definir (posible precio nuevo)».
+export const SIN_PARTIDA = 'partida por definir (posible precio nuevo)';
+export function camposGrupo({ items, params, proyecto, hoy, partidaPorCod }) {
+  const a = items[0].a;
+  const cambios = items.map(({ a: x, dec = {} }, i) => {
+    const cod = dec.partida !== undefined ? dec.partida : x.partida;
+    const n = (x.criterios || []).filter(Boolean).length;
+    return { i: i + 1, id: x.id, elemento: x.elemento, cambio: x.cambio.split(/(?<=\.)\s/)[0], ubicacion: x.ubicacion, cita: x.cita,
+      partida: cod ? `${cod} ${partidaPorCod[cod]?.desc || x.partida_desc || ''}`.trim() : SIN_PARTIDA,
+      confianza: cod && x.criterios ? `${x.confianza} (${n} de 4 criterios)` : cod ? String(x.confianza || 'sin propuesta') : 'sin partida',
+      decision: dec.estado ? `${dec.estado}${dec.estado === 'corregida' && cod !== x.partida ? ` (la IA propuso ${x.partida || 'ninguna'})` : ''}` : 'sin decidir' };
+  });
+  const limite = items.map(x => x.a.limite).sort()[0];
+  const base = N.camposCarta({ ...a, partida: null }, params, a.doc);
+  const c = { ...base, proyecto, fecha_emision: N.fmtFecha(hoy), fecha_limite: N.fmtFecha(limite), dias_restantes: String(N.diasRestantes(limite, hoy)), n_cambios: String(cambios.length) };
+  // Campos planos por cambio: así verificarCarta (nucleo.js) cubre las cifras de todos los cambios.
+  cambios.forEach(x => Object.assign(c, { [`cambio_${x.i}`]: x.cambio, [`ubicacion_${x.i}`]: x.ubicacion, [`cita_${x.i}`]: x.cita, [`partida_${x.i}`]: x.partida, [`confianza_${x.i}`]: x.confianza }));
+  delete c.cambio; delete c.ubicacion; delete c.partida;
+  Object.defineProperty(c, 'cambios', { value: cambios, enumerable: false });
+  return c;
+}
 export function camposDe(ctx, a) {
-  const dec = ctx.est.decisiones[a.id] || {};
-  const partida = dec.partida ?? a.partida;
-  const al = { ...a, cambio: a.cambio.split(/(?<=\.)\s/)[0], partida, partida_desc: partida ? ctx.partidaPorCod[partida]?.desc || a.partida_desc : '' };
-  const pp = ctx.P(a);
-  const base = N.camposCarta(al, pp, a.doc);
-  const n = (a.criterios || []).filter(Boolean).length;
-  return {
-    ...base,
-    proyecto: ctx.PROY[a.proyecto].nombre,
-    fecha_emision: N.fmtFecha(ctx.est.hoy),
-    fecha_limite: N.fmtFecha(a.limite),
-    dias_restantes: String(N.diasRestantes(a.limite, ctx.est.hoy)),
-    cita: a.cita,
-    confianza: a.criterios ? `${a.confianza} (${n} de 4 criterios)` : String(a.confianza || 'sin propuesta'),
-    decision: dec.estado ? `${dec.estado}${dec.estado === 'corregida' && partida !== a.partida ? ` (la IA propuso ${a.partida || 'ninguna'})` : ''}` : 'pendiente',
-    alternativa: a.alternativa ? `${a.alternativa} ${a.alternativa_desc}` : '',
-  };
+  const items = ctx.grupo(a).filter(x => ['confirmada', 'corregida'].includes(ctx.est.decisiones[x.id]?.estado)).map(x => ({ a: x, dec: ctx.est.decisiones[x.id] }));
+  return camposGrupo({ items: items.length ? items : [{ a, dec: ctx.est.decisiones[a.id] }], params: ctx.P(a), proyecto: ctx.PROY[a.proyecto].nombre, hoy: ctx.est.hoy, partidaPorCod: ctx.partidaPorCod });
 }
 
 export function plantilla(tipo, c) {
+  const L = c.cambios, uno = L.length === 1;
   if (tipo === 'carta') return `Lima, ${c.fecha_emision}
 
 Señores
@@ -39,50 +47,51 @@ ${c.proyecto}
 Asunto: Notificación de variación · documento ${c.documento}, revisión ${c.revision}
 Referencia: cláusula ${c.clausula} del contrato
 
-${N.cartaPlantilla(c)}
+De acuerdo con la cláusula ${c.clausula} del contrato, que establece un plazo de ${c.plazo} para notificar variaciones, por medio de la presente notificamos que el documento ${c.documento} (revisión ${c.revision}), recibido en el entorno común de datos el ${c.fecha_recepcion}, introduce ${uno ? 'el siguiente cambio' : `los siguientes ${c.n_cambios} cambios`}:
 
-Sustento: el documento ${c.documento} (revisión ${c.revision}) indica literalmente: «${c.cita}».
+${L.map(x => `– ${x.cambio} (${x.ubicacion}). Partida: ${x.partida}. Sustento literal: «${x.cita}».`).join('\n\n')}
+
+La valorización correspondiente se presentará conforme al procedimiento contractual, con el sustento de metrados y análisis de precios unitarios. Metrado preliminar: ${c.metrado_preliminar}.
 
 Fecha límite para esta notificación según la cláusula ${c.clausula}: ${c.fecha_limite}.
 
 Atentamente,
 
 [Nombre y firma del representante del contratista]`;
-  if (tipo === 'acta') return `ACTA DE REUNIÓN · REVISIÓN DE CAMBIO
+  if (tipo === 'acta') return `ACTA DE REUNIÓN · REVISIÓN DE ${uno ? 'CAMBIO' : 'CAMBIOS'}
 
 Proyecto: ${c.proyecto}
 Fecha: ${c.fecha_emision}
 Asistentes: [completar: oficina técnica, residencia, supervisión]
 
 Documento de origen: ${c.documento}, revisión ${c.revision}, recibido en el entorno común de datos el ${c.fecha_recepcion}.
-Cambio identificado: ${c.cambio} (${c.ubicacion}).
-Sustento literal: «${c.cita}».
-Partida afectada: ${c.partida}. Metrado preliminar ${c.metrado_preliminar}.
 Plazo para notificar: ${c.plazo} según la cláusula ${c.clausula}; vence el ${c.fecha_limite}.
+
+${uno ? 'Cambio identificado' : `Cambios identificados (${c.n_cambios})`}:
+${L.map(x => `– ${x.cambio} (${x.ubicacion}). Partida: ${x.partida}. Sustento literal: «${x.cita}».`).join('\n')}
 
 Acuerdos:
 – [completar]
 Responsable de notificar a la propietaria: [completar]`;
-  return `INFORME DE IMPACTO DEL CAMBIO
+  return `INFORME DE IMPACTO ${uno ? 'DEL CAMBIO' : 'DE LOS CAMBIOS'}
 
 Proyecto: ${c.proyecto}
 Documento de origen: ${c.documento}, revisión ${c.revision} (${c.titulo_documento}), recibido el ${c.fecha_recepcion}.
 
-Descripción del cambio: ${c.cambio}
-Ubicación: ${c.ubicacion}
-Evidencia (cita literal verificada): «${c.cita}»
+${L.map(x => `${x.elemento}
+Descripción: ${x.cambio}
+Ubicación: ${x.ubicacion}
+Evidencia (cita literal verificada): «${x.cita}»
+Partida del presupuesto: ${x.partida}. Confianza: ${x.confianza}. Decisión: ${x.decision}.`).join('\n\n')}
 
-Partida del presupuesto: ${c.partida}. Confianza ${c.confianza}.${c.alternativa ? `\nPartida alternativa: ${c.alternativa}.` : ''}
 Metrado preliminar: ${c.metrado_preliminar}. Lo calcula oficina técnica; el asistente no estima metrados ni montos.
-
-Plazo contractual: ${c.plazo} desde la recepción (cláusula ${c.clausula}). Fecha límite: ${c.fecha_limite}. Días restantes al ${c.fecha_emision}: ${c.dias_restantes}.
-Decisión registrada: ${c.decision}.`;
+Plazo contractual: ${c.plazo} desde la recepción (cláusula ${c.clausula}). Fecha límite: ${c.fecha_limite}. Días restantes al ${c.fecha_emision}: ${c.dias_restantes}.`;
 }
 
-// Avisos en vivo sobre el texto editado.
+// Avisos en vivo sobre el texto editado: la cita de cada cambio, la fecha límite y las cifras de todos los cambios.
 export function revisar(texto, c, vencido) {
   const v = N.verificarCarta(texto, c), n = N.normalizar(texto), av = [];
-  if (!n.includes(N.normalizar(c.cita))) av.push({ nivel: 'mal', t: 'Falta la cita literal del documento de origen.' });
+  c.cambios.forEach(x => { if (!n.includes(N.normalizar(x.cita))) av.push({ nivel: 'mal', t: `Falta la cita literal del cambio ${c.cambios.length > 1 ? `${x.i} (${x.elemento})` : ''}`.trim() + '.' }); });
   if (!texto.includes(c.fecha_limite)) av.push({ nivel: 'mal', t: `Falta la fecha límite (${c.fecha_limite}).` });
   if (!v.ok) av.push({ nivel: 'mal', t: `Cifras o fechas sin origen en los datos confirmados: ${v.fuera.join(', ')}.` });
   if (vencido) av.push({ nivel: 'mal', t: `Fecha fuera de plazo: el límite fue el ${c.fecha_limite}. La notificación sería extemporánea.` });
@@ -92,7 +101,7 @@ export function revisar(texto, c, vencido) {
 }
 
 function resaltar(texto, c) {
-  const vals = [c.cita, c.fecha_limite, c.partida, c.fecha_recepcion, c.documento, c.clausula, c.plazo].filter(v => v && String(v).length > 2);
+  const vals = [...c.cambios.flatMap(x => [x.cita, x.partida]), c.fecha_limite, c.fecha_recepcion, c.documento, c.clausula, c.plazo].filter(v => v && String(v).length > 2 && v !== SIN_PARTIDA);
   let h = esc(texto);
   [...new Set(vals)].sort((x, y) => y.length - x.length).forEach(v => { h = h.split(esc(v)).join(`\u0001${esc(v)}\u0002`); });
   h = h.replace(/\u0001/g, '<mark class="campo">').replace(/\u0002/g, '</mark>');
@@ -150,10 +159,11 @@ const S = { tipo: 'carta', res: null };
 export function vSalidas(ctx, idSel) {
   const { est } = ctx;
   const esperan = ctx.alertas.filter(a => ['confirmada', 'corregida'].includes(est.decisiones[a.id]?.estado) && !est.aprobaciones[a.id]);
-  const decididas = ctx.alertas.filter(a => est.aprobaciones[a.id]?.estado === 'aprobada').sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
+  const vistos = new Set(), esAlerta = x => { const k = `${x.proyecto}|${x.doc_id}|${x.doc.revision}`; if (vistos.has(k)) return false; vistos.add(k); return true; };
+  const decididas = ctx.alertas.filter(a => est.aprobaciones[a.id]?.estado === 'aprobada').sort((x, y) => x.id.localeCompare(y.id)).filter(esAlerta).sort((x, y) => N.diasRestantes(x.limite, est.hoy) - N.diasRestantes(y.limite, est.hoy));
   const a = ctx.alertaPorId[idSel] && est.aprobaciones[idSel]?.estado === 'aprobada' ? ctx.alertaPorId[idSel] : decididas[0];
   const raiz = $('#v-salidas');
-  const lista = decididas.length ? `<ul class="sal-lista">${decididas.map(x => { const e = est.emitidas[x.id]; return `<li><a href="#salidas-${x.id.toLowerCase()}" ${a && x.id === a.id ? 'aria-current="true"' : ''}><b>${esc(x.doc_id)} · ${esc(x.elemento)}</b><small>${esc(ctx.PROY[x.proyecto].nombre)} · ${e ? `<span class="ok-t">${esc(TIPOS[e.tipo])} emitida el ${N.fmtFecha(e.fecha)}</span>` : `notificar hasta el ${N.fmtFecha(x.limite)}`}</small></a></li>`; }).join('')}</ul>`
+  const lista = decididas.length ? `<ul class="sal-lista">${decididas.map(x => { const e = est.emitidas[x.id]; return `<li><a href="#salidas-${x.id.toLowerCase()}" ${a && x.id === a.id ? 'aria-current="true"' : ''}><b>${esc(ctx.titulo(x))}</b><small>${esc(ctx.PROY[x.proyecto].nombre)} · ${e ? `<span class="ok-t">${esc(TIPOS[e.tipo])} emitida el ${N.fmtFecha(e.fecha)}</span>` : `notificar hasta el ${N.fmtFecha(x.limite)}`}</small></a></li>`; }).join('')}</ul>`
     : `<p class="vacio">Todavía no hay variaciones aprobadas. Un cambio llega aquí cuando oficina técnica lo confirma y el jefe/a de oficina técnica aprueba notificarlo.</p>`;
   const espera = esperan.length ? `<p class="pista-txt" style="margin-top:10px">${esperan.length} cambio${esperan.length === 1 ? '' : 's'} confirmado${esperan.length === 1 ? '' : 's'} espera${esperan.length === 1 ? '' : 'n'} la aprobación del jefe/a de oficina técnica: ${esperan.map(x => `<a href="#alerta-${x.id.toLowerCase()}">${esc(x.doc_id)}</a>`).join(', ')}.</p>` : '';
   if (!a) { raiz.innerHTML = cab() + `<div class="sal-grid"><div class="panel">${lista}${espera}</div></div>`; return; }
@@ -164,7 +174,7 @@ export function vSalidas(ctx, idSel) {
       <aside class="panel"><h3>Variaciones aprobadas</h3>${lista}${espera}</aside>
       <section class="sal-editor">
         <div class="sal-barra"><div class="segmento" role="tablist" aria-label="Tipo de documento">${Object.entries(TIPOS).map(([k, t]) => `<button role="tab" aria-selected="${S.tipo === k}" data-tipo="${k}">${t}</button>`).join('')}</div>
-          <span class="pista-txt">${esc(a.doc_id)} rev. ${esc(a.doc.revision)} · decisión: ${esc(c.decision)}</span></div>
+          <span class="pista-txt">${esc(ctx.titulo(a))} · ${c.n_cambios} ${c.n_cambios === "1" ? "cambio confirmado" : "cambios confirmados"}</span></div>
         <div class="hoja" id="doc-imprimir"><div class="hoja-txt" id="sal-ed" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${esc(TIPOS[S.tipo])}, editable">${resaltar(texto, c)}</div></div>
         <p class="pista-txt">Texto editable. Resaltado: datos confirmados que la app verifica (cita, partida, fechas, cláusula). <button class="enlace" id="sal-reset" ${est.borradores[clave] != null ? '' : 'hidden'}>Volver a la plantilla</button></p>
         <div id="sal-avisos" aria-live="polite"></div>
@@ -235,11 +245,11 @@ export function vSalidas(ctx, idSel) {
   if (em) em.onclick = () => {
     const r = pintarAvisos();
     if (!r.ok && !confirm('El documento tiene avisos sin resolver. ¿Registrar la emisión de todos modos?')) return;
-    est.emitidas[a.id] = { tipo: S.tipo, fecha: est.hoy, quien: ctx.rolN(), fuera_de_plazo: vencido };
+    c.cambios.forEach(x => { est.emitidas[x.id] = { tipo: S.tipo, fecha: est.hoy, quien: ctx.rolN(), fuera_de_plazo: vencido }; });
     ctx.registrar(ctx.rolN(), `${a.doc_id} · ${TIPOS[S.tipo].toLowerCase()} emitida${vencido ? ' fuera de plazo' : ''}${r.ok ? '' : ' con avisos sin resolver'}`, { tipo: 'emitido', alerta: a.id });
     vSalidas(ctx, a.id);
   };
-  const an = ctx.puede('emitir') ? $('#sal-anular') : ($('#sal-anular')?.remove(), null); if (an) an.onclick = () => { delete est.emitidas[a.id]; ctx.registrar(ctx.rolN(), `${a.doc_id} · registro de emisión anulado`, { tipo: 'corregido', alerta: a.id }); vSalidas(ctx, a.id); };
+  const an = ctx.puede('emitir') ? $('#sal-anular') : ($('#sal-anular')?.remove(), null); if (an) an.onclick = () => { c.cambios.forEach(x => delete est.emitidas[x.id]); ctx.registrar(ctx.rolN(), `${a.doc_id} · registro de emisión anulado`, { tipo: 'corregido', alerta: a.id }); vSalidas(ctx, a.id); };
 }
 
 async function usarHerramienta(k, texto, c, vencido) {
@@ -247,7 +257,7 @@ async function usarHerramienta(k, texto, c, vencido) {
   const caja = (titulo, cuerpo, nota, chip = '') => `<div class="panel her-res"><div class="plazo-cab"><h3>${esc(titulo)} ${chip}</h3><button class="btn peq" id="her-copiar">Copiar</button></div><pre class="crudo" id="her-txt">${esc(cuerpo)}</pre><p class="origen">${esc(nota)}</p></div>`;
   const copiar = () => { const b = $('#her-copiar'); if (b) b.onclick = async () => { try { await navigator.clipboard.writeText($('#her-txt').textContent); b.textContent = 'Copiado'; } catch { b.textContent = 'Selecciona y copia con Ctrl+C'; } }; };
   if (IA.modoIA() === 'demo') {
-    if (k === 'resumir') out.innerHTML = caja(h.titulo, `• Cambio: ${c.cambio} (${c.ubicacion}).\n• Partida afectada: ${c.partida}.\n• Notificar según la cláusula ${c.clausula} hasta el ${c.fecha_limite}.`, 'Resumen armado por la app con los datos confirmados (modo demostración, sin IA).', '<span class="chip-ia basico">Sin IA · armado por la app</span>');
+    if (k === 'resumir') out.innerHTML = caja(h.titulo, `${c.cambios.map(x => `• ${x.cambio} Partida: ${x.partida}.`).join('\n')}\n• Notificar según la cláusula ${c.clausula} hasta el ${c.fecha_limite}.`, 'Resumen armado por la app con los datos confirmados (modo demostración, sin IA).', '<span class="chip-ia basico">Sin IA · armado por la app</span>');
     else if (k === 'revisar') { const r = revisar(texto, c, vencido); out.innerHTML = caja(h.titulo, r.av.length ? r.av.map(x => `• ${x.t}`).join('\n') : 'Sin observaciones: la cita, la fecha límite y las cifras coinciden con los datos confirmados.', 'Revisión automática de la app (modo demostración, sin IA). Con IA en vivo o el modo manual, la IA revisa además la redacción.', '<span class="chip-ia basico">Sin IA · armado por la app</span>'); }
     else out.innerHTML = `<div class="aviso info">En modo demostración no hay una traducción registrada para este texto. Elige «IA registrada», «Mi propia clave API» o «Manual» en <a href="#ajustes">Ajustes</a> para traducirlo.</div>`;
     copiar(); return;

@@ -159,10 +159,10 @@ function barraPlazo(a, compacta = false) {
     <div class="pb-escala"><span>Recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim}</span></div></div>`;
   const frase = margenSinMin >= 0 ? `sin asistente quedarían entre ${margenSinMin} y ${margenSinMax} días` : margenSinMax < 0 ? 'sin asistente, el plazo vencería antes de entender el cambio' : `sin asistente quedarían entre 0 y ${margenSinMax} días (o vencería antes)`;
   return `<div class="pb pb-g" role="img" aria-label="${esc(aria)}">
-    <div class="pb-fila"><span class="pb-et">Para entender el cambio</span><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"><i>Sin asistente: ${REF.min}–${REF.max} días</i></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-asist"><i>Con asistente: día 0</i></span>${hoyM}</div></div>
+    <div class="pb-fila"><span class="pb-et">Para entender el cambio</span><div class="pb-pista"><span class="pb-ref" style="width:${x(REF.max)}%"><i>Sin asistente: ${REF.min}–${REF.max} días</i></span><span class="pb-ref2" style="left:${x(REF.min)}%;width:${x(REF.max) - x(REF.min)}%"></span><span class="pb-asist"><i>Con asistente: detección el mismo día de la recepción</i></span>${hoyM}</div></div>
     <div class="pb-fila"><span class="pb-et">Para sustentar</span><div class="pb-pista"><span class="pb-margen" style="left:1.5%;width:98.5%"><i>Margen con asistente: ${margenCon} día${margenCon === 1 ? '' : 's'}</i></span><span class="pb-fin"></span>${hoyM.replace(/<b>Hoy<\/b>/, '')}</div></div>
     <div class="pb-escala pb-et-pad"><span>Día 0 · recibido ${fCorta(a.fecha_recepcion)}</span><span>${lim} · ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'}</span></div>
-    <p class="pb-nota">Con el asistente, el cambio se detecta el mismo día (mediana de ${String(LAT_MIN).replace('.', ',')} min por documento, medida) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = ${REF.n}), ver <a href="#calidad">Calidad</a>. El tiempo de revisión humana se cronometra en este navegador (Calidad → Evidencia).</p></div>`;
+    <p class="pb-nota">Con el asistente, la detección ocurre el mismo día de la recepción (en la medición de desarrollo con Claude sobre el corpus de ${cifras.corpus_base.documentos} documentos, ${N.fmtFecha(cifras.generado.slice(0, 10))}, cada documento se procesó en una mediana de ${String(LAT_MIN).replace('.', ',')} min) y quedan ${margenCon} días para sustentar; ${frase}. Referencia «sin asistente»: ${REF.min} a ${REF.max} días, casos observados (n = ${REF.n}), ver <a href="#calidad">Calidad</a>. El tiempo de revisión humana se cronometra en este navegador (Calidad → Evidencia).</p></div>`;
 }
 function diasBadge(a, cls = '') {
   const e = estadoDe(a);
@@ -197,7 +197,7 @@ function render() {
   $('#ruta-vista').textContent = { inicio: 'Inicio', simulacion: 'Cómo funciona', proyectos: 'Proyectos', panorama: 'Panorama', bandeja: 'Bandeja de cambios', salidas: 'Documentos de salida', alerta: 'Detalle del cambio', comparar: 'Comparar revisiones', calidad: 'Calidad', auditoria: 'Registro de auditoría', ajustes: 'Ajustes', plazos: 'Plazos y parámetros' }[r.vista];
   if (r.vista === 'alerta' && !(ultimaVista?.vista === 'alerta' && ultimaVista.id === r.id) && !est.decisiones[r.id]) EV.abrirDetalle(r.id);
   pintarFecha();
-  ({ inicio: vInicio, proyectos: vProyectos, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); EV.conectarEvidencia(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
+  ({ inicio: vInicio, proyectos: vProyectos, panorama: vPanorama, simulacion: vSim, bandeja: vBandeja, salidas: () => vSalidas({ est, alertas, alertaPorId, partidaPorCod, P, PROY, registrar, guardar, puede, notaRol, rolN, icsDe, telegram: TG, drive: DRV, grupo: grupoDe, titulo: tituloAlerta }, r.id), alerta: () => vAlerta(r.id), comparar: () => vComparar({ est, proyecto, partidaPorCod, crearAlertas, puede, notaRol, drive: DRV }), calidad: () => { vCalidad(); EV.conectarEvidencia(); correrPruebas(); $('#pr-correr').onclick = correrPruebas; }, auditoria: vAuditoria, ajustes: vAjustes, plazos: vPlazos })[r.vista]();
   pintarModoIA();
   ultimaVista = r;
 }
@@ -262,10 +262,10 @@ Cómo evaluar en 5 minutos: ver el panel «Cómo evaluar esto en 5 minutos» en 
   const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = 'reloj-contractual_datos-de-prueba.zip'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 const EVALUAR = [
-  ['Elige un rol y el proyecto', 'En la bienvenida (o desde el avatar). Empieza como oficina técnica en «Edificio multifamiliar R1».'],
+  ['Entra al proyecto de ejemplo', 'Se entra como oficina técnica en «Edificio multifamiliar R1». El rol se cambia arriba, en «Ver como».'],
   ['Compara la lámina de ejemplo', '«Comparar revisiones» → «Detectar cambios»: 3 cambios con impacto, 2 no evidentes a simple vista, cada uno con su cita verificada.'],
-  ['Decide', '«Crear alerta con estos cambios» → Confirmar. Cambia a jefe/a de oficina técnica desde el avatar y aprueba la variación.'],
-  ['Emite', 'Como gerente, en «Documentos de salida»: revisa los avisos, descarga el DOCX o el correo .eml y registra la emisión.'],
+  ['Decide y aprueba', '«Crear alerta con estos cambios» → «Confirmar los 3 cambios». Luego «Cambiar a Jefe/a de oficina técnica» y «Aprobar y habilitar la carta».'],
+  ['Emite', '«Cambiar a Gerente de proyecto» → la carta lista los 3 cambios con su cita y su partida. Descarga el DOCX o el correo .eml y registra la emisión.'],
   ['Audita y revisa la evidencia', '«Registro de auditoría» → «Verificar integridad». En «Calidad» está qué se midió, con qué n y qué no se afirma.'],
 ];
 function vInicio() {
@@ -279,7 +279,7 @@ function vInicio() {
       <p class="rol-hoy">${esc(ROLES[est.rol].hace)}</p></div></div>
     <div class="inicio-hero">
       <div class="accion-principal anim"><div><h2>${esc(acc.t)}</h2><p>${esc(acc.d)}</p></div><a class="btn prim grande" href="${acc.h}" id="accion-principal">${esc(acc.b)}</a></div>
-      <div class="panel" style="margin:0"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${abiertas.slice(0, 3).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(a.doc_id)} · ${esc(a.elemento)}</h4><p>Notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>` : `<p class="vacio">Sin cambios abiertos en este proyecto.</p>`}
+      <div class="panel" style="margin:0"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${unaPorAlerta(abiertas).slice(0, 3).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(tituloAlerta(a))}</h4><p>Notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>` : `<p class="vacio">Sin cambios abiertos en este proyecto.</p>`}
         <p class="pista-txt" style="margin-top:10px"><a href="#bandeja">Bandeja de cambios</a> · <a href="#panorama">Panorama del proyecto</a></p></div>
     </div>
     <details class="panel evaluar" ${guiaVista() ? '' : 'open'}><summary><b>Cómo evaluar esto en 5 minutos</b></summary><ol class="pasos-evaluar">${EVALUAR.map(([t, d]) => `<li><b>${t}.</b> ${d}</li>`).join('')}</ol>
@@ -528,10 +528,10 @@ function vBandeja() {
     ${est.bvista === 'calendario' ? (() => { const mes = est.bmes || est.hoy.slice(0, 8) + '01'; const items = lista.map(a => ({ fecha: a.limite, href: `#alerta-${a.id.toLowerCase()}`, texto: `${a.doc_id} · ${a.elemento}`, titulo: `${a.doc_id} · ${a.elemento}: vence el ${N.fmtFecha(a.limite)}`, estado: estadoDe(a) })); const fuera = items.filter(i => i.fecha.slice(0, 7) !== mes.slice(0, 7)).length;
       return `<div class="panel cal-bandeja"><div class="plazo-cab"><div class="fila-btn"><button class="btn peq" id="bm-ant" aria-label="Mes anterior">←</button><button class="btn peq" id="bm-sig" aria-label="Mes siguiente">→</button></div><span class="pista-txt">Vencimientos de los cambios filtrados. ${fuera ? `${fuera} vence${fuera === 1 ? '' : 'n'} en otros meses.` : ''}</span></div>${CAL.calendarioVencimientos({ mes, hoy: est.hoy, items, feriados: proyF === 'todos' ? FER() : feriadosProy(proyF) })}<div class="cm-ley"><span><i class="l-verde"></i>En plazo</span><span><i class="l-ambar"></i>Vence pronto</span><span><i class="l-lim"></i>Vencido o último día</span><span><i class="l-ok"></i>Decidido</span></div></div>`; })() : ''}
     <p class="pista-txt" style="margin:-4px 0 12px">Cada barra va de la recepción al límite contractual del proyecto. El tramo rayado es lo que tarda entender un cambio sin asistente (${REF.min} a ${REF.max} días, casos de referencia).</p>
-    <div class="lista" ${est.bvista === 'calendario' ? 'hidden' : ''}>${lista.length ? lista.map(a => `<a class="alerta-fila" href="#alerta-${a.id.toLowerCase()}">
+    <div class="lista" ${est.bvista === 'calendario' ? 'hidden' : ''}>${lista.length ? unaPorAlerta(lista).map(a => `<a class="alerta-fila" href="#alerta-${a.id.toLowerCase()}">
         ${diasBadge(a)}
-        <div><div class="doc-id">${esc(a.doc_id)} <span>· ${esc(a.doc.titulo)}${proyF === 'todos' ? ` · ${esc(PROY[a.proyecto].nombre)}` : ''}</span></div><div class="resumen-cambio">${esc(a.cambio)}</div></div>
-        <div class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto</b>'}<span class="conf ${a.confianza}">Confianza ${esc(String(a.confianza).toLowerCase())}</span></div>
+        <div><div class="doc-id">${esc(a.doc_id)} <span>· ${esc(a.doc.titulo)}${proyF === 'todos' ? ` · ${esc(PROY[a.proyecto].nombre)}` : ''}</span></div><div class="resumen-cambio">${grupoDe(a).length > 1 ? `<b>${esc(tituloAlerta(a))}:</b> ${grupoDe(a).map(x => esc(x.elemento)).join(' · ')}` : esc(a.cambio)}</div></div>
+        <div class="partida">${grupoDe(a).length > 1 ? `${grupoDe(a).map(x => x.partida ? `<code>${esc(x.partida)}</code>` : '<b>sin partida</b>').join(' ')}` : a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto</b>'}<span class="conf ${a.confianza}">Confianza ${esc(String(a.confianza).toLowerCase())}</span></div>
         <div class="pista">${barraPlazo(a, true)}</div></a>`).join('') : `<div class="vacio">No hay cambios con estos filtros al ${N.fmtFecha(est.hoy)}. ${proyF !== 'todos' && !alertas.some(a => a.proyecto === proyF) ? '<a href="#comparar">Compara dos revisiones</a> para registrar cambios en este proyecto.' : 'Prueba con «Todos» o mueve la fecha simulada.'}</div>`}</div>
     <div class="hoy"><label for="hoy-r">Fecha simulada <span class="etq ambar">demostración</span></label><div><input type="range" id="hoy-r" min="0" max="${max}" value="${idx}" aria-valuetext="${N.fmtFecha(est.hoy)}"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--texto-2)"><span>${N.fmtFecha(PRIMERA)}</span><span>Mueve la fecha y mira cómo corren los plazos${porLlegar ? ` · ${porLlegar} cambios llegan después` : ''}</span><span>${N.fmtFecha(ULTIMA)}</span></div></div><div class="fecha num" id="hoy-f">${N.fmtFecha(est.hoy)}</div></div>
     <section class="seccion"><h3>Últimas decisiones</h3><p style="color:var(--texto-2);font-size:.9rem;margin:4px 0 10px">Cada decisión queda anotada con el rol que la tomó; la cadena completa y sellada está en el <a href="#auditoria">registro de auditoría</a>. En esta demostración se guarda en este navegador.</p>
@@ -576,21 +576,30 @@ function icsDe(a) {
     descripcion: `${PROY[a.proyecto].nombre}. Cláusula ${pp.clausula}: ${pp.plazo} días ${pp.tipo_dias === 'habiles' ? 'hábiles' : 'calendario'} desde la recepción (${N.fmtFecha(a.fecha_recepcion)}). Cambio: ${primeraFrase(a.cambio)} Cita: «${a.cita}». Fecha calculada por Reloj Contractual (demostración).` });
 }
 // Panel de decisiones del cambio: cada rol ve solo los botones de su punto de decisión.
+// Una alerta = los cambios del mismo documento y revisión. Las decisiones se guardan por cambio y se toman por alerta.
+const unaPorAlerta = L => { const v = new Set(); return L.filter(a => { const k = `${a.proyecto}|${a.doc_id}|${a.doc.revision}`; if (v.has(k)) return false; v.add(k); return true; }); };
+const grupoDe = a => alertas.filter(x => x.proyecto === a.proyecto && x.doc_id === a.doc_id && x.doc.revision === a.doc.revision).sort((p, q) => p.id.localeCompare(q.id));
+const tituloAlerta = a => { const n = grupoDe(a).length; return `${a.doc_id} rev. ${a.doc.revision} · ${n === 1 ? a.elemento : `${n} cambios`}`; };
+const estadoGrupo = a => {
+  const G = grupoDe(a), pend = G.filter(x => !est.decisiones[x.id]), dec = G.filter(x => est.decisiones[x.id] && est.decisiones[x.id].estado !== 'descartada');
+  return { G, pend, dec, desc: G.length - pend.length - dec.length, ap: dec[0] && est.aprobaciones[dec[0].id], emi: dec[0] && est.emitidas[dec[0].id], rep: dec[0] || G[0] };
+};
 function panelDecision(a) {
-  const dec = est.decisiones[a.id], ap = est.aprobaciones[a.id], emi = est.emitidas[a.id];
+  const { G, pend, dec, desc, ap, emi, rep } = estadoGrupo(a), n = G.length;
   const pasos = [
-    ['Decidir el cambio', 'Oficina técnica', dec ? `${{ confirmada: 'Confirmado', corregida: 'Partida corregida', descartada: 'Descartado' }[dec.estado]}${dec.partida && dec.partida !== a.partida ? ` a ${dec.partida}` : ''}` : null],
-    ['Aprobar la variación', 'Jefe/a de OT', ap ? (ap.estado === 'aprobada' ? 'Aprobada' : 'Archivada sin notificar') : dec?.estado === 'descartada' ? 'No aplica' : null],
-    ['Emitir la carta', 'Gerente', emi ? `Emitida el ${N.fmtFecha(emi.fecha)}` : ap?.estado === 'archivada' || dec?.estado === 'descartada' ? 'No aplica' : null],
+    [n === 1 ? 'Decidir el cambio' : `Decidir los ${n} cambios`, 'Oficina técnica', pend.length ? null : dec.length ? `${dec.length} de ${n} confirmado${dec.length === 1 ? '' : 's'}${desc ? `, ${desc} descartado${desc === 1 ? '' : 's'}` : ''}` : 'Descartado'],
+    ['Aprobar la variación', 'Jefe/a de OT', ap ? (ap.estado === 'aprobada' ? 'Aprobada' : 'Archivada sin notificar') : !pend.length && !dec.length ? 'No aplica' : null],
+    ['Emitir la carta', 'Gerente', emi ? `Emitida el ${N.fmtFecha(emi.fecha)}` : ap?.estado === 'archivada' || (!pend.length && !dec.length) ? 'No aplica' : null],
   ];
   const actual = pasos.findIndex(p => !p[2]);
+  const opciones = x => `${proyecto.partidas.map(p => `<option value="${p.codigo}" ${p.codigo === x.partida ? 'selected' : ''}>${p.codigo} ${esc(p.desc)}</option>`).join('')}<option value="" ${x.partida ? '' : 'selected'}>Sin partida: por definir (posible precio nuevo)</option><option value="__desc">Descartar este cambio</option>`;
   let accion = '';
-  if (!dec) accion = puede('decidir') ? `<div class="acciones"><button class="btn prim" data-d="confirmada">Confirmar</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar</button></div>
-      <div id="d-corr" hidden style="margin-top:10px"><label class="tit" for="d-sel">Partida correcta</label><select id="d-sel" style="max-width:100%">${proyecto.partidas.map(x => `<option value="${x.codigo}" ${x.codigo === a.partida ? 'selected' : ''}>${x.codigo} ${esc(x.desc)}</option>`).join('')}</select> <button class="btn peq prim" id="d-corr-ok">Guardar corrección</button></div>` : notaRol('decidir', 'Decidir este cambio');
-  else if (dec.estado !== 'descartada' && !ap) accion = puede('aprobar') ? `<div class="acciones"><button class="btn prim" id="d-aprobar">Aprobar y habilitar la carta</button><button class="btn" id="d-archivar">Archivar sin notificar</button></div>` : notaRol('aprobar', 'Aprobar la variación');
-  else if (ap?.estado === 'aprobada' && !emi) accion = puede('redactar') ? `<div class="acciones"><a class="btn prim" id="d-carta" href="#salidas-${a.id.toLowerCase()}">${puede('emitir') ? 'Revisar y registrar la emisión' : 'Redactar carta, acta o informe'}</a></div>` : notaRol('redactar', 'Redactar el documento');
-  else if (emi) accion = `<div class="acciones"><a class="btn" href="#salidas-${a.id.toLowerCase()}">Ver el documento emitido</a></div>`;
-  const deshacer = dec && !ap && !emi && puede('decidir') ? '<button class="btn peq" id="d-deshacer">Deshacer la decisión</button>' : '';
+  if (pend.length) accion = puede('decidir') ? `<div class="acciones"><button class="btn prim" data-d="confirmada">${pend.length === 1 ? 'Confirmar' : `Confirmar los ${pend.length} cambios`}</button><button class="btn" data-d="corregida">Corregir partida</button><button class="btn" data-d="descartada">Descartar${pend.length === 1 ? '' : ' todos'}</button></div>
+      <div id="d-corr" hidden style="margin-top:10px">${pend.map(x => `<label class="tit" for="d-sel-${x.id}">${esc(x.elemento)}</label><select id="d-sel-${x.id}" data-sel="${x.id}" style="max-width:100%;width:100%">${opciones(x)}</select>`).join('')} <button class="btn peq prim" id="d-corr-ok" style="margin-top:8px">Guardar decisión</button></div>` : notaRol('decidir', 'Decidir estos cambios');
+  else if (dec.length && !ap) accion = puede('aprobar') ? `<div class="acciones"><button class="btn prim" id="d-aprobar">Aprobar y habilitar la carta</button><button class="btn" id="d-archivar">Archivar sin notificar</button></div>` : notaRol('aprobar', 'Aprobar la variación');
+  else if (ap?.estado === 'aprobada' && !emi) accion = puede('redactar') ? `<div class="acciones"><a class="btn prim" id="d-carta" href="#salidas-${rep.id.toLowerCase()}">${puede('emitir') ? 'Revisar y registrar la emisión' : 'Redactar carta, acta o informe'}</a></div>${puede('emitir') ? '' : notaRol('emitir', 'Registrar la emisión')}` : notaRol('redactar', 'Redactar el documento');
+  else if (emi) accion = `<div class="acciones"><a class="btn" href="#salidas-${rep.id.toLowerCase()}">Ver el documento emitido</a></div>`;
+  const deshacer = !pend.length && G.some(x => est.decisiones[x.id]) && !ap && !emi && puede('decidir') ? '<button class="btn peq" id="d-deshacer">Deshacer la decisión</button>' : '';
   return `<div class="panel" id="panel-decision"><h3>Decisiones</h3>
     <ol class="pasos-dec">${pasos.map(([t, q, r], k) => `<li class="${r ? 'hecho' : k === actual ? 'actual' : ''}"><b>${t}</b><small>${q}${r ? ` · ${esc(r)}` : k === actual ? ' · le toca ahora' : ''}</small></li>`).join('')}</ol>
     ${accion}${deshacer ? `<div class="fila-btn" style="margin-top:8px">${deshacer}</div>` : ''}</div>`;
@@ -602,7 +611,7 @@ function vAlerta(id) {
   const cuerpoNuevo = d.tipo === 'Lámina' ? conCita(d.texto, a.cita) : conCita(d.texto, a.cita);
   $('#v-alerta').innerHTML = `
     <a class="volver" href="#bandeja">← Bandeja de cambios</a>
-    <div class="det-cab">${diasBadge(a)}<div><h2>${esc(a.doc_id)} rev. ${esc(d.revision)} · ${esc(a.elemento)}</h2><p class="frase">${esc(fraseDias(a))}</p></div></div>
+    <div class="det-cab">${diasBadge(a)}<div><h2>${esc(tituloAlerta(a))}</h2><p class="frase">${esc(fraseDias(a))}</p></div></div>
     <div class="panel plazo-panel"><div class="plazo-cab"><h3>Plazo contractual</h3><span class="pista-txt">${esc(PROY[a.proyecto].nombre)} · <a href="#plazos">parámetros</a></span></div>${barraPlazo(a)}
       <details class="tec cal-det" open><summary>Ver el plazo en el calendario</summary>${CAL.calendarioPlazo({ inicio: a.fecha_recepcion, limite: a.limite, feriados: FER(a), tipo: P(a).tipo_dias, hoy: est.hoy, refMax: REF.max, titulo: `${a.doc_id} · ${a.elemento}` })}</details>
       <div class="fila-btn" style="margin-top:10px"><button class="btn peq" id="d-ics">Agregar al calendario (.ics)</button>${TG.activo ? '<button class="btn peq" id="d-tg">Enviar aviso por Telegram</button>' : ''}<span class="pista-txt" style="align-self:center">Evento el ${N.fmtFecha(a.limite)} con aviso dos días antes. Sirve con Google Calendar, Outlook y Apple.</span></div><div id="d-tg-msg" aria-live="polite"></div>
@@ -618,7 +627,8 @@ function vAlerta(id) {
       </div>
       <div>
         ${panelDecision(a)}<div id="opinion-slot"></div>
-        <div class="panel"><h3>Lo que propone la IA ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
+        ${grupoDe(a).length > 1 ? `<div class="panel"><h3>Cambios de esta alerta</h3><ul class="cambios-alerta">${grupoDe(a).map(x => `<li class="${x.id === a.id ? 'actual' : ''}">${x.id === a.id ? `<b>${esc(x.elemento)}</b>` : `<a href="#alerta-${x.id.toLowerCase()}">${esc(x.elemento)}</a>`}<small>${esc(primeraFrase(x.cambio))} · ${x.partida ? `partida ${esc(x.partida)}` : 'sin partida'}${est.decisiones[x.id] ? ` · ${esc(est.decisiones[x.id].estado)}` : ''}</small></li>`).join('')}</ul></div>` : ''}
+        <div class="panel"><h3>Lo que propone la IA${grupoDe(a).length > 1 ? ` · ${esc(a.elemento)}` : ''} ${IA.chipIA(a.origen_ia || 'registrada')}</h3><p>${esc(a.cambio)}</p><p style="font-size:.88rem;color:var(--texto-2);margin-top:6px">Ubicación: ${esc(a.ubicacion)}</p></div>
         <div class="panel"><h3>Partida del presupuesto</h3>
           <p class="partida">${a.partida ? `<code>${esc(a.partida)}</code> ${esc(a.partida_desc)}` : '<b>Sin partida en el presupuesto contractual</b>'} <span class="conf ${a.confianza}">Confianza ${a.confianza}</span></p>
           ${a.criterios ? `<div class="criterios">${['Mismo elemento', 'Misma especialidad', 'Ubicación compatible', 'Rango o unidad'].map((t, i) => `<div class="check"><span class="ico ${a.criterios[i] ? 'si' : 'no'}">${a.criterios[i] ? '✓' : '✗'}</span>${t}</div>`).join('')}</div>` : ''}
@@ -627,14 +637,26 @@ function vAlerta(id) {
         </div>
       </div>
     </div>`;
-  const decidir = (estado, partida) => { EV.registrarDecision({ id: a.id, doc: a.doc_id, rol: rolN(), estado, partida_propuesta: a.partida, partida_final: partida ?? a.partida, demo: true }); est.decisiones[a.id] = { estado, partida: partida ?? a.partida }; registrar(rolN(), `${a.doc_id} · cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[estado]}${estado === 'corregida' ? `: partida ${partida} (la IA propuso ${a.partida || 'ninguna'})` : ''}`, { tipo: estado === 'corregida' ? 'corregido' : 'revisado', alerta: a.id }); vAlerta(id); EV.ofrecerOpinion($('#opinion-slot'), `decision:${a.id}`, rolN()); };
-  document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-sel').focus(); return; } decidir(b.dataset.d); });
-  const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', $('#d-sel').value);
+  const G = grupoDe(a);
+  // Decide los cambios pendientes de la alerta; «partidas» = { id: código | '' (sin partida) | '__desc' }.
+  const decidir = (estado, partidas = null) => {
+    const pend = G.filter(x => !est.decisiones[x.id]);
+    EV.registrarDecision({ id: a.id, doc: a.doc_id, rol: rolN(), estado, partida_propuesta: a.partida, partida_final: partidas ? (partidas[a.id] ?? a.partida) : a.partida, demo: true });
+    for (const x of pend) {
+      let e = estado, cod = x.partida;
+      if (partidas) { const v = partidas[x.id]; if (v === '__desc') e = 'descartada'; else { cod = v || null; e = cod === x.partida ? 'confirmada' : 'corregida'; } }
+      est.decisiones[x.id] = { estado: e, partida: cod };
+      registrar(rolN(), `${a.doc_id} · ${x.elemento}: cambio ${({ confirmada: 'confirmado', corregida: 'corregido', descartada: 'descartado' })[e]}${e === 'corregida' ? `: partida ${cod || 'por definir'} (la IA propuso ${x.partida || 'ninguna'})` : ''}`, { tipo: e === 'corregida' ? 'corregido' : 'revisado', alerta: x.id });
+    }
+    vAlerta(id); EV.ofrecerOpinion($('#opinion-slot'), `decision:${a.id}`, rolN());
+  };
+  document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (b.dataset.d === 'corregida') { $('#d-corr').hidden = false; $('#d-corr select')?.focus(); return; } decidir(b.dataset.d); });
+  const ok = $('#d-corr-ok'); if (ok) ok.onclick = () => decidir('corregida', Object.fromEntries([...document.querySelectorAll('[data-sel]')].map(x => [x.dataset.sel, x.value])));
   $('#d-ics').onclick = () => { CAL.descargarIcs(icsDe(a), `plazo_${a.doc_id}_${a.id}.ics`.replace(/[^\w.-]+/g, '_')); registrar(rolN(), `${a.doc_id} · fecha límite agregada al calendario (.ics)`, { tipo: 'registro', alerta: a.id }); };
   const tg = $('#d-tg'); if (tg) tg.onclick = async () => { tg.disabled = true; $('#d-tg-msg').innerHTML = '<p class="estado-ia"><span class="spin"></span>Enviando aviso…</p>'; try { await TG.enviar(a); $('#d-tg-msg').innerHTML = '<p class="aviso ok" style="margin-top:8px">Aviso enviado por Telegram.</p>'; registrar(rolN(), `${a.doc_id} · aviso enviado por Telegram`, { tipo: 'registro', alerta: a.id }); } catch (e) { $('#d-tg-msg').innerHTML = `<p class="aviso mal" style="margin-top:8px">${esc(e.message)}</p>`; } tg.disabled = false; };
-  const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { est.aprobaciones[a.id] = { estado: 'aprobada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
-  const arc = $('#d-archivar'); if (arc) arc.onclick = () => { est.aprobaciones[a.id] = { estado: 'archivada', fecha: est.hoy }; registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
-  const des = $('#d-deshacer'); if (des) des.onclick = () => { delete est.decisiones[a.id]; registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
+  const apr = $('#d-aprobar'); if (apr) apr.onclick = () => { estadoGrupo(a).dec.forEach(x => { est.aprobaciones[x.id] = { estado: 'aprobada', fecha: est.hoy }; }); registrar(rolN(), `${a.doc_id} · variación aprobada: se habilita la carta`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
+  const arc = $('#d-archivar'); if (arc) arc.onclick = () => { estadoGrupo(a).dec.forEach(x => { est.aprobaciones[x.id] = { estado: 'archivada', fecha: est.hoy }; }); registrar(rolN(), `${a.doc_id} · archivado sin notificar`, { tipo: 'revisado', alerta: a.id }); vAlerta(id); };
+  const des = $('#d-deshacer'); if (des) des.onclick = () => { G.forEach(x => delete est.decisiones[x.id]); registrar(rolN(), `${a.doc_id} · decisión deshecha`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); };
   const fijarRec = v => { if (v) recepcionCorr[a.id] = v; else delete recepcionCorr[a.id]; try { localStorage.setItem('rc-recepcion', JSON.stringify(recepcionCorr)); } catch { } recalcular1(a); registrar(rolN(), `${a.doc_id} · fecha de recepción ${v ? `corregida a ${N.fmtFecha(v)}` : 'restablecida'}`, { tipo: 'corregido', alerta: a.id }); vAlerta(id); pintarFecha(); };
   $('#d-rec-ok').onclick = () => { const v = $('#d-rec').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; fijarRec(v === d.fecha_recepcion ? null : v); };
   const rr = $('#d-rec-reset'); if (rr) rr.onclick = () => fijarRec(null);
@@ -658,7 +680,8 @@ function vCalidad() {
       <div class="panel scroll-x"><table class="t"><thead><tr><th>Modelo</th><th>Fecha</th><th>Documentos</th><th>Cambios detectados</th><th>Falsas alarmas</th><th>Partida correcta</th></tr></thead><tbody>
         <tr><td>Claude <small class="pista-txt">· medición de desarrollo</small></td><td>${N.fmtFecha(cifras.generado.slice(0, 10))}</td><td>${pn.documentos}</td><td>${de(pn.corrida_1.detectados, pn.cambios_referencia)} y ${de(pn.corrida_2.detectados, pn.cambios_referencia)}</td><td>${pn.corrida_1.falsos_positivos} y ${pn.corrida_2.falsos_positivos}</td><td>${de(okPartida(pn.corrida_1), pn.corrida_1.detectados)} y ${de(okPartida(pn.corrida_2), pn.corrida_2.detectados)}</td></tr>
         ${filasModelo || `<tr><td>IA registrada <small class="pista-txt">· por defecto: Gemini</small></td><td colspan="5"><span class="aud-mal">Sin medir todavía.</span> <span class="pista-txt">Se mide con <code>npm run medir-ia</code> contra la función publicada, con la misma referencia.</span></td></tr>`}
-      </tbody></table></div></section>
+      </tbody></table></div>
+      ${(cifras.precision_por_modelo || []).map(f => `<p class="pista-txt" style="margin-top:8px">Resultados comparables (n = ${f.cambios_referencia} cambios, una sola corrida en vivo); ${esc(f.modelo)} con ${f.falsas_alarmas} falsas alarmas de ${f.alertas} alertas.${f.nota ? ` ${esc(f.nota)}` : ''}</p>`).join('')}</section>
     ${EV.vistaEvidencia({ cifras, consulta })}
     <details class="panel detalle-tec"><summary><b>Detalle técnico de las mediciones</b></summary>
       <div class="lectura" style="margin-top:10px"><ul>
