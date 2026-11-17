@@ -1,0 +1,700 @@
+{
+ "descripcion": "Conjunto de referencia (etiquetado ciego) del corpus sintético R1. Cada cambio indica las palabras clave que permiten emparejarlo con una alerta del mismo documento, la partida esperada y las partidas aceptables. Los documentos sin cambios con impacto se listan vacíos; E-108 e IS-108 deben rechazarse en la ingesta por no tener revisión anterior (CP-01).",
+ "version": "1.0 · congelado antes de la corrida",
+ "reservados": {
+  "descripcion": "Fracción reservada (10 documentos) definida antes de la corrida v1.0. No se usa para analizar errores ni para escribir v1.1; sirve para comparar v1.0 y v1.1 sin sobreajuste.",
+  "docs": [
+   "E-215",
+   "E-240",
+   "A-205",
+   "A-410",
+   "IS-220",
+   "IE-060",
+   "IM-130",
+   "RFI-155",
+   "CT-024",
+   "CT-027"
+  ]
+ },
+ "documentos": {
+  "E-101": [
+   {
+    "id": "E-101-1",
+    "cambio": "Zapata Z-3 pasa de 2,20 × 2,20 × 0,60 a 2,60 × 2,60 × 0,70 m",
+    "claves": [
+     "Z-3",
+     "zapata"
+    ],
+    "partida": "03.01.06",
+    "aceptables": [
+     "03.01.06",
+     "03.03.04"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "E-105": [],
+  "E-108": "rechazo",
+  "E-204": [
+   {
+    "id": "E-204-1",
+    "cambio": "Placa P-7: altura de 2,80 a 3,20 m (supera h ≤ 3,00)",
+    "claves": [
+     "P-7",
+     "placa"
+    ],
+    "partida": "03.02.05",
+    "aceptables": [
+     "03.02.05"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "E-210": [
+   {
+    "id": "E-210-1",
+    "cambio": "Viga V-14: bastones 2Ø3/4\" adicionales en apoyos",
+    "claves": [
+     "V-14",
+     "baston",
+     "bastones"
+    ],
+    "partida": "03.03.01",
+    "aceptables": [
+     "03.03.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "E-212": [
+   {
+    "id": "E-212-1",
+    "cambio": "Paño C–D/3–4 del nivel 6 pasa de losa aligerada a losa maciza",
+    "claves": [
+     "maciza",
+     "aligerada"
+    ],
+    "partida": "03.01.04",
+    "aceptables": [
+     "03.01.04",
+     "03.03.03",
+     "03.02.03"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "E-215": [
+   {
+    "id": "E-215-1",
+    "cambio": "Viga V-20: peralte de 0,60 a 0,70 m (nota 4)",
+    "claves": [
+     "V-20"
+    ],
+    "partida": "03.01.03",
+    "aceptables": [
+     "03.01.03",
+     "03.02.02"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "E-220": [
+   {
+    "id": "E-220-1",
+    "cambio": "Escalera E-2: se agrega descanso intermedio",
+    "claves": [
+     "E-2",
+     "escalera",
+     "descanso"
+    ],
+    "partida": "03.01.07",
+    "aceptables": [
+     "03.01.07",
+     "03.02.06"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "E-230": [
+   {
+    "id": "E-230-1",
+    "cambio": "Columna C-5: sección de 0,40 × 0,60 a 0,50 × 0,70 m",
+    "claves": [
+     "C-5",
+     "columna"
+    ],
+    "partida": "03.01.02",
+    "aceptables": [
+     "03.01.02",
+     "03.02.01",
+     "03.03.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "E-231": [
+   {
+    "id": "E-231-1",
+    "cambio": "Junta sísmica A–B de 2\" a 3\"",
+    "claves": [
+     "junta"
+    ],
+    "partida": "03.04.01",
+    "aceptables": [
+     "03.04.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "E-240": [
+   {
+    "id": "E-240-1",
+    "cambio": "Placa PL-2: espesor de 0,25 a 0,30 m",
+    "claves": [
+     "PL-2"
+    ],
+    "partida": "03.01.01",
+    "aceptables": [
+     "03.01.01",
+     "03.03.02",
+     "03.02.04",
+     "03.02.05"
+    ],
+    "tamano": "grande"
+   },
+   {
+    "id": "E-240-2",
+    "cambio": "Se elimina la viga chata VCH-3 (deductivo)",
+    "claves": [
+     "VCH-3",
+     "chata"
+    ],
+    "partida": "03.01.03",
+    "aceptables": [
+     "03.01.03",
+     "03.02.02",
+     "03.03.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "E-250": [
+   {
+    "id": "E-250-1",
+    "cambio": "Muros de cisterna: espesor de 0,25 a 0,30 m",
+    "claves": [
+     "cisterna"
+    ],
+    "partida": "03.01.01",
+    "aceptables": [
+     "03.01.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-112": [
+   {
+    "id": "A-112-1",
+    "cambio": "Se elimina tabique T-3 de albañilería (deductivo)",
+    "claves": [
+     "T-3",
+     "tabique"
+    ],
+    "partida": "04.01.02",
+    "aceptables": [
+     "04.01.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-115": [
+   {
+    "id": "A-115-1",
+    "cambio": "Tabiques entre departamentos pasan a drywall acústico e = 0,15 m",
+    "claves": [
+     "acústico",
+     "acustico",
+     "drywall"
+    ],
+    "partida": "04.02.02",
+    "aceptables": [
+     "04.02.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-150": [],
+  "A-201": [
+   {
+    "id": "A-201-1",
+    "cambio": "Dormitorios: piso laminado → porcelanato 60 × 60 con zócalo",
+    "claves": [
+     "porcelanato",
+     "laminado"
+    ],
+    "partida": "06.02.01",
+    "aceptables": [
+     "06.02.01",
+     "06.03.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-205": [
+   {
+    "id": "A-205-1",
+    "cambio": "Vestíbulo previo: puerta cortafuego de 90 min por nivel",
+    "claves": [
+     "cortafuego"
+    ],
+    "partida": "07.01.02",
+    "aceptables": [
+     "07.01.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-220": [
+   {
+    "id": "A-220-1",
+    "cambio": "Hall de ascensores: se agrega cielo raso de drywall",
+    "claves": [
+     "cielo raso",
+     "cielorraso"
+    ],
+    "partida": "05.02.01",
+    "aceptables": [
+     "05.02.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-310": [
+   {
+    "id": "A-310-1",
+    "cambio": "Fachada sur: porcelanato → panel de aluminio compuesto",
+    "claves": [
+     "aluminio compuesto",
+     "panel"
+    ],
+    "partida": "08.01.01",
+    "aceptables": [
+     "08.01.01",
+     "08.01.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "A-320": [
+   {
+    "id": "A-320-1",
+    "cambio": "Ventana V-4: vidrio templado 6 mm → laminado acústico 8 mm",
+    "claves": [
+     "V-4",
+     "laminado"
+    ],
+    "partida": "07.02.01",
+    "aceptables": [
+     "07.02.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "A-410": [
+   {
+    "id": "A-410-1",
+    "cambio": "Baños: altura de enchape de 2,10 a 2,40 m (nota 2)",
+    "claves": [
+     "enchape",
+     "2,40"
+    ],
+    "partida": "08.02.01",
+    "aceptables": [
+     "08.02.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "A-500": [
+   {
+    "id": "A-500-1",
+    "cambio": "Terraza nivel 12: parapeto de vidrio → baranda de acero inoxidable",
+    "claves": [
+     "baranda",
+     "inoxidable"
+    ],
+    "partida": "07.03.01",
+    "aceptables": [
+     "07.03.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IS-105": [
+   {
+    "id": "IS-105-1",
+    "cambio": "Cuarto de bombas: sistema dúplex (segunda electrobomba)",
+    "claves": [
+     "bomba",
+     "dúplex",
+     "duplex",
+     "electrobomba"
+    ],
+    "partida": "10.04.01",
+    "aceptables": [
+     "10.04.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IS-108": "rechazo",
+  "IS-201": [
+   {
+    "id": "IS-201-1",
+    "cambio": "Montante MD-3: de Ø4\" a Ø6\"",
+    "claves": [
+     "MD-3",
+     "montante"
+    ],
+    "partida": "10.02.02",
+    "aceptables": [
+     "10.02.02"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "IS-210": [],
+  "IS-220": [
+   {
+    "id": "IS-220-1",
+    "cambio": "Agua caliente: CPVC → PP-R",
+    "claves": [
+     "PP-R",
+     "CPVC",
+     "agua caliente"
+    ],
+    "partida": "10.01.02",
+    "aceptables": [
+     "10.01.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IS-230": [
+   {
+    "id": "IS-230-1",
+    "cambio": "Cuarto de limpieza: lavatorio por nivel (12 und)",
+    "claves": [
+     "lavatorio"
+    ],
+    "partida": "10.03.02",
+    "aceptables": [
+     "10.03.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IE-031": [
+   {
+    "id": "IE-031-1",
+    "cambio": "Sala técnica S1: tres salidas de fuerza 380 V",
+    "claves": [
+     "fuerza"
+    ],
+    "partida": "11.02.03",
+    "aceptables": [
+     "11.02.03"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "IE-040": [
+   {
+    "id": "IE-040-1",
+    "cambio": "Alimentador TG–TD3: de 35 a 50 mm²",
+    "claves": [
+     "TD3",
+     "alimentador"
+    ],
+    "partida": "11.03.02",
+    "aceptables": [
+     "11.03.02"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "IE-045": [
+   {
+    "id": "IE-045-1",
+    "cambio": "Nuevo tablero TD-ACI",
+    "claves": [
+     "TD-ACI",
+     "tablero"
+    ],
+    "partida": "11.03.01",
+    "aceptables": [
+     "11.03.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IE-050": [],
+  "IE-060": [
+   {
+    "id": "IE-060-1",
+    "cambio": "Bandeja B-1: de 300 a 400 mm",
+    "claves": [
+     "bandeja",
+     "B-1"
+    ],
+    "partida": "11.04.01",
+    "aceptables": [
+     "11.04.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "IE-070": [
+   {
+    "id": "IE-070-1",
+    "cambio": "Estacionamientos S1: 18 salidas de alumbrado adicionales",
+    "claves": [
+     "alumbrado",
+     "18"
+    ],
+    "partida": "11.01.01",
+    "aceptables": [
+     "11.01.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IM-101": [
+   {
+    "id": "IM-101-1",
+    "cambio": "Sótano 2: 24 rociadores adicionales en depósitos",
+    "claves": [
+     "rociador",
+     "rociadores"
+    ],
+    "partida": "12.01.01",
+    "aceptables": [
+     "12.01.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IM-110": [
+   {
+    "id": "IM-110-1",
+    "cambio": "Ducto DE-1: de 600 × 400 a 800 × 400 mm",
+    "claves": [
+     "DE-1",
+     "ducto"
+    ],
+    "partida": "12.02.01",
+    "aceptables": [
+     "12.02.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "IM-120": [
+   {
+    "id": "IM-120-1",
+    "cambio": "Halls: 12 detectores de humo",
+    "claves": [
+     "detector",
+     "detectores"
+    ],
+    "partida": "12.03.01",
+    "aceptables": [
+     "12.03.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "IM-130": [
+   {
+    "id": "IM-130-1",
+    "cambio": "Montante ACI: cédula 10 → cédula 40",
+    "claves": [
+     "cédula",
+     "cedula",
+     "SCH"
+    ],
+    "partida": "12.01.02",
+    "aceptables": [
+     "12.01.02"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "RFI-147": [
+   {
+    "id": "RFI-147-1",
+    "cambio": "Viga V-12: 2Ø5/8\" adicionales en apoyo del eje 6",
+    "claves": [
+     "V-12"
+    ],
+    "partida": "03.03.01",
+    "aceptables": [
+     "03.03.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "RFI-152": [],
+  "RFI-155": [
+   {
+    "id": "RFI-155-1",
+    "cambio": "Cuarto de bombas: porcelanato → cemento pulido con endurecedor y epóxico (sin partida en el presupuesto)",
+    "claves": [
+     "cemento pulido",
+     "epóxica",
+     "epoxica",
+     "endurecedor"
+    ],
+    "partida": null,
+    "aceptables": [
+     null,
+     "06.02.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "RFI-160": [
+   {
+    "id": "RFI-160-1",
+    "cambio": "Sala de reuniones nivel 1: 2 equipos split de 24 000 BTU",
+    "claves": [
+     "split",
+     "aire acondicionado"
+    ],
+    "partida": "12.02.02",
+    "aceptables": [
+     "12.02.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "RFI-163": [
+   {
+    "id": "RFI-163-1",
+    "cambio": "Puerta P-1: contraplacada de alma sólida con chapa de seguridad (64 und)",
+    "claves": [
+     "P-1",
+     "puerta"
+    ],
+    "partida": "07.01.01",
+    "aceptables": [
+     "07.01.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "RFI-170": [],
+  "CT-018": [
+   {
+    "id": "CT-018-1",
+    "cambio": "Fachada norte: pintura elastomérica → enchape de porcelanato",
+    "claves": [
+     "fachada norte",
+     "porcelanato"
+    ],
+    "partida": "08.01.02",
+    "aceptables": [
+     "08.01.02",
+     "09.01.02"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "CT-021": [],
+  "CT-024": [
+   {
+    "id": "CT-024-1",
+    "cambio": "Barandas de escaleras de evacuación en acero inoxidable (instrucción en el cuarto párrafo)",
+    "claves": [
+     "baranda",
+     "inoxidable"
+    ],
+    "partida": "07.03.01",
+    "aceptables": [
+     "07.03.01"
+    ],
+    "tamano": "pequeño"
+   }
+  ],
+  "CT-027": [],
+  "CT-030": [
+   {
+    "id": "CT-030-1",
+    "cambio": "6 tomacorrientes dobles adicionales por departamento tipo B (16 dptos.)",
+    "claves": [
+     "tomacorriente"
+    ],
+    "partida": "11.02.01",
+    "aceptables": [
+     "11.02.01"
+    ],
+    "tamano": "grande"
+   }
+  ],
+  "CT-033": [
+   {
+    "id": "CT-033-1",
+    "cambio": "Adelanto de 15 días en la entrega del nivel 1 (impacto en plazo, sin partida)",
+    "claves": [
+     "adelant",
+     "entrega",
+     "plazo"
+    ],
+    "partida": null,
+    "aceptables": [
+     null
+    ],
+    "tamano": "grande"
+   }
+  ]
+ },
+ "arbitraje": {
+  "fecha": "2026-11-02",
+  "descripcion": "Revisión de discrepancias posterior a la corrida v1.0 (rol de árbitro: S. Coronado; pendiente de su confirmación). La referencia congelada no se modifica: las alertas dictaminadas como cambios reales se reportan aparte.",
+  "casos": [
+   {
+    "doc_id": "A-201",
+    "claves": [
+     "zócalo",
+     "zocalo"
+    ],
+    "dictamen": "Cambio real omitido por la referencia: el zócalo pasa de MDF a porcelanato h = 10 cm (partida 06.03.01)."
+   },
+   {
+    "doc_id": "A-500",
+    "claves": [
+     "murete"
+    ],
+    "dictamen": "Cambio real omitido por la referencia: se agrega un murete de 0,30 m bajo la baranda (sin partida propia)."
+   },
+   {
+    "doc_id": "E-230",
+    "claves": [
+     "refuerzo",
+     "acero",
+     "12Ø"
+    ],
+    "dictamen": "Cambio real: el refuerzo de C-5 pasa de 10Ø3/4\" a 12Ø3/4\". La referencia lo agrupaba con el cambio de sección (granularidad)."
+   },
+   {
+    "doc_id": "IE-040",
+    "claves": [
+     "tierra",
+     "1×25",
+     "1x25"
+    ],
+    "dictamen": "Cambio real: el conductor de tierra pasa de 1×16 a 1×25 mm². La referencia lo agrupaba con el cambio de fases (granularidad)."
+   }
+  ]
+ }
+}

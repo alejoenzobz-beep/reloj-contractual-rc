@@ -103,7 +103,7 @@ const leerEditor = el => el.innerText.replace(/ /g, ' ').replace(/\n{3,}/g, '\n
 // ---------- DOCX mínimo (ZIP sin compresión) ----------
 const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
-function zip(archivos) {
+export function zip(archivos, tipo = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
   const enc = new TextEncoder(), partes = [], central = []; let off = 0;
   for (const [nombre, cont] of archivos) {
     const n = enc.encode(nombre), d = enc.encode(cont), crc = crc32(d);
@@ -114,7 +114,7 @@ function zip(archivos) {
   }
   const tam = central.reduce((s, x) => s + x.length, 0);
   const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, archivos.length, true); e.setUint16(10, archivos.length, true); e.setUint32(12, tam, true); e.setUint32(16, off, true);
-  return new Blob([...partes, ...central, new Uint8Array(e.buffer)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  return new Blob([...partes, ...central, new Uint8Array(e.buffer)], { type: tipo });
 }
 const xml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function docx(titulo, texto) {

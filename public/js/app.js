@@ -4,7 +4,8 @@ import * as N from './nucleo.js';
 import * as IA from './ia.js';
 import { SISTEMA_CHAT } from './asistente_ia.js';
 import { vComparar } from './comparador.js';
-import { vSalidas } from './salidas.js';
+import { vSalidas, zip } from './salidas.js';
+import { laminaSVG } from './lamina_demo.js';
 import * as AUD from './auditoria.js';
 import * as CAL from './calendario.js';
 import * as DRIVE from './drive.js';
@@ -228,6 +229,40 @@ function accionPrincipal(id) {
   if (est.rol === 'ot' && ab.length) return { t: 'Comparar revisiones', d: `Detecta qué cambió entre dos revisiones. Tienes además ${ab.length} cambio${ab.length === 1 ? '' : 's'} por decidir: el primero vence el ${N.fmtFecha(ab[0].limite)}.`, h: '#comparar', b: 'Comparar revisiones' };
   return { t: 'Comparar revisiones', d: 'Sube o elige dos revisiones de un documento: el asistente marca qué cambió, propone la partida y calcula el plazo.', h: '#comparar', b: 'Comparar revisiones' };
 }
+// ---------- datos de prueba (M3) ----------
+async function descargarDatosPrueba() {
+  const leer = async f => (await fetch(`data/${f}`)).text();
+  const [refCorpus, consulta] = await Promise.all([leer('referencia_corpus.json'), leer('consulta.json').catch(() => '')]);
+  const csv = ['elemento;antes (rev. A);después (rev. B);¿tiene impacto?;partida esperada;nota',
+    'Viga V-1;sección 0,30 × 0,60 m;sección 0,30 × 0,70 m;sí;03.01.03 Concreto en vigas (también varía 03.02.02 Encofrado de vigas);visible en el dibujo y en el cuadro de vigas',
+    'Viga V-3;acero inferior 3 Ø 5/8";acero inferior 4 Ø 3/4";sí;03.03.01 Acero en vigas;solo en el cuadro de vigas: no evidente a simple vista',
+    "Concreto de vigas;NOTA 2: f'c = 280 kg/cm²;NOTA 2: f'c = 350 kg/cm²;sí;03.01.03 con confianza media (la partida es de 280 kg/cm²: requiere precio nuevo);solo en las notas: no evidente a simple vista",
+    'Rótulo y cuadro de revisiones;REVISIÓN A · 02/10/2026;REVISIÓN B · 07/10/2026 y nueva línea «REV. B: SE ACTUALIZA CUADRO DE VIGAS»;no;—;cambio administrativo'].join('\r\n');
+  const ejemplos = IA.DEMO.filter(d => d.actual != null).flatMap(d => [[`textos/${d.clave}_revA.txt`, d.anterior || '(carta: sin revisión anterior)'], [`textos/${d.clave}_revB.txt`, d.actual]]);
+  const leeme = `DATOS DE PRUEBA · RELOJ CONTRACTUAL (demostración)
+
+Todo es de demostración: proyecto ficticio R1 y documentos sintéticos, salvo consulta.json (respuestas reales anonimizadas).
+
+1. E-301_revA.svg y E-301_revB.svg: lámina de ejemplo. En «Comparar revisiones» → «Subir dos imágenes», súbelas (o usa «Ejemplo: lámina E-301»).
+   E-301_resultado_esperado.csv: los cambios que se introdujeron a propósito entre A y B y la partida esperada.
+2. textos/: pares de revisiones en texto para «Pegar texto» (nota escondida, instrucción en una carta y un cambio solo de rótulo).
+3. corpus/documentos.json y corpus/proyecto.json: corpus sintético R1 (50 documentos, partidas y contrato).
+   corpus/referencia.json: respuestas correctas escritas antes de correr la IA (etiquetado ciego), con las que se midieron las cifras de Calidad.
+4. consulta.json: consulta a profesionales de obra y oficina técnica (anonimizada).
+
+Cómo evaluar en 5 minutos: ver el panel «Cómo evaluar esto en 5 minutos» en Inicio o el README del repositorio.
+`;
+  const blob = zip([['LEEME.txt', leeme], ['E-301_revA.svg', laminaSVG('A')], ['E-301_revB.svg', laminaSVG('B')], ['E-301_resultado_esperado.csv', '\ufeff' + csv], ...ejemplos,
+    ['corpus/documentos.json', JSON.stringify(docs, null, 1)], ['corpus/proyecto.json', JSON.stringify(proyecto, null, 1)], ['corpus/referencia.json', refCorpus], ...(consulta ? [['consulta.json', consulta]] : [])], 'application/zip');
+  const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = 'reloj-contractual_datos-de-prueba.zip'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+}
+const EVALUAR = [
+  ['Elige un rol y el proyecto', 'En la bienvenida (o desde el avatar). Empieza como oficina técnica en «Edificio multifamiliar R1».'],
+  ['Compara la lámina de ejemplo', '«Comparar revisiones» → «Detectar cambios»: 3 cambios con impacto, 2 no evidentes a simple vista, cada uno con su cita verificada.'],
+  ['Decide', '«Crear alerta con estos cambios» → Confirmar. Cambia a jefe/a de oficina técnica desde el avatar y aprueba la variación.'],
+  ['Emite', 'Como gerente, en «Documentos de salida»: revisa los avisos, descarga el DOCX o el correo .eml y registra la emisión.'],
+  ['Audita y revisa la evidencia', '«Registro de auditoría» → «Verificar integridad». En «Calidad» está qué se midió, con qué n y qué no se afirma.'],
+];
 function vInicio() {
   const id = est.proyecto, pr = PROY[id];
   const abiertas = abiertasDe(id);
@@ -242,9 +277,12 @@ function vInicio() {
       <div class="panel" style="margin:0"><h3>Lo que vence primero</h3>${abiertas.length ? `<ul class="lista-urg">${abiertas.slice(0, 3).map(a => `<li><a href="#alerta-${a.id.toLowerCase()}">${diasBadge(a)}<div><h4>${esc(a.doc_id)} · ${esc(a.elemento)}</h4><p>Notificar hasta el ${fCorta(a.limite)}</p></div></a></li>`).join('')}</ul>` : `<p class="vacio">Sin cambios abiertos en este proyecto.</p>`}
         <p class="pista-txt" style="margin-top:10px"><a href="#bandeja">Bandeja de cambios</a> · <a href="#panorama">Panorama del proyecto</a></p></div>
     </div>
+    <details class="panel evaluar" ${guiaVista() ? '' : 'open'}><summary><b>Cómo evaluar esto en 5 minutos</b></summary><ol class="pasos-evaluar">${EVALUAR.map(([t, d]) => `<li><b>${t}.</b> ${d}</li>`).join('')}</ol>
+      <div class="fila-btn"><button class="btn peq" id="datos-prueba">Descargar datos de prueba (.zip)</button><span class="pista-txt">Lámina E-301 A y B, resultado esperado, textos de ejemplo, corpus de demostración y su referencia.</span></div></details>
     ${guiaVista() ? '' : `<div class="invita" id="invita-guia"><p><b>¿Primera vez?</b> Recorrido guiado de 6 pasos con la lámina de ejemplo: de la revisión nueva a la carta emitida. <small>Unos 2 minutos.</small></p><div class="fila-btn"><button class="btn prim peq" id="guia-ini">Empezar el recorrido</button><button class="btn peq" id="guia-saltar">Ahora no</button></div></div>`}`;
   const gi = $('#guia-ini'); if (gi) gi.onclick = () => iniciarGuia();
   const gs = $('#guia-saltar'); if (gs) gs.onclick = () => { marcarGuia(); $('#invita-guia').remove(); };
+  $('#datos-prueba').onclick = () => descargarDatosPrueba();
 }
 function vPanorama() {
   const id = est.proyecto, pr = PROY[id], pp = paramsProy(id), abiertas = abiertasDe(id);
