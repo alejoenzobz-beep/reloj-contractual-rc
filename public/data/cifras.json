@@ -175,5 +175,23 @@
    "min": 2,
    "max": 4
   }
- }
+ },
+ "precision_por_modelo": [
+  {
+   "modelo": "gemini-3.1-flash-lite",
+   "via": "función publicada (IA registrada)",
+   "fecha": "2026-11-17",
+   "documentos": 10,
+   "cambios_referencia": 8,
+   "detectados": 8,
+   "falsas_alarmas": 2,
+   "partida_correcta": 8,
+   "alertas": 10,
+   "docs_sin_cambio_ok": "2 de 2",
+   "rechazos_ingesta_ok": "1 de 1",
+   "latencia_mediana_ms": 5347,
+   "reintentos": 1,
+   "errores": 0
+  }
+ ]
 }
